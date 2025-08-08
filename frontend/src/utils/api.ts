@@ -1,14 +1,3 @@
-// API URL configuration for both local development and production
-const getApiUrl = () => {
-  // In production, always use the production URL
-  if (process.env.NODE_ENV === "production") {
-    return "https://grandedu-g5yo.onrender.com";
-  }
-
-  // In development, try localhost first, fallback to production
-  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
-};
-
 // Test if localhost is available
 const testLocalhost = async (): Promise<boolean> => {
   try {

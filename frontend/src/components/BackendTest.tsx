@@ -39,7 +39,7 @@ export default function BackendTest() {
         try {
           const errorData = await response.text();
           console.error("Response body:", errorData);
-        } catch (e) {
+        } catch {
           console.error("Could not read response body");
         }
       }

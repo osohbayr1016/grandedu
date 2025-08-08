@@ -15,7 +15,6 @@ interface PageContent {
 }
 
 export default function Home() {
-  const [backendStatus, setBackendStatus] = useState<string>("Loading...");
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [showAuth, setShowAuth] = useState<boolean>(false);
   const [isLogin, setIsLogin] = useState<boolean>(true);
@@ -37,15 +36,12 @@ export default function Home() {
 
         if (response.ok) {
           const data = await response.json();
-          setBackendStatus(data.status || "Connected");
           setIsConnected(true);
         } else {
-          setBackendStatus(`Error: ${response.status}`);
           setIsConnected(false);
         }
       } catch (error) {
         console.error("Backend health check failed:", error);
-        setBackendStatus("Disconnected");
         setIsConnected(false);
       }
     };
