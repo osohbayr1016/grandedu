@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GrandEdu Frontend
 
-## Getting Started
+## Backend Connection Setup
 
-First, run the development server:
+This frontend is configured to connect to the backend API with automatic fallback between local development and production environments.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### Environment Variables
+
+#### Local Development (`.env.local`)
+
+```
+NEXT_PUBLIC_API_URL=http://localhost:5001
+NEXT_PUBLIC_PRODUCTION_API_URL=https://grandedu-g5yo.onrender.com
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+#### Production (`.env.production`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+NEXT_PUBLIC_API_URL=https://grandedu-g5yo.onrender.com
+NEXT_PUBLIC_PRODUCTION_API_URL=https://grandedu-g5yo.onrender.com
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Backend URLs
 
-## Learn More
+- **Local Development**: `http://localhost:5001`
+- **Production**: `https://grandedu-g5yo.onrender.com`
 
-To learn more about Next.js, take a look at the following resources:
+### How It Works
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Development Mode**:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   - Uses localhost:5001 by default
+   - Falls back to production URL if localhost is unavailable
 
-## Deploy on Vercel
+2. **Production Mode**:
+   - Always uses the production URL: `https://grandedu-g5yo.onrender.com`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### API Endpoints
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+All API calls are centralized through `src/utils/api.ts`:
+
+- Health Check: `/api/health`
+- Authentication: `/api/auth/login`, `/api/auth/signup`
+- Content Management: `/api/content/*`
+- Programs: `/api/programs`
+
+### Deployment
+
+When deploying to Vercel:
+
+1. The production environment variables are automatically used
+2. All API calls will point to the production backend
+3. No additional configuration needed
+
+### Local Development
+
+To run locally:
+
+1. Start your local backend on port 5001
+2. Run `npm run dev` or `yarn dev`
+3. The frontend will automatically connect to localhost:5001
+4. If localhost is not available, it will fallback to production
+
+### Troubleshooting
+
+If you encounter connection issues:
+
+1. Check if your local backend is running on port 5001
+2. Verify the production backend is accessible at https://grandedu-g5yo.onrender.com
+3. Check browser console for any CORS or network errors

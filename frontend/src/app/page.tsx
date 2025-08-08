@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
+import { HEALTH_CHECK_URL, HOME_CONTENT_URL } from "@/utils/api";
 
 interface PageContent {
   [section: string]: {
@@ -24,7 +25,7 @@ export default function Home() {
   useEffect(() => {
     const checkBackendHealth = async () => {
       try {
-        const response = await fetch("http://localhost:5001/api/health");
+        const response = await fetch(HEALTH_CHECK_URL);
         const data = await response.json();
         setBackendStatus(data.status);
         setIsConnected(true);
@@ -56,7 +57,7 @@ export default function Home() {
 
   const fetchPageContent = async () => {
     try {
-      const response = await fetch("http://localhost:5001/api/content/home");
+      const response = await fetch(HOME_CONTENT_URL);
       if (response.ok) {
         const data = await response.json();
         setPageContent(data);

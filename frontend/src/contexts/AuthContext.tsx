@@ -8,6 +8,7 @@ import React, {
   ReactNode,
 } from "react";
 import axios from "axios";
+import { LOGIN_URL, SIGNUP_URL } from "@/utils/api";
 
 interface User {
   id: string;
@@ -79,13 +80,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post(
-        "http://localhost:5001/api/auth/login",
-        {
-          email,
-          password,
-        }
-      );
+      const response = await axios.post(LOGIN_URL, {
+        email,
+        password,
+      });
 
       const { token: newToken, user: userData } = response.data;
 
@@ -117,10 +115,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const signup = async (userData: SignupData) => {
     try {
-      const response = await axios.post(
-        "http://localhost:5001/api/auth/signup",
-        userData
-      );
+      const response = await axios.post(SIGNUP_URL, userData);
 
       const { token: newToken, user: newUser } = response.data;
 
