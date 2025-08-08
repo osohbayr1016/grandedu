@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { CONTENT_URL } from "@/utils/api";
+import { getContentUrl } from "@/utils/api";
 
 interface PageContent {
   id: string;
@@ -68,7 +68,7 @@ export default function AdminPage() {
 
   const fetchContent = async () => {
     try {
-      const response = await fetch(CONTENT_URL, {
+      const response = await fetch(getContentUrl(), {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -104,7 +104,7 @@ export default function AdminPage() {
   ) => {
     setSaving(true);
     try {
-      const response = await fetch(CONTENT_URL, {
+      const response = await fetch(getContentUrl(), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -132,7 +132,7 @@ export default function AdminPage() {
 
   const toggleContentStatus = async (id: string) => {
     try {
-      const response = await fetch(`${CONTENT_URL}/${id}/toggle`, {
+      const response = await fetch(`${getContentUrl()}/${id}/toggle`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,

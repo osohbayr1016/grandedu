@@ -40,21 +40,73 @@ export const getBestApiUrl = async (): Promise<string> => {
   return "https://grandedu-g5yo.onrender.com";
 };
 
-// Default API URL (for immediate use)
-export const API_BASE_URL = getApiUrl();
+// Get API base URL dynamically
+export const getApiBaseUrl = () => {
+  // In production, always use the production URL
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname !== "localhost"
+  ) {
+    console.log(
+      "Using production API URL:",
+      "https://grandedu-g5yo.onrender.com"
+    );
+    return "https://grandedu-g5yo.onrender.com";
+  }
+
+  // In development, use localhost
+  console.log("Using development API URL:", "http://localhost:5001");
+  return "http://localhost:5001";
+};
 
 // Health check endpoint
-export const HEALTH_CHECK_URL = `${API_BASE_URL}/api/health`;
+export const getHealthCheckUrl = () => {
+  const url = `${getApiBaseUrl()}/api/health`;
+  console.log("Health check URL:", url);
+  return url;
+};
 
 // Auth endpoints
-export const LOGIN_URL = `${API_BASE_URL}/api/auth/login`;
-export const SIGNUP_URL = `${API_BASE_URL}/api/auth/signup`;
+export const getLoginUrl = () => {
+  const url = `${getApiBaseUrl()}/api/auth/login`;
+  console.log("Login URL:", url);
+  return url;
+};
+
+export const getSignupUrl = () => {
+  const url = `${getApiBaseUrl()}/api/auth/signup`;
+  console.log("Signup URL:", url);
+  return url;
+};
 
 // Content endpoints
-export const CONTENT_URL = `${API_BASE_URL}/api/content`;
-export const HOME_CONTENT_URL = `${API_BASE_URL}/api/content/home`;
-export const PROGRAMS_CONTENT_URL = `${API_BASE_URL}/api/content/programs`;
-export const NAVIGATION_CONTENT_URL = `${API_BASE_URL}/api/content/navigation`;
+export const getContentUrl = () => {
+  const url = `${getApiBaseUrl()}/api/content`;
+  console.log("Content URL:", url);
+  return url;
+};
+
+export const getHomeContentUrl = () => {
+  const url = `${getApiBaseUrl()}/api/content/home`;
+  console.log("Home content URL:", url);
+  return url;
+};
+
+export const getProgramsContentUrl = () => {
+  const url = `${getApiBaseUrl()}/api/content/programs`;
+  console.log("Programs content URL:", url);
+  return url;
+};
+
+export const getNavigationContentUrl = () => {
+  const url = `${getApiBaseUrl()}/api/content/navigation`;
+  console.log("Navigation content URL:", url);
+  return url;
+};
 
 // Programs endpoints
-export const PROGRAMS_URL = `${API_BASE_URL}/api/programs`;
+export const getProgramsUrl = () => {
+  const url = `${getApiBaseUrl()}/api/programs`;
+  console.log("Programs URL:", url);
+  return url;
+};

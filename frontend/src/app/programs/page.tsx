@@ -7,9 +7,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
 import {
-  PROGRAMS_URL,
-  PROGRAMS_CONTENT_URL,
-  NAVIGATION_CONTENT_URL,
+  getProgramsUrl,
+  getProgramsContentUrl,
+  getNavigationContentUrl,
 } from "@/utils/api";
 
 interface Program {
@@ -64,7 +64,7 @@ export default function ProgramsPage() {
 
   const fetchPrograms = async () => {
     try {
-      const response = await fetch(PROGRAMS_URL);
+      const response = await fetch(getProgramsUrl());
       if (response.ok) {
         const data = await response.json();
         setPrograms(data);
@@ -82,8 +82,8 @@ export default function ProgramsPage() {
     try {
       // Fetch content for multiple pages
       const [programsResponse, navigationResponse] = await Promise.all([
-        fetch(PROGRAMS_CONTENT_URL),
-        fetch(NAVIGATION_CONTENT_URL),
+        fetch(getProgramsContentUrl()),
+        fetch(getNavigationContentUrl()),
       ]);
 
       let allContent = {};

@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
-import { HEALTH_CHECK_URL, HOME_CONTENT_URL } from "@/utils/api";
+import BackendTest from "@/components/BackendTest";
+import { getHealthCheckUrl, getHomeContentUrl } from "@/utils/api";
 
 interface PageContent {
   [section: string]: {
@@ -25,7 +26,7 @@ export default function Home() {
   useEffect(() => {
     const checkBackendHealth = async () => {
       try {
-        const response = await fetch(HEALTH_CHECK_URL);
+        const response = await fetch(getHealthCheckUrl());
         const data = await response.json();
         setBackendStatus(data.status);
         setIsConnected(true);
@@ -57,7 +58,7 @@ export default function Home() {
 
   const fetchPageContent = async () => {
     try {
-      const response = await fetch(HOME_CONTENT_URL);
+      const response = await fetch(getHomeContentUrl());
       if (response.ok) {
         const data = await response.json();
         setPageContent(data);
@@ -95,6 +96,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white">
+      <BackendTest />
       {/* Navigation */}
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
