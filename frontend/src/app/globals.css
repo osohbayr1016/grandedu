@@ -3,6 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --color-background: #ffffff;
 }
 
 @theme inline {
@@ -12,15 +13,29 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Force white background regardless of system preference */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #ffffff;
+    --foreground: #171717;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: #ffffff !important;
+  color: #171717 !important;
   font-family: Arial, Helvetica, sans-serif;
+}
+
+html {
+  background: #ffffff !important;
+}
+
+#__next {
+  background: #ffffff !important;
+}
+
+/* Force light theme */
+* {
+  color-scheme: light !important;
 }

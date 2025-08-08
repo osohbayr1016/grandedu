@@ -1,15 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import LoginForm from "@/components/LoginForm";
+import SignupForm from "@/components/SignupForm";
+
+interface PageContent {
+  [section: string]: {
+    [field: string]: string;
+  };
+}
 
 export default function Home() {
   const [backendStatus, setBackendStatus] = useState<string>("Loading...");
   const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [showAuth, setShowAuth] = useState<boolean>(false);
+  const [isLogin, setIsLogin] = useState<boolean>(true);
+  const [pageContent, setPageContent] = useState<PageContent>({});
+  const [contentLoading, setContentLoading] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     const checkBackendHealth = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/health");
+        const response = await fetch("http://localhost:5001/api/health");
         const data = await response.json();
         setBackendStatus(data.status);
         setIsConnected(true);
@@ -20,81 +35,586 @@ export default function Home() {
     };
 
     checkBackendHealth();
-    const interval = setInterval(checkBackendHealth, 5000);
+    const interval = setInterval(checkBackendHealth, 5000); // Check every 5 seconds
 
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    fetchPageContent();
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      setIsScrolled(scrollPosition > 100); // Show nav after 100px scroll
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const fetchPageContent = async () => {
+    try {
+      const response = await fetch("http://localhost:5001/api/content/home");
+      if (response.ok) {
+        const data = await response.json();
+        setPageContent(data);
+      }
+    } catch (error) {
+      console.error("Error fetching page content:", error);
+    } finally {
+      setContentLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+  };
+
+  // Helper function to get content with fallback
+  const getContent = (
+    section: string,
+    field: string,
+    fallback: string = ""
+  ) => {
+    return pageContent[section]?.[field] || fallback;
+  };
+
+  if (contentLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 py-16">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
-          {/* Left Section - Text Content */}
-          <div className="flex-1 text-center lg:text-left">
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-4">
-              Let us be your bridge to the{" "}
-              <span className="text-red-600">Future</span>
-            </h1>
-            <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl">
-              We are committed to providing a stimulating, secure, enjoyable,
-              environment for learning.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <button className="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200">
-                Register Now
-              </button>
-              <div className="flex items-center justify-center lg:justify-start text-red-600 font-medium cursor-pointer hover:text-red-700 transition-colors duration-200">
-                Read more
-                <svg
-                  className="w-5 h-5 ml-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+      {/* Navigation */}
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? "bg-white shadow-lg transform translate-y-0"
+            : "bg-transparent shadow-none transform -translate-y-full"
+        }`}
+      >
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <h1
+                className={`text-xl sm:text-2xl font-bold transition-colors duration-300 ${
+                  isScrolled ? "text-black" : "text-white"
+                }`}
+              >
+                {getContent("navigation", "logo", "GrandEdu")}
+              </h1>
+              <a
+                href="/programs"
+                className={`font-medium text-sm sm:text-base transition-colors duration-300 ${
+                  isScrolled
+                    ? "text-blue-600 hover:text-blue-700"
+                    : "text-white hover:text-blue-200"
+                }`}
+              >
+                {getContent("navigation", "programsLink", "Хөтөлбөрүүд")}
+              </a>
+            </div>
+
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              {user ? (
+                <>
+                  <span
+                    className={`text-sm sm:text-base hidden sm:block transition-colors duration-300 ${
+                      isScrolled ? "text-gray-700" : "text-white"
+                    }`}
+                  >
+                    {getContent(
+                      "navigation",
+                      "welcomeMessage",
+                      "Сайн байна уу, {firstName}!"
+                    ).replace("{firstName}", user.firstName)}
+                  </span>
+                  {user.role === "admin" && (
+                    <a
+                      href="/admin"
+                      className="bg-green-600 hover:bg-green-700 text-white px-2 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-sm"
+                    >
+                      Admin Panel
+                    </a>
+                  )}
+                  {/* Debug info */}
+                  <div
+                    className={`text-xs hidden sm:block transition-colors duration-300 ${
+                      isScrolled
+                        ? "text-gray-500"
+                        : "text-white text-opacity-70"
+                    }`}
+                  >
+                    Role: {user.role || "undefined"}
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="bg-red-600 hover:bg-red-700 text-white px-2 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-sm"
+                  >
+                    {getContent("navigation", "logoutButton", "Гарах")}
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setShowAuth(true)}
+                  className={`px-3 sm:px-6 py-2 rounded-lg transition-all duration-300 text-sm sm:text-base ${
+                    isScrolled
+                      ? "bg-blue-600 hover:bg-blue-700 text-white"
+                      : "bg-white bg-opacity-20 hover:bg-opacity-30 text-white border border-white border-opacity-30"
+                  }`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 8l4 4m0 0l-4 4m4-4H3"
-                  />
-                </svg>
+                  {getContent("navigation", "loginButton", "Нэвтрэх")}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Floating Menu Button (when not scrolled) */}
+      {!isScrolled && (
+        <div className="fixed top-4 right-4 z-40">
+          <button
+            onClick={() => setShowAuth(true)}
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full border border-white border-opacity-30 transition-all duration-300 backdrop-blur-sm"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Hero Section */}
+      <section className="relative text-white h-screen min-h-[500px] max-h-[800px] overflow-hidden">
+        {/* Background Image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('${getContent(
+              "hero",
+              "backgroundImage",
+              "https://images.unsplash.com/photo-1523050854058-8df90110c9e1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
+            )}')`,
+          }}
+        ></div>
+        {/* Gradient Overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/80 to-blue-700/80"></div>
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 h-full flex items-center justify-center">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold mb-4 sm:mb-6">
+              {getContent(
+                "hero",
+                "title",
+                "Хятадад зуучлах баталгаат хамт олон GrandEdu"
+              )}
+            </h1>
+            <p className="text-lg sm:text-xl md:text-2xl mb-6 sm:mb-8 text-blue-100 px-4">
+              {getContent(
+                "hero",
+                "subtitle",
+                "Бидэнтэй холбогдоод хятадад амжилттай суралцаарай"
+              )}
+            </p>
+            <button className="bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-lg text-base sm:text-lg transition-colors duration-200">
+              {getContent("hero", "ctaButton", "Эхлэх")}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Latest News Section */}
+      <section className="py-12 sm:py-16 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 sm:mb-12 space-y-4 sm:space-y-0">
+              <div className="w-full sm:w-auto">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">
+                  {getContent("news", "title", "Сүүлийн мэдээ")}
+                </h2>
+                <p className="text-gray-600 text-sm sm:text-base">
+                  {getContent(
+                    "news",
+                    "description",
+                    "Хятадын их сургуулиудад элсэх боломж болон тэтгэлгийн мэдээллийг аваарай"
+                  )}
+                </p>
+              </div>
+              <button className="text-blue-600 hover:text-blue-700 font-semibold text-sm sm:text-base">
+                {getContent("news", "viewAllButton", "Бүх мэдээг харах →")}
+              </button>
+            </div>
+
+            {/* News Card */}
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 max-w-md mx-auto sm:mx-0">
+              <div className="flex items-center text-xs sm:text-sm text-gray-500 mb-3">
+                <span className="bg-blue-100 text-blue-800 px-2 sm:px-3 py-1 rounded-full text-xs font-medium">
+                  {getContent("news", "newsCardTag", "ХӨТӨЛБӨР")}
+                </span>
+                <span className="ml-2 sm:ml-3">
+                  {getContent("news", "newsCardDate", "2025 оны 6-р сар")}
+                </span>
+              </div>
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
+                {getContent(
+                  "news",
+                  "newsCardTitle",
+                  "6+6 Хятад хэлний бэлтгэл хөтөлбөр (2025 оны 6-р сарын элсэлт)"
+                )}
+              </h3>
+              <p className="text-gray-600 text-sm sm:text-base">
+                {getContent(
+                  "news",
+                  "newsCardDescription",
+                  "Монголд 6 сар, Хятадт 6-11 сар хэлний бэлтгэл"
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Programs Section */}
+      <section className="py-12 sm:py-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">
+                {getContent("programs", "title", "Манай хөтөлбөрүүд")}
+              </h2>
+              <p className="text-gray-600 text-base sm:text-lg px-4">
+                {getContent(
+                  "programs",
+                  "description",
+                  "Хятадын их сургуулиудад суралцах боломжийг сонгоно уу"
+                )}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {/* Program Card 1 */}
+              <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
+                  <svg
+                    className="w-5 h-5 sm:w-6 sm:h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">
+                  {getContent(
+                    "programs",
+                    "program1Title",
+                    "Хятад хэлний бэлтгэл"
+                  )}
+                </h3>
+                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
+                  {getContent(
+                    "programs",
+                    "program1Description",
+                    "Хятад хэлний суурь мэдлэг"
+                  )}
+                </p>
+                <a
+                  href="/programs"
+                  className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
+                >
+                  {getContent("programs", "viewMoreButton", "Дэлгэрэнгүй →")}
+                </a>
+              </div>
+
+              {/* Program Card 2 */}
+              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mb-4">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  {getContent(
+                    "programs",
+                    "program2Title",
+                    "Бакалаврын хөтөлбөр"
+                  )}
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {getContent(
+                    "programs",
+                    "program2Description",
+                    "4 жилийн дээд боловсрол"
+                  )}
+                </p>
+                <a
+                  href="/programs"
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  {getContent("programs", "viewMoreButton", "Дэлгэрэнгүй →")}
+                </a>
+              </div>
+
+              {/* Program Card 3 */}
+              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mb-4">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  {getContent(
+                    "programs",
+                    "program3Title",
+                    "Магистрын хөтөлбөр"
+                  )}
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {getContent(
+                    "programs",
+                    "program3Description",
+                    "2 жилийн магистрын зэрэг"
+                  )}
+                </p>
+                <a
+                  href="/programs"
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  {getContent("programs", "viewMoreButton", "Дэлгэрэнгүй →")}
+                </a>
+              </div>
+
+              {/* Program Card 4 */}
+              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center mb-4">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  {getContent("programs", "program4Title", "Докторын хөтөлбөр")}
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {getContent(
+                    "programs",
+                    "program4Description",
+                    "3-4 жилийн докторын зэрэг"
+                  )}
+                </p>
+                <a
+                  href="/programs"
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  {getContent("programs", "viewMoreButton", "Дэлгэрэнгүй →")}
+                </a>
               </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* Right Section - Image */}
-          <div className="flex-1 flex justify-center lg:justify-end">
-            <div className="relative">
-              <div className="w-80 h-96 bg-gradient-to-br from-blue-100 to-indigo-200 rounded-lg shadow-lg flex items-center justify-center">
-                <div className="text-center p-8">
-                  <div className="w-24 h-24 bg-red-600 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <svg
-                      className="w-12 h-12 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                      />
-                    </svg>
+      {/* Universities Section */}
+      <section className="py-12 sm:py-16 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">
+                {getContent(
+                  "universities",
+                  "title",
+                  "Хамтран ажилладаг их сургуулиуд"
+                )}
+              </h2>
+              <p className="text-gray-600 text-base sm:text-lg px-4">
+                {getContent(
+                  "universities",
+                  "description",
+                  "Хятадын тэргүүлэгч их сургуулиудтай хамтран ажилладаг"
+                )}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {/* University Card 1 */}
+              <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <div className="h-32 sm:h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                  <div className="text-white text-center px-2">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white bg-opacity-20 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
+                      <svg
+                        className="w-6 h-6 sm:w-8 sm:h-8"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                      </svg>
+                    </div>
+                    <h3 className="text-sm sm:text-lg font-bold">
+                      {getContent(
+                        "universities",
+                        "university1Name",
+                        "Сычуань их сургууль"
+                      )}
+                    </h3>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                    VOCABULARY & READING
-                  </h3>
-                  <p className="text-gray-600">(A1-A2)</p>
+                </div>
+                <div className="p-4 sm:p-6">
+                  <p className="text-gray-600 mb-2 sm:mb-3 text-sm sm:text-base">
+                    {getContent(
+                      "universities",
+                      "university1Location",
+                      "Чэнду, Сычуань"
+                    )}
+                  </p>
+                  <button className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base">
+                    {getContent(
+                      "universities",
+                      "viewMoreButton",
+                      "Дэлгэрэнгүй →"
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* University Card 2 */}
+              <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <div className="h-32 sm:h-48 bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                  <div className="text-white text-center px-2">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white bg-opacity-20 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
+                      <svg
+                        className="w-6 h-6 sm:w-8 sm:h-8"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                      </svg>
+                    </div>
+                    <h3 className="text-sm sm:text-lg font-bold">
+                      {getContent(
+                        "universities",
+                        "university2Name",
+                        "Хятадын Шинжлэх Ухаан, Технологийн Их Сургууль"
+                      )}
+                    </h3>
+                  </div>
+                </div>
+                <div className="p-4 sm:p-6">
+                  <p className="text-gray-600 mb-2 sm:mb-3 text-sm sm:text-base">
+                    {getContent(
+                      "universities",
+                      "university2Location",
+                      "Хэфэй, Аньхой"
+                    )}
+                  </p>
+                  <button className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base">
+                    {getContent(
+                      "universities",
+                      "viewMoreButton",
+                      "Дэлгэрэнгүй →"
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* University Card 3 */}
+              <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <div className="h-32 sm:h-48 bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
+                  <div className="text-white text-center px-2">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white bg-opacity-20 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
+                      <svg
+                        className="w-6 h-6 sm:w-8 sm:h-8"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                      </svg>
+                    </div>
+                    <h3 className="text-sm sm:text-lg font-bold">
+                      {getContent(
+                        "universities",
+                        "university3Name",
+                        "Шанхайн Жяо Тонгийн Их Сургууль"
+                      )}
+                    </h3>
+                  </div>
+                </div>
+                <div className="p-4 sm:p-6">
+                  <p className="text-gray-600 mb-2 sm:mb-3 text-sm sm:text-base">
+                    {getContent(
+                      "universities",
+                      "university3Location",
+                      "Шанхай"
+                    )}
+                  </p>
+                  <button className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base">
+                    {getContent(
+                      "universities",
+                      "viewMoreButton",
+                      "Дэлгэрэнгүй →"
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Backend Status Indicator (Hidden by default, can be toggled) */}
+      {/* Backend Status Indicator */}
       <div className="fixed bottom-4 right-4">
         <div className="bg-white rounded-lg shadow-lg p-3 border border-gray-200">
           <div className="flex items-center space-x-2">
@@ -109,6 +629,25 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Authentication Modal */}
+      {showAuth && (
+        <div className="fixed inset-0 bg-white bg-opacity-95 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="relative">
+            <button
+              onClick={() => setShowAuth(false)}
+              className="absolute -top-4 -right-4 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center"
+            >
+              ×
+            </button>
+            {isLogin ? (
+              <LoginForm onSwitchToSignup={() => setIsLogin(false)} />
+            ) : (
+              <SignupForm onSwitchToLogin={() => setIsLogin(true)} />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
