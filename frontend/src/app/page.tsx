@@ -35,7 +35,6 @@ export default function Home() {
         });
 
         if (response.ok) {
-          const data = await response.json();
           setIsConnected(true);
         } else {
           setIsConnected(false);
