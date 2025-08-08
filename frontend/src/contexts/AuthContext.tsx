@@ -107,8 +107,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       // Set default authorization header
       axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Login failed");
+    } catch (error: unknown) {
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      throw new Error(axiosError.response?.data?.message || "Login failed");
     }
   };
 
@@ -129,8 +132,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       // Set default authorization header
       axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Signup failed");
+    } catch (error: unknown) {
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      throw new Error(axiosError.response?.data?.message || "Signup failed");
     }
   };
 

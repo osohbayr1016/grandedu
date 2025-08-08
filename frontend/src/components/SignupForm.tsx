@@ -51,8 +51,8 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
 
     try {
       await signup(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }

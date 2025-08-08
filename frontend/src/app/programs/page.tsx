@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
@@ -64,7 +66,7 @@ export default function ProgramsPage() {
       } else {
         setError("Failed to fetch programs");
       }
-    } catch (error) {
+    } catch {
       setError("Error fetching programs");
     } finally {
       setLoading(false);
@@ -92,8 +94,8 @@ export default function ProgramsPage() {
       }
 
       setPageContent(allContent);
-    } catch (error) {
-      console.error("Error fetching page content:", error);
+    } catch {
+      console.error("Error fetching page content");
     } finally {
       setContentLoading(false);
     }
@@ -184,7 +186,7 @@ export default function ProgramsPage() {
               >
                 {getContent("navigation", "logo", "GrandEdu")}
               </h1>
-              <a
+              <Link
                 href="/"
                 className={`font-medium text-sm sm:text-base transition-colors duration-300 ${
                   isScrolled
@@ -193,8 +195,8 @@ export default function ProgramsPage() {
                 }`}
               >
                 {getContent("navigation", "homeLink", "Нүүр")}
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/programs"
                 className={`font-medium text-sm sm:text-base transition-colors duration-300 ${
                   isScrolled
@@ -203,7 +205,7 @@ export default function ProgramsPage() {
                 }`}
               >
                 {getContent("navigation", "programsLink", "Хөтөлбөрүүд")}
-              </a>
+              </Link>
             </div>
 
             <div className="flex items-center space-x-2 sm:space-x-4">
@@ -221,12 +223,12 @@ export default function ProgramsPage() {
                     ).replace("{firstName}", user.firstName)}
                   </span>
                   {user.role === "admin" && (
-                    <a
+                    <Link
                       href="/admin"
                       className="bg-green-600 hover:bg-green-700 text-white px-2 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-sm"
                     >
                       {getContent("navigation", "adminButton", "Admin Panel")}
-                    </a>
+                    </Link>
                   )}
                   <button
                     onClick={handleLogout}
@@ -333,10 +335,12 @@ export default function ProgramsPage() {
               >
                 {program.imageUrl ? (
                   <div className="relative h-32 sm:h-48 overflow-hidden">
-                    <img
+                    <Image
                       src={program.imageUrl}
                       alt={program.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                   </div>
