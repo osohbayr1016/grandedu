@@ -6,6 +6,7 @@ import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
 import BackendTest from "@/components/BackendTest";
 import { getHealthCheckUrl, getHomeContentUrl } from "@/utils/api";
+import { defaultContent } from "@/utils/defaultContent";
 
 interface PageContent {
   [section: string]: {
@@ -26,18 +27,31 @@ export default function Home() {
   useEffect(() => {
     const checkBackendHealth = async () => {
       try {
-        const response = await fetch(getHealthCheckUrl());
-        const data = await response.json();
-        setBackendStatus(data.status);
-        setIsConnected(true);
+        const response = await fetch(getHealthCheckUrl(), {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          signal: AbortSignal.timeout(5000), // 5 second timeout
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setBackendStatus(data.status || "Connected");
+          setIsConnected(true);
+        } else {
+          setBackendStatus(`Error: ${response.status}`);
+          setIsConnected(false);
+        }
       } catch (error) {
+        console.error("Backend health check failed:", error);
         setBackendStatus("Disconnected");
         setIsConnected(false);
       }
     };
 
     checkBackendHealth();
-    const interval = setInterval(checkBackendHealth, 5000); // Check every 5 seconds
+    const interval = setInterval(checkBackendHealth, 10000); // Check every 10 seconds
 
     return () => clearInterval(interval);
   }, []);
@@ -58,13 +72,30 @@ export default function Home() {
 
   const fetchPageContent = async () => {
     try {
-      const response = await fetch(getHomeContentUrl());
+      const response = await fetch(getHomeContentUrl(), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        signal: AbortSignal.timeout(10000), // 10 second timeout
+      });
+
       if (response.ok) {
         const data = await response.json();
         setPageContent(data);
+      } else {
+        console.error(
+          "Failed to fetch page content:",
+          response.status,
+          response.statusText
+        );
+        // Set default content if backend is not available
+        setPageContent({});
       }
     } catch (error) {
       console.error("Error fetching page content:", error);
+      // Set default content if backend is not available
+      setPageContent({});
     } finally {
       setContentLoading(false);
     }
@@ -80,7 +111,22 @@ export default function Home() {
     field: string,
     fallback: string = ""
   ) => {
-    return pageContent[section]?.[field] || fallback;
+    // If backend is not connected or content is empty, use default content
+    if (!isConnected || Object.keys(pageContent).length === 0) {
+      const defaultSection = defaultContent[
+        section as keyof typeof defaultContent
+      ] as Record<string, string> | undefined;
+      return defaultSection?.[field] || fallback;
+    }
+    return (
+      pageContent[section]?.[field] ||
+      (
+        defaultContent[section as keyof typeof defaultContent] as
+          | Record<string, string>
+          | undefined
+      )?.[field] ||
+      fallback
+    );
   };
 
   if (contentLoading) {
@@ -96,7 +142,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white">
-      <BackendTest />
+      {process.env.NODE_ENV === "development" && <BackendTest />}
       {/* Navigation */}
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${

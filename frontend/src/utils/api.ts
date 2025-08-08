@@ -42,21 +42,30 @@ export const getBestApiUrl = async (): Promise<string> => {
 
 // Get API base URL dynamically
 export const getApiBaseUrl = () => {
-  // In production, always use the production URL
-  if (
-    typeof window !== "undefined" &&
-    window.location.hostname !== "localhost"
-  ) {
-    console.log(
-      "Using production API URL:",
-      "https://grandedu-g5yo.onrender.com"
-    );
-    return "https://grandedu-g5yo.onrender.com";
+  // Check if we're in a browser environment
+  if (typeof window !== "undefined") {
+    // If not localhost, use production URL
+    if (window.location.hostname !== "localhost") {
+      console.log(
+        "Using production API URL:",
+        "https://grandedu-g5yo.onrender.com"
+      );
+      return "https://grandedu-g5yo.onrender.com";
+    }
   }
 
-  // In development, use localhost
-  console.log("Using development API URL:", "http://localhost:5001");
-  return "http://localhost:5001";
+  // Check environment variables for development
+  if (process.env.NODE_ENV === "development") {
+    console.log("Using development API URL:", "http://localhost:5001");
+    return "http://localhost:5001";
+  }
+
+  // Default to production for any other case (including Vercel)
+  console.log(
+    "Using production API URL (default):",
+    "https://grandedu-g5yo.onrender.com"
+  );
+  return "https://grandedu-g5yo.onrender.com";
 };
 
 // Health check endpoint

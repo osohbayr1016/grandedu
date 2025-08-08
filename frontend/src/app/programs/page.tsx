@@ -11,6 +11,7 @@ import {
   getProgramsContentUrl,
   getNavigationContentUrl,
 } from "@/utils/api";
+import { defaultContent } from "@/utils/defaultContent";
 
 interface Program {
   id: string;
@@ -64,14 +65,27 @@ export default function ProgramsPage() {
 
   const fetchPrograms = async () => {
     try {
-      const response = await fetch(getProgramsUrl());
+      const response = await fetch(getProgramsUrl(), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        signal: AbortSignal.timeout(10000), // 10 second timeout
+      });
+
       if (response.ok) {
         const data = await response.json();
         setPrograms(data);
       } else {
+        console.error(
+          "Failed to fetch programs:",
+          response.status,
+          response.statusText
+        );
         setError("Failed to fetch programs");
       }
-    } catch {
+    } catch (error) {
+      console.error("Error fetching programs:", error);
       setError("Error fetching programs");
     } finally {
       setLoading(false);
@@ -82,8 +96,16 @@ export default function ProgramsPage() {
     try {
       // Fetch content for multiple pages
       const [programsResponse, navigationResponse] = await Promise.all([
-        fetch(getProgramsContentUrl()),
-        fetch(getNavigationContentUrl()),
+        fetch(getProgramsContentUrl(), {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(10000),
+        }),
+        fetch(getNavigationContentUrl(), {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(10000),
+        }),
       ]);
 
       let allContent = {};
@@ -91,16 +113,27 @@ export default function ProgramsPage() {
       if (programsResponse.ok) {
         const programsData = await programsResponse.json();
         allContent = { ...allContent, ...programsData };
+      } else {
+        console.error(
+          "Failed to fetch programs content:",
+          programsResponse.status
+        );
       }
 
       if (navigationResponse.ok) {
         const navigationData = await navigationResponse.json();
         allContent = { ...allContent, ...navigationData };
+      } else {
+        console.error(
+          "Failed to fetch navigation content:",
+          navigationResponse.status
+        );
       }
 
       setPageContent(allContent);
-    } catch {
-      console.error("Error fetching page content");
+    } catch (error) {
+      console.error("Error fetching page content:", error);
+      setPageContent({});
     } finally {
       setContentLoading(false);
     }
@@ -112,7 +145,22 @@ export default function ProgramsPage() {
     field: string,
     fallback: string = ""
   ) => {
-    return pageContent[section]?.[field] || fallback;
+    // If content is not loaded, use default content
+    if (Object.keys(pageContent).length === 0) {
+      const defaultSection = defaultContent[
+        section as keyof typeof defaultContent
+      ] as Record<string, string> | undefined;
+      return defaultSection?.[field] || fallback;
+    }
+    return (
+      pageContent[section]?.[field] ||
+      (
+        defaultContent[section as keyof typeof defaultContent] as
+          | Record<string, string>
+          | undefined
+      )?.[field] ||
+      fallback
+    );
   };
 
   const openModal = (program: Program) => {
