@@ -334,7 +334,7 @@ export default function ProgramsPage() {
               </svg>
               {getContent("header", "badge", "Хөтөлбөрүүд")}
             </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text">
               {getContent("header", "title", "Хөтөлбөрүүд")}
             </h1>
             <p className="text-lg sm:text-xl text-gray-600 leading-relaxed">
