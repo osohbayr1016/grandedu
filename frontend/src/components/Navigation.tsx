@@ -24,58 +24,60 @@ export default function Navigation() {
       }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
-          <div className="flex items-center space-x-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 items-center py-4">
+          <div className="flex items-center col-start-1">
             <a href="/" className="text-xl font-bold text-blue-700">
               {defaultContent.navigation.logo}
             </a>
-            <div className="hidden md:flex items-center space-x-4">
-              <a
-                href="/"
-                className={`hover:text-blue-700 ${
-                  pathname === "/"
-                    ? "text-blue-700 font-semibold"
-                    : "text-gray-600"
-                }`}
-              >
-                {defaultContent.navigation.homeLink}
-              </a>
-              <a
-                href="/programs"
-                className={`hover:text-blue-700 ${
-                  pathname?.startsWith("/programs")
-                    ? "text-blue-700 font-semibold"
-                    : "text-gray-600"
-                }`}
-              >
-                {defaultContent.navigation.programsLink}
-              </a>
-              <a
-                href="/news"
-                className={`hover:text-blue-700 ${
-                  pathname?.startsWith("/news")
-                    ? "text-blue-700 font-semibold"
-                    : "text-gray-600"
-                }`}
-              >
-                {defaultContent.navigation.newsLink}
-              </a>
-              <a
-                href="/universities"
-                className={`hover:text-blue-700 ${
-                  pathname?.startsWith("/universities")
-                    ? "text-blue-700 font-semibold"
-                    : "text-gray-600"
-                }`}
-              >
-                {defaultContent.navigation.universitiesLink}
-              </a>
-              <a href="#contact" className="text-gray-600 hover:text-blue-700">
-                {defaultContent.navigation.contactLink}
-              </a>
-            </div>
           </div>
-          <div className="flex items-center space-x-3">
+
+          <div className="hidden md:flex justify-center items-center space-x-6 md:col-start-2">
+            <a
+              href="/"
+              className={`hover:text-blue-700 ${
+                pathname === "/"
+                  ? "text-blue-700 font-semibold"
+                  : "text-gray-600"
+              }`}
+            >
+              {defaultContent.navigation.homeLink}
+            </a>
+            <a
+              href="/programs"
+              className={`hover:text-blue-700 ${
+                pathname?.startsWith("/programs")
+                  ? "text-blue-700 font-semibold"
+                  : "text-gray-600"
+              }`}
+            >
+              {defaultContent.navigation.programsLink}
+            </a>
+            <a
+              href="/news"
+              className={`hover:text-blue-700 ${
+                pathname?.startsWith("/news")
+                  ? "text-blue-700 font-semibold"
+                  : "text-gray-600"
+              }`}
+            >
+              {defaultContent.navigation.newsLink}
+            </a>
+            <a
+              href="/universities"
+              className={`hover:text-blue-700 ${
+                pathname?.startsWith("/universities")
+                  ? "text-blue-700 font-semibold"
+                  : "text-gray-600"
+              }`}
+            >
+              {defaultContent.navigation.universitiesLink}
+            </a>
+            <a href="#contact" className="text-gray-600 hover:text-blue-700">
+              {defaultContent.navigation.contactLink}
+            </a>
+          </div>
+
+          <div className="flex items-center justify-end space-x-3 col-start-2 md:col-start-3">
             {user ? (
               <>
                 <span className="hidden sm:block text-gray-700 text-sm">
