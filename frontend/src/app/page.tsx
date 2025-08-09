@@ -55,12 +55,12 @@ export default function Home() {
     fetchPageContent();
   }, []);
 
+  // Scroll state kept for floating menu animation, nav now global
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
-      setIsScrolled(scrollPosition > 100); // Show nav after 100px scroll
+      setIsScrolled(scrollPosition > 100);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -137,92 +137,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white">
-      {process.env.NODE_ENV === "development" && <BackendTest />}
-      {/* Navigation */}
-      <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? "bg-white shadow-lg transform translate-y-0"
-            : "bg-transparent shadow-none transform -translate-y-full"
-        }`}
-      >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <h1
-                className={`text-xl sm:text-2xl font-bold transition-colors duration-300 ${
-                  isScrolled ? "text-black" : "text-white"
-                }`}
-              >
-                {getContent("navigation", "logo", "GrandEdu")}
-              </h1>
-              <a
-                href="/programs"
-                className={`font-medium text-sm sm:text-base transition-colors duration-300 ${
-                  isScrolled
-                    ? "text-blue-600 hover:text-blue-700"
-                    : "text-white hover:text-blue-200"
-                }`}
-              >
-                {getContent("navigation", "programsLink", "Хөтөлбөрүүд")}
-              </a>
-            </div>
-
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              {user ? (
-                <>
-                  <span
-                    className={`text-sm sm:text-base hidden sm:block transition-colors duration-300 ${
-                      isScrolled ? "text-gray-700" : "text-white"
-                    }`}
-                  >
-                    {getContent(
-                      "navigation",
-                      "welcomeMessage",
-                      "Сайн байна уу, {firstName}!"
-                    ).replace("{firstName}", user.firstName)}
-                  </span>
-                  {user.role === "admin" && (
-                    <a
-                      href="/admin"
-                      className="bg-green-600 hover:bg-green-700 text-white px-2 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-sm"
-                    >
-                      Admin Panel
-                    </a>
-                  )}
-                  {/* Debug info */}
-                  <div
-                    className={`text-xs hidden sm:block transition-colors duration-300 ${
-                      isScrolled
-                        ? "text-gray-500"
-                        : "text-white text-opacity-70"
-                    }`}
-                  >
-                    Role: {user.role || "undefined"}
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="bg-red-600 hover:bg-red-700 text-white px-2 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-sm"
-                  >
-                    {getContent("navigation", "logoutButton", "Гарах")}
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => setShowAuth(true)}
-                  className={`px-3 sm:px-6 py-2 rounded-lg transition-all duration-300 text-sm sm:text-base ${
-                    isScrolled
-                      ? "bg-blue-600 hover:bg-blue-700 text-white"
-                      : "bg-white bg-opacity-20 hover:bg-opacity-30 text-white border border-white border-opacity-30"
-                  }`}
-                >
-                  {getContent("navigation", "loginButton", "Нэвтрэх")}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
+      {/* {process.env.NODE_ENV === "development" && <BackendTest />} */}
+      {/* Navigation moved to global layout */}
 
       {/* Floating Menu Button (when not scrolled) */}
       {!isScrolled && (
@@ -262,7 +178,7 @@ export default function Home() {
           }}
         ></div>
         {/* Gradient Overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/80 to-blue-700/80"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/70 to-blue-700/60"></div>
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 h-full flex items-center justify-center">
           <div className="max-w-4xl mx-auto text-center">
@@ -304,9 +220,12 @@ export default function Home() {
                   )}
                 </p>
               </div>
-              <button className="text-blue-600 hover:text-blue-700 font-semibold text-sm sm:text-base">
+              <a
+                href="/news"
+                className="text-blue-600 hover:text-blue-700 font-semibold text-sm sm:text-base"
+              >
                 {getContent("news", "viewAllButton", "Бүх мэдээг харах →")}
-              </button>
+              </a>
             </div>
 
             {/* News Card */}
@@ -564,13 +483,16 @@ export default function Home() {
                       "Чэнду, Сычуань"
                     )}
                   </p>
-                  <button className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base">
+                  <a
+                    href="/universities"
+                    className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
+                  >
                     {getContent(
                       "universities",
                       "viewMoreButton",
                       "Дэлгэрэнгүй →"
                     )}
-                  </button>
+                  </a>
                 </div>
               </div>
 
@@ -604,13 +526,16 @@ export default function Home() {
                       "Хэфэй, Аньхой"
                     )}
                   </p>
-                  <button className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base">
+                  <a
+                    href="/universities"
+                    className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
+                  >
                     {getContent(
                       "universities",
                       "viewMoreButton",
                       "Дэлгэрэнгүй →"
                     )}
-                  </button>
+                  </a>
                 </div>
               </div>
 
@@ -644,13 +569,16 @@ export default function Home() {
                       "Шанхай"
                     )}
                   </p>
-                  <button className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base">
+                  <a
+                    href="/universities"
+                    className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
+                  >
                     {getContent(
                       "universities",
                       "viewMoreButton",
                       "Дэлгэрэнгүй →"
                     )}
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
