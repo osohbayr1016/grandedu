@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { defaultContent } from "@/utils/defaultContent";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 export default function Navigation() {
   const { user, logout } = useAuth();
@@ -42,13 +43,13 @@ export default function Navigation() {
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4 ">
           <div className="flex items-center ">
-            <a href="/" className="text-xl font-bold text-black">
+            <Link href="/" className="text-xl font-bold text-black">
               {defaultContent.navigation.logo}
-            </a>
+            </Link>
           </div>
 
           <div className="hidden md:flex items-center space-x-8 lg:space-x-10 ">
-            <a
+            <Link
               href="/"
               className={`hover:text-blue-700 ${
                 pathname === "/"
@@ -57,8 +58,8 @@ export default function Navigation() {
               }`}
             >
               {defaultContent.navigation.homeLink}
-            </a>
-            <a
+            </Link>
+            <Link
               href="/programs"
               className={`hover:text-blue-700 ${
                 pathname?.startsWith("/programs")
@@ -67,8 +68,8 @@ export default function Navigation() {
               }`}
             >
               {defaultContent.navigation.programsLink}
-            </a>
-            <a
+            </Link>
+            <Link
               href="/news"
               className={`hover:text-blue-700 ${
                 pathname?.startsWith("/news")
@@ -77,8 +78,8 @@ export default function Navigation() {
               }`}
             >
               {defaultContent.navigation.newsLink}
-            </a>
-            <a
+            </Link>
+            <Link
               href="/universities"
               className={`hover:text-blue-700 ${
                 pathname?.startsWith("/universities")
@@ -87,7 +88,7 @@ export default function Navigation() {
               }`}
             >
               {defaultContent.navigation.universitiesLink}
-            </a>
+            </Link>
             <a href="#contact" className="text-gray-600 hover:text-blue-700">
               {defaultContent.navigation.contactLink}
             </a>
@@ -97,12 +98,12 @@ export default function Navigation() {
             {user ? (
               <>
                 {user.role === "admin" && (
-                  <a
+                  <Link
                     href="/admin"
                     className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm"
                   >
                     {defaultContent.navigation.adminButton}
-                  </a>
+                  </Link>
                 )}
                 <div ref={userMenuRef} className="relative">
                   <button
@@ -157,12 +158,12 @@ export default function Navigation() {
                 </div>
               </>
             ) : (
-              <a
+              <Link
                 href="/"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
               >
                 {defaultContent.navigation.loginButton}
-              </a>
+              </Link>
             )}
             <button
               className="md:hidden p-2 rounded hover:bg-gray-100"
@@ -187,7 +188,7 @@ export default function Navigation() {
         </div>
         {mobileOpen && (
           <div className="md:hidden pb-4 space-y-3">
-            <a
+            <Link
               href="/"
               className={`block px-2 py-2 rounded hover:bg-gray-100 ${
                 pathname === "/"
@@ -196,8 +197,8 @@ export default function Navigation() {
               }`}
             >
               {defaultContent.navigation.homeLink}
-            </a>
-            <a
+            </Link>
+            <Link
               href="/programs"
               className={`block px-2 py-2 rounded hover:bg-gray-100 ${
                 pathname?.startsWith("/programs")
@@ -206,8 +207,8 @@ export default function Navigation() {
               }`}
             >
               {defaultContent.navigation.programsLink}
-            </a>
-            <a
+            </Link>
+            <Link
               href="/news"
               className={`block px-2 py-2 rounded hover:bg-gray-100 ${
                 pathname?.startsWith("/news")
@@ -216,8 +217,8 @@ export default function Navigation() {
               }`}
             >
               {defaultContent.navigation.newsLink}
-            </a>
-            <a
+            </Link>
+            <Link
               href="/universities"
               className={`block px-2 py-2 rounded hover:bg-gray-100 ${
                 pathname?.startsWith("/universities")
@@ -226,7 +227,7 @@ export default function Navigation() {
               }`}
             >
               {defaultContent.navigation.universitiesLink}
-            </a>
+            </Link>
             <a
               href="#contact"
               className="block px-2 py-2 rounded hover:bg-gray-100 text-gray-700"

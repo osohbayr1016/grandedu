@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+
 import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
-import BackendTest from "@/components/BackendTest";
 import { getHealthCheckUrl, getHomeContentUrl } from "@/utils/api";
 import { defaultContent } from "@/utils/defaultContent";
 
@@ -21,7 +20,6 @@ export default function Home() {
   const [pageContent, setPageContent] = useState<PageContent>({});
   const [contentLoading, setContentLoading] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
-  const { user, logout } = useAuth();
 
   useEffect(() => {
     const checkBackendHealth = async () => {
@@ -94,10 +92,6 @@ export default function Home() {
     } finally {
       setContentLoading(false);
     }
-  };
-
-  const handleLogout = () => {
-    logout();
   };
 
   // Helper function to get content with fallback

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   return (
@@ -5,9 +7,9 @@ export default function Footer() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
-            <a href="/" className="text-xl font-bold text-blue-700">
+            <Link href="/" className="text-xl font-bold text-blue-700">
               GrandEdu
-            </a>
+            </Link>
             <p className="text-gray-600 mt-3 text-sm">
               Хятадын их сургуулиудад суралцах боломжийг таньд санал болгож
               байна.
@@ -17,22 +19,25 @@ export default function Footer() {
             <h4 className="text-gray-900 font-semibold mb-3">Холбоосууд</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="/" className="text-gray-600 hover:text-blue-700">
+                <Link href="/" className="text-gray-600 hover:text-blue-700">
                   Нүүр
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/programs"
                   className="text-gray-600 hover:text-blue-700"
                 >
                   Хөтөлбөрүүд
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/news" className="text-gray-600 hover:text-blue-700">
+                <Link
+                  href="/news"
+                  className="text-gray-600 hover:text-blue-700"
+                >
                   Мэдээ
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

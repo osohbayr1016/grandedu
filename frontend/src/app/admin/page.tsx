@@ -3,12 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import {
-  getContentUrl,
-  getHomeContentUrl,
-  getProgramsContentUrl,
-  getNavigationContentUrl,
-} from "@/utils/api";
+import { getContentUrl } from "@/utils/api";
 
 interface PageContent {
   id: string;
