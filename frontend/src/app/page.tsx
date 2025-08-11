@@ -6,6 +6,7 @@ import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
 import { getHealthCheckUrl, getHomeContentUrl } from "@/utils/api";
 import { defaultContent } from "@/utils/defaultContent";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PageContent {
   [section: string]: {
@@ -15,11 +16,10 @@ interface PageContent {
 
 export default function Home() {
   const [isConnected, setIsConnected] = useState<boolean>(false);
-  const [showAuth, setShowAuth] = useState<boolean>(false);
-  const [isLogin, setIsLogin] = useState<boolean>(true);
   const [pageContent, setPageContent] = useState<PageContent>({});
   const [contentLoading, setContentLoading] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { showAuth, setShowAuth, isLogin, setIsLogin } = useAuth();
 
   useEffect(() => {
     const checkBackendHealth = async () => {

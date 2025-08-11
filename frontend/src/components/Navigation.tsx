@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 export default function Navigation() {
-  const { user, logout } = useAuth();
+  const { user, logout, setShowAuth } = useAuth();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -158,12 +158,12 @@ export default function Navigation() {
                 </div>
               </>
             ) : (
-              <Link
-                href="/"
+              <button
+                onClick={() => setShowAuth(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
               >
                 {defaultContent.navigation.loginButton}
-              </Link>
+              </button>
             )}
             <button
               className="md:hidden p-2 rounded hover:bg-gray-100"
@@ -234,6 +234,17 @@ export default function Navigation() {
             >
               {defaultContent.navigation.contactLink}
             </a>
+            {!user && (
+              <button
+                onClick={() => {
+                  setShowAuth(true);
+                  setMobileOpen(false);
+                }}
+                className="block w-full text-left px-2 py-2 rounded hover:bg-gray-100 text-blue-600 font-medium"
+              >
+                {defaultContent.navigation.loginButton}
+              </button>
+            )}
           </div>
         )}
       </div>

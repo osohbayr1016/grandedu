@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import axios from "axios";
 import { getLoginUrl, getSignupUrl } from "@/utils/api";
+import { useRouter } from "next/navigation";
 
 interface User {
   id: string;
@@ -26,6 +27,10 @@ interface AuthContextType {
   signup: (userData: SignupData) => Promise<void>;
   logout: () => void;
   loading: boolean;
+  showAuth: boolean;
+  setShowAuth: (show: boolean) => void;
+  isLogin: boolean;
+  setIsLogin: (isLogin: boolean) => void;
 }
 
 interface SignupData {
@@ -50,9 +55,12 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showAuth, setShowAuth] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
 
   useEffect(() => {
     // Check for stored token on app load
@@ -77,6 +85,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
     setLoading(false);
   }, []);
+
+  // Close auth modal when user is logged in
+  useEffect(() => {
+    if (user && showAuth) {
+      setShowAuth(false);
+    }
+  }, [user, showAuth]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -105,6 +120,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       // Set default authorization header
       axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+
+      // Close auth modal after successful login
+      setShowAuth(false);
+
+      // Redirect to home page
+      router.push("/");
     } catch (error: unknown) {
       const axiosError = error as {
         response?: { data?: { message?: string } };
@@ -127,6 +148,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       // Set default authorization header
       axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+
+      // Close auth modal after successful signup
+      setShowAuth(false);
+
+      // Redirect to home page
+      router.push("/");
     } catch (error: unknown) {
       const axiosError = error as {
         response?: { data?: { message?: string } };
@@ -150,6 +177,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     signup,
     logout,
     loading,
+    showAuth,
+    setShowAuth,
+    isLogin,
+    setIsLogin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
