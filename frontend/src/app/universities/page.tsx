@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { getHealthCheckUrl, getHomeContentUrl } from "@/utils/api";
 import { defaultContent } from "@/utils/defaultContent";
 
@@ -11,6 +12,7 @@ interface PageContent {
 }
 
 export default function UniversitiesPage() {
+  const router = useRouter();
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [pageContent, setPageContent] = useState<PageContent>({});
   const [loading, setLoading] = useState(true);
@@ -91,21 +93,46 @@ export default function UniversitiesPage() {
     <div className="min-h-screen bg-white">
       {/* Navigation is provided by the global layout */}
 
-      {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-500 text-white py-10">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl sm:text-4xl font-bold">
-            {getContent("universities", "title", "Их сургуулиуд")}
-          </h1>
-          <p className="text-blue-50 mt-2">
-            {getContent(
-              "universities",
-              "description",
-              "Хятадын тэргүүлэгч их сургуулиудтай хамтран ажилладаг"
-            )}
-          </p>
+      {/* Enhanced Header Design */}
+      <div className="relative bg-white shadow-lg overflow-hidden">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-0 left-0 w-64 h-64 bg-blue-600 rounded-full -translate-x-32 -translate-y-32"></div>
+          <div className="absolute top-1/2 right-0 w-48 h-48 bg-purple-600 rounded-full translate-x-24 -translate-y-24"></div>
+          <div className="absolute bottom-0 left-1/3 w-32 h-32 bg-indigo-600 rounded-full translate-y-16"></div>
         </div>
-      </header>
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative z-10">
+          <div className="text-center max-w-3xl mx-auto">
+            <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-4">
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 14l9-5-9-5-9 5 9 5z"
+                />
+              </svg>
+              Их сургуулиуд
+            </div>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text">
+              {getContent("universities", "title", "Их сургуулиуд")}
+            </h1>
+            <p className="text-lg sm:text-xl text-gray-600 leading-relaxed">
+              {getContent(
+                "universities",
+                "description",
+                "Хятадын тэргүүлэгч их сургуулиудтай хамтран ажилладаг"
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Universities Grid */}
       <main className="py-12 sm:py-16">
@@ -114,7 +141,8 @@ export default function UniversitiesPage() {
             {[1, 2, 3].map((idx) => (
               <article
                 key={idx}
-                className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200"
+                onClick={() => router.push(`/universities/${idx}`)}
+                className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 <div className="h-32 sm:h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                   <div className="text-white text-center px-2">
@@ -168,10 +196,19 @@ export default function UniversitiesPage() {
                           "Шанхай"
                         )}
                   </p>
-                  <p className="text-gray-600 text-sm sm:text-base">
+                  <p className="text-gray-600 text-sm sm:text-base mb-4">
                     Хөтөлбөр, сургалтын орчин, хотын амьдрал болон элсэлтийн
                     ерөнхий мэдээллийг эндээс үзнэ үү.
                   </p>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/universities/${idx}`);
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Дэлгэрэнгүй үзэх →
+                  </button>
                 </div>
               </article>
             ))}

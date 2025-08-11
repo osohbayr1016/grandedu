@@ -92,21 +92,46 @@ export default function NewsPage() {
     <div className="min-h-screen bg-white">
       {/* Navigation is provided by the global layout */}
 
-      {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-500 text-white py-10">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl sm:text-4xl font-bold">
-            {getContent("news", "title", "Мэдээ мэдээлэл")}
-          </h1>
-          <p className="text-blue-50 mt-2">
-            {getContent(
-              "news",
-              "description",
-              "Сүүлийн мэдээ, мэдээллийг эндээс авна уу"
-            )}
-          </p>
+      {/* Enhanced Header Design */}
+      <div className="relative bg-white shadow-lg overflow-hidden">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-0 left-0 w-64 h-64 bg-blue-600 rounded-full -translate-x-32 -translate-y-32"></div>
+          <div className="absolute top-1/2 right-0 w-48 h-48 bg-purple-600 rounded-full translate-x-24 -translate-y-24"></div>
+          <div className="absolute bottom-0 left-1/3 w-32 h-32 bg-indigo-600 rounded-full translate-y-16"></div>
         </div>
-      </header>
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative z-10">
+          <div className="text-center max-w-3xl mx-auto">
+            <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-4">
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2v10a2 2 0 01-2 2z"
+                />
+              </svg>
+              Мэдээ
+            </div>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text">
+              {getContent("news", "title", "Мэдээ мэдээлэл")}
+            </h1>
+            <p className="text-lg sm:text-xl text-gray-600 leading-relaxed">
+              {getContent(
+                "news",
+                "description",
+                "Сүүлийн мэдээ, мэдээллийг эндээс авна уу"
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* News list (same card style as home) */}
       <main className="py-12 sm:py-16">
