@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { defaultContent } from "@/utils/defaultContent";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
 export default function Navigation() {
@@ -10,11 +10,27 @@ export default function Navigation() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 8);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        userMenuRef.current &&
+        event.target instanceof Node &&
+        !userMenuRef.current.contains(event.target)
+      ) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
@@ -23,15 +39,15 @@ export default function Navigation() {
         isScrolled ? "shadow-md" : "shadow-none"
       }`}
     >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-3 items-center py-4">
-          <div className="flex items-center col-start-1">
-            <a href="/" className="text-xl font-bold text-blue-700">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-4 ">
+          <div className="flex items-center ">
+            <a href="/" className="text-xl font-bold text-black">
               {defaultContent.navigation.logo}
             </a>
           </div>
 
-          <div className="hidden md:flex justify-center items-center space-x-6 md:col-start-2">
+          <div className="hidden md:flex items-center space-x-8 lg:space-x-10 ">
             <a
               href="/"
               className={`hover:text-blue-700 ${
@@ -77,15 +93,9 @@ export default function Navigation() {
             </a>
           </div>
 
-          <div className="flex items-center justify-end space-x-3 col-start-2 md:col-start-3">
+          <div className="flex items-center justify-end space-x-3">
             {user ? (
               <>
-                <span className="hidden sm:block text-gray-700 text-sm">
-                  {defaultContent.navigation.welcomeMessage.replace(
-                    "{firstName}",
-                    user.firstName
-                  )}
-                </span>
                 {user.role === "admin" && (
                   <a
                     href="/admin"
@@ -94,12 +104,57 @@ export default function Navigation() {
                     {defaultContent.navigation.adminButton}
                   </a>
                 )}
-                <button
-                  onClick={logout}
-                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm"
-                >
-                  {defaultContent.navigation.logoutButton}
-                </button>
+                <div ref={userMenuRef} className="relative">
+                  <button
+                    onClick={() => setUserMenuOpen((open) => !open)}
+                    className="w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm hover:bg-gray-50 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-haspopup="menu"
+                    aria-expanded={userMenuOpen}
+                    aria-label="User menu"
+                  >
+                    <svg
+                      className="w-5 h-5 text-gray-700"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M15 9a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M4.5 20a7.5 7.5 0 0115 0"
+                      />
+                    </svg>
+                  </button>
+                  {userMenuOpen && (
+                    <div
+                      role="menu"
+                      aria-orientation="vertical"
+                      className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-md ring-1 ring-black/5 z-50 overflow-hidden"
+                    >
+                      <button
+                        role="menuitem"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        Профайл
+                      </button>
+                      <button
+                        role="menuitem"
+                        onClick={logout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        {defaultContent.navigation.logoutButton}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <a
@@ -131,7 +186,7 @@ export default function Navigation() {
           </div>
         </div>
         {mobileOpen && (
-          <div className="md:hidden pb-4 space-y-2">
+          <div className="md:hidden pb-4 space-y-3">
             <a
               href="/"
               className={`block px-2 py-2 rounded hover:bg-gray-100 ${

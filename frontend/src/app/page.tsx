@@ -142,10 +142,10 @@ export default function Home() {
 
       {/* Floating Menu Button (when not scrolled) */}
       {!isScrolled && (
-        <div className="fixed top-4 right-4 z-40">
+        <div className="fixed top-4 right-4 z-40 animate-fade-in-up animate-delay-1000">
           <button
             onClick={() => setShowAuth(true)}
-            className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full border border-white border-opacity-30 transition-all duration-300 backdrop-blur-sm"
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full border border-white border-opacity-30 transition-all duration-300 backdrop-blur-sm transform hover:scale-110"
           >
             <svg
               className="w-6 h-6"
@@ -178,25 +178,28 @@ export default function Home() {
           }}
         ></div>
         {/* Gradient Overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/70 to-blue-700/60"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/60"></div>
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 h-full flex items-center justify-center">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold mb-4 sm:mb-6">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold mb-4 sm:mb-6 animate-fade-in-up animate-delay-200">
               {getContent(
                 "hero",
                 "title",
                 "Хятадад зуучлах баталгаат хамт олон GrandEdu"
               )}
             </h1>
-            <p className="text-lg sm:text-xl md:text-2xl mb-6 sm:mb-8 text-blue-100 px-4">
+            <p className="text-lg sm:text-xl md:text-2xl mb-6 sm:mb-8 text-blue-100 px-4 animate-fade-in-up animate-delay-500">
               {getContent(
                 "hero",
                 "subtitle",
                 "Бидэнтэй холбогдоод хятадад амжилттай суралцаарай"
               )}
             </p>
-            <button className="bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-lg text-base sm:text-lg transition-colors duration-200">
+            <button
+              onClick={() => setShowAuth(true)}
+              className="bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-lg text-base sm:text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg animate-fade-in-up animate-delay-700"
+            >
               {getContent("hero", "ctaButton", "Эхлэх")}
             </button>
           </div>
@@ -207,7 +210,7 @@ export default function Home() {
       <section className="py-12 sm:py-16 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 sm:mb-12 space-y-4 sm:space-y-0">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 sm:mb-12 space-y-4 sm:space-y-0 animate-fade-in-up">
               <div className="w-full sm:w-auto">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">
                   {getContent("news", "title", "Сүүлийн мэдээ")}
@@ -229,7 +232,7 @@ export default function Home() {
             </div>
 
             {/* News Card */}
-            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 max-w-md mx-auto sm:mx-0">
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 max-w-md mx-auto sm:mx-0 animate-fade-in-up animate-delay-300">
               <div className="flex items-center text-xs sm:text-sm text-gray-500 mb-3">
                 <span className="bg-blue-100 text-blue-800 px-2 sm:px-3 py-1 rounded-full text-xs font-medium">
                   {getContent("news", "newsCardTag", "ХӨТӨЛБӨР")}
@@ -261,7 +264,7 @@ export default function Home() {
       <section className="py-12 sm:py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-8 sm:mb-12">
+            <div className="text-center mb-8 sm:mb-12 animate-fade-in-up">
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">
                 {getContent("programs", "title", "Манай хөтөлбөрүүд")}
               </h2>
@@ -276,7 +279,7 @@ export default function Home() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               {/* Program Card 1 */}
-              <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+              <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-200">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
                   <svg
                     className="w-5 h-5 sm:w-6 sm:h-6 text-white"
@@ -315,7 +318,7 @@ export default function Home() {
               </div>
 
               {/* Program Card 2 */}
-              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-400">
                 <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mb-4">
                   <svg
                     className="w-6 h-6 text-white"
@@ -354,7 +357,7 @@ export default function Home() {
               </div>
 
               {/* Program Card 3 */}
-              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-600">
                 <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mb-4">
                   <svg
                     className="w-6 h-6 text-white"
@@ -393,7 +396,7 @@ export default function Home() {
               </div>
 
               {/* Program Card 4 */}
-              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-800">
                 <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center mb-4">
                   <svg
                     className="w-6 h-6 text-white"
@@ -435,7 +438,7 @@ export default function Home() {
       <section className="py-12 sm:py-16 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-8 sm:mb-12">
+            <div className="text-center mb-8 sm:mb-12 animate-fade-in-up">
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">
                 {getContent(
                   "universities",
@@ -454,7 +457,7 @@ export default function Home() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* University Card 1 */}
-              <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+              <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-300">
                 <div className="h-32 sm:h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                   <div className="text-white text-center px-2">
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white bg-opacity-20 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
@@ -497,7 +500,7 @@ export default function Home() {
               </div>
 
               {/* University Card 2 */}
-              <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+              <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-500">
                 <div className="h-32 sm:h-48 bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
                   <div className="text-white text-center px-2">
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white bg-opacity-20 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
@@ -540,7 +543,7 @@ export default function Home() {
               </div>
 
               {/* University Card 3 */}
-              <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+              <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-700">
                 <div className="h-32 sm:h-48 bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
                   <div className="text-white text-center px-2">
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white bg-opacity-20 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
@@ -587,7 +590,7 @@ export default function Home() {
       </section>
 
       {/* Backend Status Indicator */}
-      <div className="fixed bottom-4 right-4">
+      <div className="fixed bottom-4 right-4 animate-fade-in-up animate-delay-1200">
         <div className="bg-white rounded-lg shadow-lg p-3 border border-gray-200">
           <div className="flex items-center space-x-2">
             <div
@@ -604,8 +607,8 @@ export default function Home() {
 
       {/* Authentication Modal */}
       {showAuth && (
-        <div className="fixed inset-0 bg-white bg-opacity-95 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="relative">
+        <div className="fixed inset-0 bg-white bg-opacity-95 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="relative animate-scale-in">
             <button
               onClick={() => setShowAuth(false)}
               className="absolute -top-4 -right-4 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center"
