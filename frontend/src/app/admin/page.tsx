@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFooter } from "@/contexts/FooterContext";
+import { usePrograms } from "@/contexts/ProgramsContext";
 import { useRouter } from "next/navigation";
 import { getContentUrl } from "@/utils/api";
 
@@ -47,6 +49,7 @@ interface Program {
   duration: string;
   level: string;
   imageUrl: string;
+  googleFormLink: string;
   isActive: boolean;
 }
 
@@ -62,6 +65,14 @@ interface News {
 
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
+  const { footerContent, updateFooterContent } = useFooter();
+  const {
+    programs,
+    addProgram,
+    updateProgram,
+    deleteProgram,
+    toggleProgramStatus,
+  } = usePrograms();
   const router = useRouter();
   const [content, setContent] = useState<PageContent[]>([]);
   const [groupedContent, setGroupedContent] = useState<GroupedContent>({});
@@ -91,6 +102,7 @@ export default function AdminPage() {
     duration: "",
     level: "",
     imageUrl: "",
+    googleFormLink: "",
   });
 
   // News form state
@@ -135,37 +147,6 @@ export default function AdminPage() {
       location: "Шанхай",
       description: "Хятадын тэргүүлэгч их сургуулиудтай хамтран ажилладаг",
       imageUrl: "https://example.com/sjtu.jpg",
-      isActive: true,
-    },
-  ]);
-
-  // Sample programs data
-  const [programs, setPrograms] = useState<Program[]>([
-    {
-      id: "1",
-      title: "Бакалаврын хөтөлбөр",
-      description: "4 жилийн бакалаврын зэрэг",
-      duration: "4 жил",
-      level: "Бакалавр",
-      imageUrl: "https://example.com/bachelor.jpg",
-      isActive: true,
-    },
-    {
-      id: "2",
-      title: "Магистрын хөтөлбөр",
-      description: "2 жилийн магистрын зэрэг",
-      duration: "2 жил",
-      level: "Магистр",
-      imageUrl: "https://example.com/master.jpg",
-      isActive: true,
-    },
-    {
-      id: "3",
-      title: "Докторын хөтөлбөр",
-      description: "3-4 жилийн докторын зэрэг",
-      duration: "3-4 жил",
-      level: "Доктор",
-      imageUrl: "https://example.com/phd.jpg",
       isActive: true,
     },
   ]);
@@ -264,6 +245,7 @@ export default function AdminPage() {
       duration: "",
       level: "",
       imageUrl: "",
+      googleFormLink: "",
     });
     setShowProgramModal(true);
   };
@@ -276,24 +258,22 @@ export default function AdminPage() {
       duration: program.duration,
       level: program.level,
       imageUrl: program.imageUrl,
+      googleFormLink: program.googleFormLink,
     });
     setShowProgramModal(true);
   };
 
   const handleSaveProgram = () => {
     if (editingProgram) {
-      setPrograms((prev) =>
-        prev.map((prog) =>
-          prog.id === editingProgram.id ? { ...prog, ...programForm } : prog
-        )
-      );
+      updateProgram(editingProgram.id, programForm);
     } else {
       const newProgram: Program = {
         id: Date.now().toString(),
         ...programForm,
+        googleFormLink: programForm.googleFormLink || "",
         isActive: true,
       };
-      setPrograms((prev) => [...prev, newProgram]);
+      addProgram(newProgram);
     }
     setShowProgramModal(false);
     setEditingProgram(null);
@@ -303,19 +283,16 @@ export default function AdminPage() {
       duration: "",
       level: "",
       imageUrl: "",
+      googleFormLink: "",
     });
   };
 
   const handleDeleteProgram = (id: string) => {
-    setPrograms((prev) => prev.filter((prog) => prog.id !== id));
+    deleteProgram(id);
   };
 
   const handleToggleProgramStatus = (id: string) => {
-    setPrograms((prev) =>
-      prev.map((prog) =>
-        prog.id === id ? { ...prog, isActive: !prog.isActive } : prog
-      )
-    );
+    toggleProgramStatus(id);
   };
 
   // News handlers
@@ -381,6 +358,13 @@ export default function AdminPage() {
     );
   };
 
+  // Footer content handlers
+  const handleFooterContentChange = (field: string, value: string) => {
+    updateFooterContent({
+      [field]: value,
+    });
+  };
+
   useEffect(() => {
     if (authLoading) return;
 
@@ -423,12 +407,259 @@ export default function AdminPage() {
           {}
         );
         setGroupedContent(grouped);
+      } else {
+        // If API fails, use sample content
+        console.log("API failed, using sample content");
+        setSampleContent();
       }
     } catch (error) {
       console.error("Контент татахад алдаа гарлаа:", error);
+      // Use sample content on error
+      setSampleContent();
     } finally {
       setLoading(false);
     }
+  };
+
+  const setSampleContent = () => {
+    const sampleContent: PageContent[] = [
+      // Navigation content
+      {
+        id: "nav-1",
+        page: "home",
+        section: "navigation",
+        field: "homeLink",
+        content: "Нүүр",
+        type: "text",
+        order: 1,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: "nav-2",
+        page: "home",
+        section: "navigation",
+        field: "programsLink",
+        content: "Хөтөлбөрүүд",
+        type: "text",
+        order: 2,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: "nav-3",
+        page: "home",
+        section: "navigation",
+        field: "universitiesLink",
+        content: "Их сургуулиуд",
+        type: "text",
+        order: 3,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: "nav-4",
+        page: "home",
+        section: "navigation",
+        field: "newsLink",
+        content: "Мэдээ",
+        type: "text",
+        order: 4,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: "nav-5",
+        page: "home",
+        section: "navigation",
+        field: "contactLink",
+        content: "Холбоо барих",
+        type: "text",
+        order: 5,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: "nav-6",
+        page: "home",
+        section: "navigation",
+        field: "loginButton",
+        content: "Нэвтрэх",
+        type: "text",
+        order: 6,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: "nav-7",
+        page: "home",
+        section: "navigation",
+        field: "signupButton",
+        content: "Бүртгүүлэх",
+        type: "text",
+        order: 7,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      // Hero content
+      {
+        id: "hero-1",
+        page: "home",
+        section: "hero",
+        field: "mainTitle",
+        content: "Хятадад зуучлах баталгаат хамт олон",
+        type: "text",
+        order: 1,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: "hero-2",
+        page: "home",
+        section: "hero",
+        field: "subtitle",
+        content: "Монголын оюутан залуусыг Хятад улс руу зуучлах вэбсайт",
+        type: "text",
+        order: 2,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: "hero-3",
+        page: "home",
+        section: "hero",
+        field: "description",
+        content:
+          "Хятадын тэргүүлэгч их сургуулиудтай хамтран ажиллаж, танд хамгийн сайн боловсролын боломжийг санал болгож байна.",
+        type: "text",
+        order: 3,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: "hero-4",
+        page: "home",
+        section: "hero",
+        field: "ctaButton",
+        content: "Дэлгэрэнгүй мэдэх",
+        type: "text",
+        order: 4,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: "hero-5",
+        page: "home",
+        section: "hero",
+        field: "learnMoreButton",
+        content: "Илүү их мэдэх",
+        type: "text",
+        order: 5,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      // News section content
+      {
+        id: "news-1",
+        page: "home",
+        section: "news",
+        field: "sectionTitle",
+        content: "Сүүлийн мэдээ",
+        type: "text",
+        order: 1,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: "news-2",
+        page: "home",
+        section: "news",
+        field: "sectionDescription",
+        content: "Хамгийн сүүлийн үеийн мэдээ, мэдээлэл",
+        type: "text",
+        order: 2,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: "news-3",
+        page: "home",
+        section: "news",
+        field: "viewAllNewsButton",
+        content: "Бүх мэдээг харах",
+        type: "text",
+        order: 3,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      // Programs section content
+      {
+        id: "programs-1",
+        page: "home",
+        section: "programs",
+        field: "sectionTitle",
+        content: "Хөтөлбөрүүд",
+        type: "text",
+        order: 1,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: "programs-2",
+        page: "home",
+        section: "programs",
+        field: "sectionDescription",
+        content: "Хятадын их сургуулиудын хөтөлбөрүүд",
+        type: "text",
+        order: 2,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: "programs-3",
+        page: "home",
+        section: "programs",
+        field: "viewAllProgramsButton",
+        content: "Бүх хөтөлбөрийг харах",
+        type: "text",
+        order: 3,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
+
+    setContent(sampleContent);
+
+    // Group content by section
+    const grouped = sampleContent.reduce(
+      (acc: GroupedContent, item: PageContent) => {
+        if (!acc[item.section]) {
+          acc[item.section] = {};
+        }
+        acc[item.section][item.field] = item.content;
+        return acc;
+      },
+      {}
+    );
+    setGroupedContent(grouped);
   };
 
   const fetchStats = async () => {
@@ -542,6 +773,12 @@ export default function AdminPage() {
       name: "Их сургуулиуд",
       icon: "🎓",
       description: "Их сургуулийн жагсаалт, нэмэх, засах",
+    },
+    {
+      id: "footer",
+      name: "Хөл",
+      icon: "📞",
+      description: "Хөл хэсгийн мэдээлэл, холбоо барих, сошиал",
     },
   ];
 
@@ -1073,6 +1310,9 @@ export default function AdminPage() {
                         Түвшин
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Google Form
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Төлөв
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1120,6 +1360,24 @@ export default function AdminPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
                             {program.level}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {program.googleFormLink ? (
+                              <a
+                                href={program.googleFormLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 underline"
+                              >
+                                Холбоос
+                              </a>
+                            ) : (
+                              <span className="text-gray-400">
+                                Холбоос байхгүй
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -1355,6 +1613,261 @@ export default function AdminPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          ) : activeSection === "footer" ? (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:gap-3 sm:items-center sm:justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Хөл хэсэг - Контент засвар
+                  </h2>
+                  <p className="text-gray-500 text-sm">
+                    Хөл хэсгийн бүх мэдээллийг засварлах
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Company Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                    Компанийн мэдээлэл
+                  </h3>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Компанийн тайлбар
+                    </label>
+                    <textarea
+                      value={footerContent.companyDescription}
+                      onChange={(e) =>
+                        handleFooterContentChange(
+                          "companyDescription",
+                          e.target.value
+                        )
+                      }
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Имэйл
+                    </label>
+                    <input
+                      type="email"
+                      value={footerContent.email}
+                      onChange={(e) =>
+                        handleFooterContentChange("email", e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Утас
+                    </label>
+                    <input
+                      type="text"
+                      value={footerContent.phone}
+                      onChange={(e) =>
+                        handleFooterContentChange("phone", e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Хаяг
+                    </label>
+                    <input
+                      type="text"
+                      value={footerContent.address}
+                      onChange={(e) =>
+                        handleFooterContentChange("address", e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Social Media & Legal */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                    Сошиал медиа & Эрх зүй
+                  </h3>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Facebook URL
+                    </label>
+                    <input
+                      type="url"
+                      value={footerContent.facebook}
+                      onChange={(e) =>
+                        handleFooterContentChange("facebook", e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Instagram URL
+                    </label>
+                    <input
+                      type="url"
+                      value={footerContent.instagram}
+                      onChange={(e) =>
+                        handleFooterContentChange("instagram", e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      YouTube URL
+                    </label>
+                    <input
+                      type="url"
+                      value={footerContent.youtube}
+                      onChange={(e) =>
+                        handleFooterContentChange("youtube", e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Нууцлалын бодлого URL
+                    </label>
+                    <input
+                      type="url"
+                      value={footerContent.privacyPolicy}
+                      onChange={(e) =>
+                        handleFooterContentChange(
+                          "privacyPolicy",
+                          e.target.value
+                        )
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Үйлчилгээний нөхцөл URL
+                    </label>
+                    <input
+                      type="url"
+                      value={footerContent.termsOfService}
+                      onChange={(e) =>
+                        handleFooterContentChange(
+                          "termsOfService",
+                          e.target.value
+                        )
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Зохиогчийн эрх
+                    </label>
+                    <input
+                      type="text"
+                      value={footerContent.copyright}
+                      onChange={(e) =>
+                        handleFooterContentChange("copyright", e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Preview Section */}
+              <div className="mt-8 p-6 bg-gray-50 rounded-lg">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  Урьдчилан харах
+                </h3>
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <div className="text-xl font-bold text-blue-700 mb-2">
+                        GrandEdu
+                      </div>
+                      <p className="text-gray-600 text-sm">
+                        {footerContent.companyDescription}
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="text-gray-900 font-semibold mb-2">
+                        Холбоо барих
+                      </h4>
+                      <ul className="space-y-1 text-sm text-gray-600">
+                        <li>Имэйл: {footerContent.email}</li>
+                        <li>Утас: {footerContent.phone}</li>
+                        <li>{footerContent.address}</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="text-gray-900 font-semibold mb-2">
+                        Социал
+                      </h4>
+                      <ul className="space-y-1 text-sm">
+                        <li>
+                          <a
+                            href={footerContent.facebook}
+                            className="text-gray-600 hover:text-blue-700"
+                          >
+                            Facebook
+                          </a>
+                        </li>
+                        <li>
+                          <a
+                            href={footerContent.instagram}
+                            className="text-gray-600 hover:text-blue-700"
+                          >
+                            Instagram
+                          </a>
+                        </li>
+                        <li>
+                          <a
+                            href={footerContent.youtube}
+                            className="text-gray-600 hover:text-blue-700"
+                          >
+                            YouTube
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="border-t border-gray-200 mt-4 pt-4 text-xs text-gray-500 flex flex-col sm:flex-row justify-between items-center">
+                    <p>{footerContent.copyright}</p>
+                    <div className="mt-2 sm:mt-0 space-x-4">
+                      <a
+                        href={footerContent.privacyPolicy}
+                        className="hover:text-blue-700"
+                      >
+                        Нууцлал
+                      </a>
+                      <a
+                        href={footerContent.termsOfService}
+                        className="hover:text-blue-700"
+                      >
+                        Үйлчилгээний нөхцөл
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
@@ -1725,6 +2238,27 @@ export default function AdminPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="https://example.com/image.jpg"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Google Form холбоос
+                  </label>
+                  <input
+                    type="url"
+                    value={programForm.googleFormLink}
+                    onChange={(e) =>
+                      setProgramForm((prev) => ({
+                        ...prev,
+                        googleFormLink: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="https://forms.google.com/your-form-link"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Энэ хөтөлбөрт өргөдөл гаргах Google Form-ын холбоос
+                  </p>
                 </div>
               </div>
 

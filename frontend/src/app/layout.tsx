@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { FooterProvider } from "@/contexts/FooterContext";
+import { ProgramsProvider } from "@/contexts/ProgramsContext";
 import Footer from "@/components/Footer";
 import Navigation from "@/components/Navigation";
 
@@ -21,9 +23,13 @@ export default function RootLayout({
     <html lang="mn">
       <body className={`${inter.className} bg-white`}>
         <AuthProvider>
-          <Navigation />
-          {children}
-          <Footer />
+          <FooterProvider>
+            <ProgramsProvider>
+              <Navigation />
+              {children}
+              <Footer />
+            </ProgramsProvider>
+          </FooterProvider>
         </AuthProvider>
       </body>
     </html>

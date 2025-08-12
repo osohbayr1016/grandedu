@@ -4,13 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePrograms } from "@/contexts/ProgramsContext";
 import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
-import {
-  getProgramsUrl,
-  getProgramsContentUrl,
-  getNavigationContentUrl,
-} from "@/utils/api";
+import { getProgramsContentUrl, getNavigationContentUrl } from "@/utils/api";
 import { defaultContent } from "@/utils/defaultContent";
 
 interface Program {
@@ -18,11 +15,10 @@ interface Program {
   title: string;
   description: string;
   duration: string;
-  price: string;
-  location: string;
-  university: string;
-  requirements: string;
-  imageUrl?: string;
+  level: string;
+  imageUrl: string;
+  googleFormLink: string;
+  isActive: boolean;
 }
 
 interface PageContent {
@@ -33,9 +29,7 @@ interface PageContent {
 
 export default function ProgramsPage() {
   const { user, logout } = useAuth();
-  const [programs, setPrograms] = useState<Program[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { programs } = usePrograms();
   const [pageContent, setPageContent] = useState<PageContent>({});
   const [contentLoading, setContentLoading] = useState(true);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
@@ -45,7 +39,6 @@ export default function ProgramsPage() {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    fetchPrograms();
     fetchPageContent();
   }, []);
 
@@ -61,35 +54,6 @@ export default function ProgramsPage() {
 
   const handleLogout = () => {
     logout();
-  };
-
-  const fetchPrograms = async () => {
-    try {
-      const response = await fetch(getProgramsUrl(), {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        signal: AbortSignal.timeout(10000), // 10 second timeout
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setPrograms(data);
-      } else {
-        console.error(
-          "Failed to fetch programs:",
-          response.status,
-          response.statusText
-        );
-        setError("Failed to fetch programs");
-      }
-    } catch (error) {
-      console.error("Error fetching programs:", error);
-      setError("Error fetching programs");
-    } finally {
-      setLoading(false);
-    }
   };
 
   const fetchPageContent = async () => {
@@ -177,6 +141,15 @@ export default function ProgramsPage() {
     document.body.style.overflow = "unset";
   };
 
+  const handleApply = (program: Program) => {
+    if (program.googleFormLink) {
+      window.open(program.googleFormLink, "_blank", "noopener,noreferrer");
+    } else {
+      // If no Google Form link, show a message or redirect to a default form
+      alert("Энэ хөтөлбөрт өргөдөл гаргах холбоос одоогоор боломжгүй байна.");
+    }
+  };
+
   // Close modal on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -194,25 +167,13 @@ export default function ProgramsPage() {
     };
   }, [showModal]);
 
-  if (loading || contentLoading) {
+  if (contentLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center px-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-3 sm:mt-4 text-gray-600 text-sm sm:text-base">
             Хөтөлбөрүүдийг ачаалж байна...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-4">
-        <div className="text-center">
-          <p className="text-red-600 text-sm sm:text-base">
-            Алдаа гарлаа: {error}
           </p>
         </div>
       </div>
@@ -380,70 +341,31 @@ export default function ProgramsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
-            {programs.map((program) => (
-              <div
-                key={program.id}
-                className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 flex flex-col cursor-pointer transform hover:scale-105 hover:-translate-y-2 border border-gray-100"
-                onClick={() => openModal(program)}
-              >
-                {program.imageUrl ? (
-                  <div className="relative h-32 sm:h-48 overflow-hidden">
-                    <Image
-                      src={program.imageUrl}
-                      alt={program.title}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                  </div>
-                ) : (
-                  <div className="h-32 sm:h-48 bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 flex items-center justify-center relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
-                    <div className="relative z-10 text-white text-center">
-                      <svg
-                        className="w-12 h-12 mx-auto mb-2 opacity-80"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                        />
-                      </svg>
-                      <p className="text-sm font-medium">
-                        {getContent(
-                          "programs",
-                          "fallbackImageText",
-                          "Хөтөлбөр"
-                        )}
-                      </p>
+            {programs
+              .filter((program) => program.isActive)
+              .map((program) => (
+                <div
+                  key={program.id}
+                  className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 flex flex-col cursor-pointer transform hover:scale-105 hover:-translate-y-2 border border-gray-100"
+                  onClick={() => openModal(program)}
+                >
+                  {program.imageUrl ? (
+                    <div className="relative h-32 sm:h-48 overflow-hidden">
+                      <Image
+                        src={program.imageUrl}
+                        alt={program.title}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                     </div>
-                  </div>
-                )}
-
-                <div className="p-6 flex flex-col h-full">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
-                      {program.title}
-                    </h3>
-                    <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs sm:text-sm font-medium border border-gray-200">
-                      {program.duration}
-                    </span>
-                  </div>
-
-                  <p className="text-gray-600 mb-4 text-sm sm:text-base leading-relaxed line-clamp-3">
-                    {program.description}
-                  </p>
-
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg p-3 group-hover:bg-blue-50 transition-colors duration-300">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors duration-300">
+                  ) : (
+                    <div className="h-32 sm:h-48 bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 flex items-center justify-center relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
+                      <div className="relative z-10 text-white text-center">
                         <svg
-                          className="w-4 h-4 text-blue-600"
+                          className="w-12 h-12 mx-auto mb-2 opacity-80"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -452,107 +374,120 @@ export default function ProgramsPage() {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth={2}
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
                           />
                         </svg>
+                        <p className="text-sm font-medium">
+                          {getContent(
+                            "programs",
+                            "fallbackImageText",
+                            "Хөтөлбөр"
+                          )}
+                        </p>
                       </div>
-                      <span className="font-medium">{program.location}</span>
                     </div>
-                    <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg p-3 group-hover:bg-purple-50 transition-colors duration-300">
-                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-purple-200 transition-colors duration-300">
-                        <svg
-                          className="w-4 h-4 text-purple-600"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                          />
-                        </svg>
-                      </div>
-                      <span className="font-medium">{program.university}</span>
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg p-3 group-hover:bg-green-50 transition-colors duration-300">
-                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-green-200 transition-colors duration-300">
-                        <svg
-                          className="w-4 h-4 text-green-600"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                          />
-                        </svg>
-                      </div>
-                      <span className="font-semibold text-green-700">
-                        {program.price}
+                  )}
+
+                  <div className="p-6 flex flex-col h-full">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+                        {program.title}
+                      </h3>
+                      <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs sm:text-sm font-medium border border-gray-200">
+                        {program.duration}
                       </span>
                     </div>
-                  </div>
 
-                  <div className="mb-6">
-                    <h4 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base flex items-center">
-                      <svg
-                        className="w-4 h-4 mr-2 text-blue-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      {getContent(
-                        "programs",
-                        "requirementsLabel",
-                        "Шаардлага:"
-                      )}
-                    </h4>
-                    <div className="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500">
-                      <p className="text-sm text-gray-700">
-                        {program.requirements}
-                      </p>
+                    <p className="text-gray-600 mb-4 text-sm sm:text-base leading-relaxed line-clamp-3">
+                      {program.description}
+                    </p>
+
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg p-3 group-hover:bg-blue-50 transition-colors duration-300">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors duration-300">
+                          <svg
+                            className="w-4 h-4 text-blue-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                            />
+                          </svg>
+                        </div>
+                        <span className="font-medium">{program.level}</span>
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg p-3 group-hover:bg-purple-50 transition-colors duration-300">
+                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-purple-200 transition-colors duration-300">
+                          <svg
+                            className="w-4 h-4 text-purple-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                            />
+                          </svg>
+                        </div>
+                        <span className="font-medium">{program.duration}</span>
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg p-3 group-hover:bg-green-50 transition-colors duration-300">
+                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-green-200 transition-colors duration-300">
+                          <svg
+                            className="w-4 h-4 text-green-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                        <span className="font-semibold text-green-700">
+                          {program.isActive ? "Идэвхтэй" : "Идэвхгүй"}
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  <button className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 text-sm sm:text-base mt-auto transform hover:scale-105 shadow-md group-hover:shadow-lg">
-                    <span className="flex items-center justify-center">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                        />
-                      </svg>
-                      {getContent("programs", "applyButton", "Хүсэлт илгээх")}
-                    </span>
-                  </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleApply(program);
+                      }}
+                      className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 text-sm sm:text-base mt-auto transform hover:scale-105 shadow-md group-hover:shadow-lg"
+                    >
+                      <span className="flex items-center justify-center">
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
+                        </svg>
+                        {getContent("programs", "applyButton", "Хүсэлт илгээх")}
+                      </span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         )}
       </div>
@@ -601,7 +536,7 @@ export default function ProgramsPage() {
                   </span>
                 </div>
                 <p className="text-gray-600 text-sm sm:text-base">
-                  {selectedProgram.university}
+                  {selectedProgram.level}
                 </p>
               </div>
             </div>
@@ -645,18 +580,12 @@ export default function ProgramsPage() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
                       />
                     </svg>
-                    <span className="font-medium text-gray-900">Байршил</span>
+                    <span className="font-medium text-gray-900">Түвшин</span>
                   </div>
-                  <p className="text-gray-600">{selectedProgram.location}</p>
+                  <p className="text-gray-600">{selectedProgram.level}</p>
                 </div>
 
                 <div className="bg-gray-50 rounded-lg p-4">
@@ -671,18 +600,20 @@ export default function ProgramsPage() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
                       />
                     </svg>
-                    <span className="font-medium text-gray-900">Төлбөр</span>
+                    <span className="font-medium text-gray-900">
+                      Үргэлжлэх хугацаа
+                    </span>
                   </div>
                   <p className="text-gray-600 font-semibold">
-                    {selectedProgram.price}
+                    {selectedProgram.duration}
                   </p>
                 </div>
               </div>
 
-              {/* Requirements */}
+              {/* Status */}
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                   <svg
@@ -698,11 +629,11 @@ export default function ProgramsPage() {
                       d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  {getContent("programs", "requirementsLabel", "Шаардлага")}
+                  Төлөв
                 </h3>
                 <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
                   <p className="text-gray-700">
-                    {selectedProgram.requirements}
+                    {selectedProgram.isActive ? "Идэвхтэй" : "Идэвхгүй"}
                   </p>
                 </div>
               </div>
@@ -797,7 +728,10 @@ export default function ProgramsPage() {
                 >
                   {getContent("modal", "closeButton", "Хаах")}
                 </button>
-                <button className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
+                <button
+                  onClick={() => handleApply(selectedProgram)}
+                  className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
+                >
                   {getContent("modal", "applyButton", "Өргөдөл гаргах")}
                 </button>
               </div>

@@ -247,6 +247,7 @@ export default function Home() {
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">
                   {getContent("news", "title", "Сүүлийн мэдээ")}
                 </h2>
+                <div className="w-full h-0.5 bg-gray-300 mx-auto mb-6"></div>
                 <p className="text-gray-600 text-sm sm:text-base">
                   {getContent(
                     "news",
@@ -300,6 +301,7 @@ export default function Home() {
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">
                 {getContent("programs", "title", "Манай хөтөлбөрүүд")}
               </h2>
+              <div className="w-full h-0.5 bg-gray-300 mx-auto mb-6"></div>
               <p className="text-gray-600 text-base sm:text-lg px-4">
                 {getContent(
                   "programs",
@@ -334,6 +336,7 @@ export default function Home() {
                     "Хятад хэлний бэлтгэл"
                   )}
                 </h3>
+
                 <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
                   {getContent(
                     "programs",
@@ -447,6 +450,7 @@ export default function Home() {
                 <h3 className="text-lg font-bold text-gray-900 mb-2">
                   {getContent("programs", "program4Title", "Докторын хөтөлбөр")}
                 </h3>
+
                 <p className="text-gray-600 mb-4">
                   {getContent(
                     "programs",
@@ -478,6 +482,7 @@ export default function Home() {
                   "Хамтран ажилладаг их сургуулиуд"
                 )}
               </h2>
+              <div className="w-full h-0.5 bg-gray-300 mx-auto mb-6"></div>
               <p className="text-gray-600 text-base sm:text-lg px-4">
                 {getContent(
                   "universities",
