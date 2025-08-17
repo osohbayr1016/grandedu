@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getHealthCheckUrl, getHomeContentUrl } from "@/utils/api";
+import {
+  getHealthCheckUrl,
+  getHomeContentUrl,
+  getUniversitiesUrl,
+} from "@/utils/api";
 import { defaultContent } from "@/utils/defaultContent";
 
 interface PageContent {
@@ -11,10 +15,22 @@ interface PageContent {
   };
 }
 
+interface University {
+  id: string;
+  name: string;
+  location: string;
+  description: string;
+  imageUrl: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function UniversitiesPage() {
   const router = useRouter();
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [pageContent, setPageContent] = useState<PageContent>({});
+  const [universities, setUniversities] = useState<University[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,26 +50,42 @@ export default function UniversitiesPage() {
   }, []);
 
   useEffect(() => {
-    const fetchPageContent = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(getHomeContentUrl(), {
+        // Fetch page content
+        const contentResponse = await fetch(getHomeContentUrl(), {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           signal: AbortSignal.timeout(10000),
         });
-        if (response.ok) {
-          const data = await response.json();
-          setPageContent(data);
+        if (contentResponse.ok) {
+          const contentData = await contentResponse.json();
+          setPageContent(contentData);
         } else {
           setPageContent({});
         }
-      } catch {
+
+        // Fetch universities
+        const universitiesResponse = await fetch(getUniversitiesUrl(), {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(10000),
+        });
+        if (universitiesResponse.ok) {
+          const universitiesData = await universitiesResponse.json();
+          setUniversities(universitiesData);
+        } else {
+          setUniversities([]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
         setPageContent({});
+        setUniversities([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchPageContent();
+    fetchData();
   }, []);
 
   const getContent = (
@@ -138,80 +170,84 @@ export default function UniversitiesPage() {
       <main className="py-12 sm:py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((idx) => (
-              <article
-                key={idx}
-                onClick={() => router.push(`/universities/${idx}`)}
-                className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-              >
-                <div className="h-32 sm:h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                  <div className="text-white text-center px-2">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white bg-opacity-20 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
-                      <svg
-                        className="w-6 h-6 sm:w-8 sm:h-8"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                      </svg>
-                    </div>
-                    <h3 className="text-sm sm:text-lg font-bold">
-                      {idx === 1
-                        ? getContent(
-                            "universities",
-                            "university1Name",
-                            "Сычуань их сургууль"
-                          )
-                        : idx === 2
-                        ? getContent(
-                            "universities",
-                            "university2Name",
-                            "Хятадын Шинжлэх Ухаан, Технологийн Их Сургууль"
-                          )
-                        : getContent(
-                            "universities",
-                            "university3Name",
-                            "Шанхайн Жяо Тонгийн Их Сургууль"
-                          )}
-                    </h3>
+            {universities.length > 0 ? (
+              universities.map((university) => (
+                <article
+                  key={university.id}
+                  onClick={() => router.push(`/universities/${university.id}`)}
+                  className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                >
+                  <div className="h-32 sm:h-48 relative overflow-hidden">
+                    {university.imageUrl ? (
+                      <img
+                        src={university.imageUrl}
+                        alt={university.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                        <div className="text-white text-center px-2">
+                          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white bg-opacity-20 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
+                            <svg
+                              className="w-6 h-6 sm:w-8 sm:h-8"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                            </svg>
+                          </div>
+                          <h3 className="text-sm sm:text-lg font-bold">
+                            {university.name}
+                          </h3>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="p-4 sm:p-6">
-                  <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                    {idx === 1
-                      ? getContent(
-                          "universities",
-                          "university1Location",
-                          "Чэнду, Сычуань"
-                        )
-                      : idx === 2
-                      ? getContent(
-                          "universities",
-                          "university2Location",
-                          "Хэфэй, Аньхой"
-                        )
-                      : getContent(
-                          "universities",
-                          "university3Location",
-                          "Шанхай"
-                        )}
-                  </p>
-                  <p className="text-gray-600 text-sm sm:text-base mb-4">
-                    Хөтөлбөр, сургалтын орчин, хотын амьдрал болон элсэлтийн
-                    ерөнхий мэдээллийг эндээс үзнэ үү.
-                  </p>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push(`/universities/${idx}`);
-                    }}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                  <div className="p-4 sm:p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                      {university.name}
+                    </h3>
+                    <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
+                      {university.location}
+                    </p>
+                    <p className="text-gray-600 text-sm sm:text-base mb-4 line-clamp-3">
+                      {university.description}
+                    </p>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/universities/${university.id}`);
+                      }}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Дэлгэрэнгүй үзэх →
+                    </button>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <div className="text-gray-500">
+                  <svg
+                    className="w-16 h-16 mx-auto mb-4 opacity-50"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    Дэлгэрэнгүй үзэх →
-                  </button>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                    />
+                  </svg>
+                  <p className="text-lg font-medium">Их сургууль олдсонгүй</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Их сургуулиудын мэдээлэл удахгүй нэмэгдэнэ.
+                  </p>
                 </div>
-              </article>
-            ))}
+              </div>
+            )}
           </div>
         </div>
       </main>

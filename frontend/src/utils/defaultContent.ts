@@ -18,6 +18,8 @@ export const defaultContent = {
     description:
       "Хятадын тэргүүн их сургуулиудад суралцах боломжийг таньд санал болгож байна",
     buttonText: "Дэлгэрэнгүй мэдэх",
+    backgroundImage:
+      "https://images.unsplash.com/photo-1523050854058-8df90110c9e1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
   },
   news: {
     title: "Мэдээ мэдээлэл",

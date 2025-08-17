@@ -8,11 +8,25 @@ const prisma = new PrismaClient();
 router.get("/", async (req, res) => {
   try {
     const programs = await prisma.program.findMany({
+      where: { isActive: true },
       orderBy: { createdAt: "desc" },
     });
     res.json(programs);
   } catch (error) {
     console.error("Get programs error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get all programs for admin (including inactive)
+router.get("/admin", async (req, res) => {
+  try {
+    const programs = await prisma.program.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    res.json(programs);
+  } catch (error) {
+    console.error("Get admin programs error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -43,23 +57,19 @@ router.post("/", async (req, res) => {
       title,
       description,
       duration,
+      level,
       price,
       location,
       university,
       requirements,
       imageUrl,
+      googleFormLink,
     } = req.body;
 
-    if (
-      !title ||
-      !description ||
-      !duration ||
-      !price ||
-      !location ||
-      !university ||
-      !requirements
-    ) {
-      return res.status(400).json({ message: "All fields are required" });
+    if (!title || !description || !duration) {
+      return res
+        .status(400)
+        .json({ message: "Title, description and duration are required" });
     }
 
     const program = await prisma.program.create({
@@ -67,11 +77,13 @@ router.post("/", async (req, res) => {
         title,
         description,
         duration,
-        price: price.toString(),
+        level: level || "Бакалавр",
+        price,
         location,
         university,
         requirements,
         imageUrl,
+        googleFormLink,
       },
     });
 
@@ -90,11 +102,13 @@ router.put("/:id", async (req, res) => {
       title,
       description,
       duration,
+      level,
       price,
       location,
       university,
       requirements,
       imageUrl,
+      googleFormLink,
     } = req.body;
 
     const program = await prisma.program.update({
@@ -103,17 +117,48 @@ router.put("/:id", async (req, res) => {
         title,
         description,
         duration,
-        price: price.toString(),
+        level,
+        price,
         location,
         university,
         requirements,
         imageUrl,
+        googleFormLink,
+        updatedAt: new Date(),
       },
     });
 
     res.json(program);
   } catch (error) {
     console.error("Update program error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Toggle program status (admin only)
+router.patch("/:id/toggle", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const program = await prisma.program.findUnique({
+      where: { id },
+    });
+
+    if (!program) {
+      return res.status(404).json({ message: "Program not found" });
+    }
+
+    const updatedProgram = await prisma.program.update({
+      where: { id },
+      data: {
+        isActive: !program.isActive,
+        updatedAt: new Date(),
+      },
+    });
+
+    res.json(updatedProgram);
+  } catch (error) {
+    console.error("Toggle program status error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });

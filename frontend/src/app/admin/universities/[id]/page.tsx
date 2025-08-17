@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { getUniversitiesUrl } from "@/utils/api";
 
 interface University {
   id: string;
@@ -10,11 +11,9 @@ interface University {
   location: string;
   description: string;
   imageUrl: string;
-  programs: string[];
-  facilities: string[];
-  admissionRequirements: string[];
-  cityLife: string[];
   isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function AdminUniversityDetailPage() {
@@ -26,112 +25,6 @@ export default function AdminUniversityDetailPage() {
   const [saving, setSaving] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [addModalType, setAddModalType] = useState<
-    "programs" | "facilities" | "admissionRequirements" | "cityLife"
-  >("programs");
-  const [newItem, setNewItem] = useState("");
-
-  // Sample university data
-  const universitiesData: University[] = [
-    {
-      id: "1",
-      name: "Сычуань их сургууль",
-      location: "Чэнду, Сычуань",
-      description: "Хятадын тэргүүлэгч их сургуулиудтай хамтран ажилладаг",
-      imageUrl: "https://example.com/sichuan.jpg",
-      programs: [
-        "Бакалаврын хөтөлбөр - 4 жил",
-        "Магистрын хөтөлбөр - 2 жил",
-        "Докторын хөтөлбөр - 3-4 жил",
-      ],
-      facilities: [
-        "Орчин үеийн сургалтын танхимууд",
-        "Номын сан",
-        "Спорт заал",
-        "Оюутны дотуур байр",
-        "Цахим сургалтын систем",
-      ],
-      admissionRequirements: [
-        "12 жилийн боловсрол",
-        "IELTS 6.0 эсвэл TOEFL 80+",
-        "Хятад хэлний HSK 4+",
-        "Академик дундаж 3.0+",
-        "Урьдчилсан мэдлэг",
-      ],
-      cityLife: [
-        "Чэнду - Хятадын 4-р том хот",
-        "Хятадын байгаль, соёлын төв",
-        "Хоолны соёл, технологийн хөгжил",
-        "Олон улсын компаниудын төв",
-        "Аялал жуулчлалын хөгжлийн",
-      ],
-      isActive: true,
-    },
-    {
-      id: "2",
-      name: "Хятадын Шинжлэх Ухаан, Технологийн Их Сургууль",
-      location: "Хэфэй, Аньхой",
-      description: "Хятадын тэргүүлэгч их сургуулиудтай хамтран ажилладаг",
-      imageUrl: "https://example.com/ustc.jpg",
-      programs: [
-        "Инженерийн хөтөлбөрүүд",
-        "Шинжлэх ухааны хөтөлбөрүүд",
-        "Технологийн хөтөлбөрүүд",
-      ],
-      facilities: [
-        "Дэлгэрэнгүй лабораториуд",
-        "Судалгааны төвүүд",
-        "Олон улсын хамтын ажиллагаа",
-        "Инновацийн парк",
-      ],
-      admissionRequirements: [
-        "Математик, физикийн сайн мэдлэг",
-        "Англи хэлний түвшин",
-        "Хятад хэлний мэдлэг",
-        "Академик хөгжил",
-      ],
-      cityLife: [
-        "Хэфэй - Аньхой мужийн төв",
-        "Технологийн хөгжлийн хот",
-        "Байгаль орчны цэвэр",
-        "Хятадын соёлын төв",
-      ],
-      isActive: true,
-    },
-    {
-      id: "3",
-      name: "Шанхайн Жяо Тонгийн Их Сургууль",
-      location: "Шанхай",
-      description: "Хятадын тэргүүлэгч их сургуулиудтай хамтран ажилладаг",
-      imageUrl: "https://example.com/sjtu.jpg",
-      programs: [
-        "Бизнес удирдлага",
-        "Инженерийн чиглэлүүд",
-        "Хууль эрх зүй",
-        "Хэл, соёл",
-      ],
-      facilities: [
-        "Олон улсын стандартын сургалт",
-        "Бизнес инкубатор",
-        "Хэлний сургалтын төв",
-        "Оюутны үйл ажиллагааны төв",
-      ],
-      admissionRequirements: [
-        "Англи хэлний түвшин",
-        "Хятад хэлний мэдлэг",
-        "Академик дундаж",
-        "Хувийн мэдээлэл",
-      ],
-      cityLife: [
-        "Шанхай - Хятадын хамгийн том хот",
-        "Олон улсын санхүүгийн төв",
-        "Худалдаа, үйлдвэрлэлийн төв",
-        "Олон улсын соёлын хөгжил",
-      ],
-      isActive: true,
-    },
-  ];
 
   useEffect(() => {
     if (authLoading) return;
@@ -141,17 +34,32 @@ export default function AdminUniversityDetailPage() {
       return;
     }
 
-    const universityId = params.id as string;
-    const foundUniversity = universitiesData.find(
-      (uni) => uni.id === universityId
-    );
-    if (foundUniversity) {
-      setUniversity(foundUniversity);
-    } else {
+    fetchUniversity();
+  }, [params.id, router, user, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchUniversity = async () => {
+    try {
+      const universityId = params.id as string;
+      const response = await fetch(`${getUniversitiesUrl()}/${universityId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUniversity(data);
+      } else {
+        console.error("Failed to fetch university");
+        router.push("/admin");
+      }
+    } catch (error) {
+      console.error("Error fetching university:", error);
       router.push("/admin");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [params.id, router, user, authLoading]);
+  };
 
   const startEditing = (field: string, currentValue: string) => {
     setEditingField(field);
@@ -163,18 +71,30 @@ export default function AdminUniversityDetailPage() {
 
     setSaving(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setUniversity((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
+      const response = await fetch(`${getUniversitiesUrl()}/${university.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          ...university,
           [editingField]: editValue,
-        };
+        }),
       });
-      setEditingField(null);
-      setEditValue("");
+
+      if (response.ok) {
+        const updatedUniversity = await response.json();
+        setUniversity(updatedUniversity);
+        setEditingField(null);
+        setEditValue("");
+      } else {
+        console.error("Failed to update university");
+        alert("Хадгалахад алдаа гарлаа");
+      }
     } catch (error) {
       console.error("Хадгалахад алдаа гарлаа:", error);
+      alert("Хадгалахад алдаа гарлаа");
     } finally {
       setSaving(false);
     }
@@ -185,53 +105,53 @@ export default function AdminUniversityDetailPage() {
     setEditValue("");
   };
 
-  const handleAddItem = () => {
-    if (!newItem.trim() || !university) return;
-
-    setUniversity((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        [addModalType]: [...prev[addModalType], newItem],
-      };
-    });
-
-    setNewItem("");
-    setShowAddModal(false);
-  };
-
-  const handleRemoveItem = (type: keyof University, index: number) => {
+  const handleToggleStatus = async () => {
     if (!university) return;
 
-    setUniversity((prev) => {
-      if (!prev) return prev;
-      const newArray = [...(prev[type] as string[])];
-      newArray.splice(index, 1);
-      return {
-        ...prev,
-        [type]: newArray,
-      };
-    });
-  };
+    try {
+      const response = await fetch(
+        `${getUniversitiesUrl()}/${university.id}/toggle`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
-  const handleToggleStatus = () => {
-    if (!university) return;
-
-    setUniversity((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        isActive: !prev.isActive,
-      };
-    });
+      if (response.ok) {
+        const updatedUniversity = await response.json();
+        setUniversity(updatedUniversity);
+      } else {
+        console.error("Failed to toggle university status");
+        alert("Төлөв өөрчлөхөд алдаа гарлаа");
+      }
+    } catch (error) {
+      console.error("Error toggling status:", error);
+      alert("Төлөв өөрчлөхөд алдаа гарлаа");
+    }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Уншиж байна...</p>
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto"></div>
+            <div
+              className="absolute inset-0 rounded-full h-16 w-16 border-4 border-transparent border-t-purple-400 animate-spin"
+              style={{
+                animationDirection: "reverse",
+                animationDuration: "1.5s",
+              }}
+            ></div>
+          </div>
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold text-gray-800">
+              Их сургуулийн мэдээлэл ачаалж байна
+            </h3>
+            <p className="text-gray-600 mt-1">Түр хүлээнэ үү...</p>
+          </div>
         </div>
       </div>
     );
@@ -252,59 +172,15 @@ export default function AdminUniversityDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Top Bar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3">
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-600">grandedu.mn/admin</div>
-          <div className="text-sm text-gray-600">Админ: {user.firstName}</div>
-        </div>
-      </div>
-
-      <div className="flex">
-        {/* Left Sidebar */}
-        <div className="w-64 bg-white border-r border-gray-200 min-h-screen">
-          <div className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">
-              GrandEdu Админ
-            </h2>
-
-            <nav className="space-y-2">
-              <button
-                onClick={() => router.push("/admin")}
-                className="w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <div className="flex items-center space-x-3">
-                  <span className="text-lg">🏠</span>
-                  <div>
-                    <div className="font-medium text-sm">Админ самбар</div>
-                    <div className="text-xs text-gray-500">
-                      Үндсэн хянах самбар
-                    </div>
-                  </div>
-                </div>
-              </button>
-              <button
-                onClick={() => router.push("/admin")}
-                className="w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <div className="flex items-center space-x-3">
-                  <span className="text-lg">🎓</span>
-                  <div>
-                    <div className="font-medium text-sm">Их сургуулиуд</div>
-                    <div className="text-xs text-gray-500">
-                      Их сургуулийн жагсаалт
-                    </div>
-                  </div>
-                </div>
-              </button>
-            </nav>
-
-            {/* User Profile Section */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <div className="flex items-center space-x-3 px-3 py-2">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* Enhanced Top Bar */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 px-6 py-4 sticky top-0 z-40">
+        <div className="flex justify-between items-center max-w-7xl mx-auto">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <svg
-                  className="w-5 h-5 text-gray-600"
+                  className="w-5 h-5 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -313,19 +189,146 @@ export default function AdminUniversityDetailPage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
                   />
                 </svg>
-                <div>
-                  <div className="text-sm font-medium text-gray-900">
-                    {user.firstName}
+              </div>
+              <span className="text-sm font-medium text-gray-700">
+                grandedu.mn/admin
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 bg-gray-100 rounded-full px-3 py-1">
+              <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                <span className="text-xs font-bold text-white">
+                  {user.firstName.charAt(0)}
+                </span>
+              </div>
+              <span className="text-sm font-medium text-gray-700">
+                {user.firstName}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex max-w-7xl mx-auto">
+        {/* Enhanced Left Sidebar */}
+        <div className="w-72 bg-white/90 backdrop-blur-sm border-r border-gray-200/50 min-h-screen shadow-lg">
+          <div className="p-6">
+            <div className="flex items-center space-x-3 mb-8">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  GrandEdu
+                </h2>
+                <p className="text-xs text-gray-500">Админ удирдлага</p>
+              </div>
+            </div>
+
+            <nav className="space-y-3">
+              <button
+                onClick={() => router.push("/admin")}
+                className="w-full text-left px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 rounded-xl transition-all duration-200 group"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-100 group-hover:bg-blue-200 rounded-lg flex items-center justify-center transition-colors">
+                    <svg
+                      className="w-4 h-4 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 5a2 2 0 012-2h4a2 2 0 012 2v1H8V5z"
+                      />
+                    </svg>
                   </div>
-                  <div className="text-xs text-gray-500">{user.email}</div>
+                  <div>
+                    <div className="font-semibold text-sm">Админ самбар</div>
+                    <div className="text-xs text-gray-500">
+                      Үндсэн хянах самбар
+                    </div>
+                  </div>
+                </div>
+              </button>
+              <div className="w-full text-left px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-sm text-blue-700">
+                      Их сургуулиуд
+                    </div>
+                    <div className="text-xs text-blue-600">
+                      Өөрчлөлт хийж байна
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </nav>
+
+            {/* Enhanced User Profile Section */}
+            <div className="mt-8 pt-6 border-t border-gray-200/50">
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-bold text-white">
+                      {user.firstName.charAt(0)}
+                      {user.lastName?.charAt(0) || ""}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {user.firstName} {user.lastName}
+                    </div>
+                    <div className="text-xs text-gray-600">{user.email}</div>
+                    <div className="text-xs text-green-600 font-medium">
+                      ● Онлайн
+                    </div>
+                  </div>
                 </div>
               </div>
               <button
                 onClick={() => router.push("/")}
-                className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 mt-2"
+                className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
               >
                 <svg
                   className="w-4 h-4"
@@ -337,7 +340,7 @@ export default function AdminUniversityDetailPage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
                   />
                 </svg>
                 <span>Вэбсайт руу буцах</span>
@@ -346,64 +349,173 @@ export default function AdminUniversityDetailPage() {
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 p-6">
-          {/* Header */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <button
-                  onClick={() => router.push("/admin")}
-                  className="flex items-center text-blue-600 hover:text-blue-700 mb-2"
-                >
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+        {/* Enhanced Main Content */}
+        <div className="flex-1 p-8 max-w-5xl">
+          {/* Enhanced Header with Breadcrumbs */}
+          <div className="mb-8">
+            {/* Breadcrumbs */}
+            <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+              <button
+                onClick={() => router.push("/admin")}
+                className="hover:text-blue-600 transition-colors"
+              >
+                Админ самбар
+              </button>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+              <span className="text-gray-700 font-medium">Их сургуулиуд</span>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+              <span className="text-blue-600 font-medium">
+                {university.name}
+              </span>
+            </nav>
+
+            {/* Header Content */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 shadow-lg">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                      <svg
+                        className="w-7 h-7 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                        {university.name}
+                      </h1>
+                      <p className="text-gray-600 mt-1 flex items-center space-x-2">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                        <span>{university.location}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-gray-600 text-sm mt-3 max-w-2xl">
+                    Их сургуулийн дэлгэрэнгүй мэдээллийг засварлах, статус
+                    өөрчлөх болон бусад тохиргоо хийх
+                  </p>
+                </div>
+                <div className="flex items-center space-x-3 ml-4">
+                  <button
+                    onClick={handleToggleStatus}
+                    className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center space-x-2 ${
+                      university.isActive
+                        ? "bg-green-100 text-green-700 hover:bg-green-200 border border-green-200"
+                        : "bg-red-100 text-red-700 hover:bg-red-200 border border-red-200"
+                    }`}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                  Админ самбар руу буцах
-                </button>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  {university.name} - Засвар
-                </h1>
-                <p className="text-gray-600 mt-2">
-                  Их сургуулийн дэлгэрэнгүй мэдээллийг засварлах
-                </p>
-              </div>
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={handleToggleStatus}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                    university.isActive
-                      ? "bg-green-100 text-green-800 hover:bg-green-200"
-                      : "bg-red-100 text-red-800 hover:bg-red-200"
-                  }`}
-                >
-                  {university.isActive ? "Идэвхтэй" : "Идэвхгүй"}
-                </button>
-                <button
-                  onClick={() => router.push(`/universities/${university.id}`)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
-                >
-                  Харах
-                </button>
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        university.isActive ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    ></div>
+                    <span>{university.isActive ? "Идэвхтэй" : "Идэвхгүй"}</span>
+                  </button>
+                  <button
+                    onClick={() =>
+                      router.push(`/universities/${university.id}`)
+                    }
+                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 shadow-lg"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                    <span>Харах</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Basic Information */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Үндсэн мэдээлэл
-            </h2>
+          {/* Enhanced Basic Information */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 p-8 mb-8">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Үндсэн мэдээлэл
+              </h2>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -579,217 +691,32 @@ export default function AdminUniversityDetailPage() {
             </div>
           </div>
 
-          {/* Programs Section */}
+          {/* Additional Information */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Хөтөлбөрүүд
-              </h2>
-              <button
-                onClick={() => {
-                  setAddModalType("programs");
-                  setShowAddModal(true);
-                }}
-                className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
-              >
-                + Нэмэх
-              </button>
-            </div>
-            <div className="space-y-3">
-              {university.programs.map((program, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
-                >
-                  <span className="text-gray-900">{program}</span>
-                  <button
-                    onClick={() => handleRemoveItem("programs", index)}
-                    className="text-red-600 hover:text-red-700 text-sm"
-                  >
-                    Устгах
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Facilities Section */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Суурь талбай, тоног төхөөрөмж
-              </h2>
-              <button
-                onClick={() => {
-                  setAddModalType("facilities");
-                  setShowAddModal(true);
-                }}
-                className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
-              >
-                + Нэмэх
-              </button>
-            </div>
-            <div className="space-y-3">
-              {university.facilities.map((facility, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
-                >
-                  <span className="text-gray-900">{facility}</span>
-                  <button
-                    onClick={() => handleRemoveItem("facilities", index)}
-                    className="text-red-600 hover:text-red-700 text-sm"
-                  >
-                    Устгах
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Admission Requirements Section */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Элсэлтийн шаардлага
-              </h2>
-              <button
-                onClick={() => {
-                  setAddModalType("admissionRequirements");
-                  setShowAddModal(true);
-                }}
-                className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
-              >
-                + Нэмэх
-              </button>
-            </div>
-            <div className="space-y-3">
-              {university.admissionRequirements.map((requirement, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
-                >
-                  <span className="text-gray-900">{requirement}</span>
-                  <button
-                    onClick={() =>
-                      handleRemoveItem("admissionRequirements", index)
-                    }
-                    className="text-red-600 hover:text-red-700 text-sm"
-                  >
-                    Устгах
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* City Life Section */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Хотын амьдрал
-              </h2>
-              <button
-                onClick={() => {
-                  setAddModalType("cityLife");
-                  setShowAddModal(true);
-                }}
-                className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
-              >
-                + Нэмэх
-              </button>
-            </div>
-            <div className="space-y-3">
-              {university.cityLife.map((life, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
-                >
-                  <span className="text-gray-900">{life}</span>
-                  <button
-                    onClick={() => handleRemoveItem("cityLife", index)}
-                    className="text-red-600 hover:text-red-700 text-sm"
-                  >
-                    Устгах
-                  </button>
-                </div>
-              ))}
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Нэмэлт мэдээлэл
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Үүсгэсэн огноо
+                </label>
+                <p className="text-gray-900">
+                  {new Date(university.createdAt).toLocaleDateString("mn-MN")}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Сүүлд засварласан
+                </label>
+                <p className="text-gray-900">
+                  {new Date(university.updatedAt).toLocaleDateString("mn-MN")}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Add Item Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {addModalType === "programs" && "Шинэ хөтөлбөр нэмэх"}
-                  {addModalType === "facilities" && "Шинэ суурь талбай нэмэх"}
-                  {addModalType === "admissionRequirements" &&
-                    "Шинэ шаардлага нэмэх"}
-                  {addModalType === "cityLife" && "Шинэ хотын амьдрал нэмэх"}
-                </h3>
-                <button
-                  onClick={() => setShowAddModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {addModalType === "programs" && "Хөтөлбөрийн нэр"}
-                    {addModalType === "facilities" && "Суурь талбайн нэр"}
-                    {addModalType === "admissionRequirements" &&
-                      "Шаардлагын тайлбар"}
-                    {addModalType === "cityLife" && "Хотын амьдралын тайлбар"}
-                  </label>
-                  <input
-                    type="text"
-                    value={newItem}
-                    onChange={(e) => setNewItem(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Оруулна уу..."
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
-                >
-                  Цуцлах
-                </button>
-                <button
-                  onClick={handleAddItem}
-                  disabled={!newItem.trim()}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Нэмэх
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

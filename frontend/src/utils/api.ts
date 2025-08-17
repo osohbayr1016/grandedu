@@ -108,3 +108,54 @@ export const getProgramsUrl = () => {
   console.log("Programs URL:", url);
   return url;
 };
+
+export const getAdminProgramsUrl = () => {
+  const url = `${getApiBaseUrl()}/api/programs/admin`;
+  console.log("Admin Programs URL:", url);
+  return url;
+};
+
+// News endpoints
+export const getNewsUrl = () => {
+  const url = `${getApiBaseUrl()}/api/news`;
+  console.log("News URL:", url);
+  return url;
+};
+
+export const getAdminNewsUrl = () => {
+  const url = `${getApiBaseUrl()}/api/news/admin`;
+  console.log("Admin News URL:", url);
+  return url;
+};
+
+// Universities endpoints
+export const getUniversitiesUrl = () => {
+  const url = `${getApiBaseUrl()}/api/universities`;
+  console.log("Universities URL:", url);
+  return url;
+};
+
+export const getAdminUniversitiesUrl = () => {
+  const url = `${getApiBaseUrl()}/api/universities/admin`;
+  console.log("Admin Universities URL:", url);
+  return url;
+};
+
+// User management endpoints
+export const getUsersUrl = () => {
+  const url = `${getApiBaseUrl()}/api/auth/users`;
+  console.log("Users URL:", url);
+  return url;
+};
+
+export const getStatsUrl = () => {
+  const url = `${getApiBaseUrl()}/api/auth/stats`;
+  console.log("Stats URL:", url);
+  return url;
+};
+
+export const getCreateAdminUrl = () => {
+  const url = `${getApiBaseUrl()}/api/auth/create-admin`;
+  console.log("Create Admin URL:", url);
+  return url;
+};

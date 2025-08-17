@@ -5,6 +5,8 @@ import { PrismaClient } from "@prisma/client";
 import authRoutes from "./routes/auth";
 import programRoutes from "./routes/programs";
 import contentRoutes from "./routes/content";
+import newsRoutes from "./routes/news";
+import universitiesRoutes from "./routes/universities";
 
 dotenv.config();
 
@@ -20,6 +22,8 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/programs", programRoutes);
 app.use("/api/content", contentRoutes);
+app.use("/api/news", newsRoutes);
+app.use("/api/universities", universitiesRoutes);
 
 // Basic route
 app.get("/", (req, res) => {

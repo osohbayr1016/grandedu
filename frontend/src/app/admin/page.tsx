@@ -3,9 +3,19 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFooter } from "@/contexts/FooterContext";
-import { usePrograms } from "@/contexts/ProgramsContext";
 import { useRouter } from "next/navigation";
-import { getContentUrl } from "@/utils/api";
+import {
+  getContentUrl,
+  getAdminProgramsUrl,
+  getAdminNewsUrl,
+  getAdminUniversitiesUrl,
+  getUsersUrl,
+  getStatsUrl,
+  getCreateAdminUrl,
+  getProgramsUrl,
+  getNewsUrl,
+  getUniversitiesUrl,
+} from "@/utils/api";
 
 interface PageContent {
   id: string;
@@ -66,13 +76,7 @@ interface News {
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
   const { footerContent, updateFooterContent } = useFooter();
-  const {
-    programs,
-    addProgram,
-    updateProgram,
-    deleteProgram,
-    toggleProgramStatus,
-  } = usePrograms();
+  // Note: Not using usePrograms context in admin to avoid conflicts
   const router = useRouter();
   const [content, setContent] = useState<PageContent[]>([]);
   const [groupedContent, setGroupedContent] = useState<GroupedContent>({});
@@ -123,55 +127,29 @@ export default function AdminPage() {
     totalUniversities: 0,
   });
 
-  // Sample universities data - in real app this would come from your database
-  const [universities, setUniversities] = useState<University[]>([
-    {
-      id: "1",
-      name: "Сычуань их сургууль",
-      location: "Чэнду, Сычуань",
-      description: "Хятадын тэргүүлэгч их сургуулиудтай хамтран ажилладаг",
-      imageUrl: "https://example.com/sichuan.jpg",
-      isActive: true,
-    },
-    {
-      id: "2",
-      name: "Хятадын Шинжлэх Ухаан, Технологийн Их Сургууль",
-      location: "Хэфэй, Аньхой",
-      description: "Хятадын тэргүүлэгч их сургуулиудтай хамтран ажилладаг",
-      imageUrl: "https://example.com/ustc.jpg",
-      isActive: true,
-    },
-    {
-      id: "3",
-      name: "Шанхайн Жяо Тонгийн Их Сургууль",
-      location: "Шанхай",
-      description: "Хятадын тэргүүлэгч их сургуулиудтай хамтран ажилладаг",
-      imageUrl: "https://example.com/sjtu.jpg",
-      isActive: true,
-    },
-  ]);
-
-  // Sample news data
-  const [news, setNews] = useState<News[]>([
-    {
-      id: "1",
-      title: "Шинэ хөтөлбөр эхэллээ",
-      content: "Хятадын их сургуулиудтай хамтран ажиллах шинэ хөтөлбөр эхэллээ",
-      author: "Admin",
-      publishDate: "2024-08-11",
-      imageUrl: "https://example.com/news1.jpg",
-      isActive: true,
-    },
-    {
-      id: "2",
-      title: "Их сургуулийн түншлэл",
-      content: "Шинэ их сургуулиудтай түншлэл байгууллаа",
-      author: "Admin",
-      publishDate: "2024-08-10",
-      imageUrl: "https://example.com/news2.jpg",
-      isActive: true,
-    },
-  ]);
+  const [universities, setUniversities] = useState<University[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [news, setNews] = useState<News[]>([]);
+  const [users, setUsers] = useState<
+    Array<{
+      id: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      phoneNumber: string;
+      role: string;
+      createdAt: string;
+      updatedAt: string;
+    }>
+  >([]);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [newAdminForm, setNewAdminForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    phoneNumber: "",
+  });
 
   const handleAddUniversity = () => {
     setEditingUniversity(null);
@@ -195,45 +173,72 @@ export default function AdminPage() {
     setShowUniversityModal(true);
   };
 
-  const handleSaveUniversity = () => {
-    if (editingUniversity) {
-      // Update existing university
-      setUniversities((prev) =>
-        prev.map((uni) =>
-          uni.id === editingUniversity.id ? { ...uni, ...universityForm } : uni
-        )
-      );
-    } else {
-      // Add new university
-      const newUniversity: University = {
-        id: Date.now().toString(),
-        ...universityForm,
-        isActive: true,
-      };
-      setUniversities((prev) => [...prev, newUniversity]);
+  const handleSaveUniversity = async () => {
+    try {
+      const url = editingUniversity
+        ? `${getUniversitiesUrl()}/${editingUniversity.id}`
+        : getUniversitiesUrl();
+      const method = editingUniversity ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(universityForm),
+      });
+
+      if (response.ok) {
+        await fetchUniversities();
+        setShowUniversityModal(false);
+        setEditingUniversity(null);
+        setUniversityForm({
+          name: "",
+          location: "",
+          description: "",
+          imageUrl: "",
+        });
+      } else {
+        console.error("Failed to save university");
+      }
+    } catch (error) {
+      console.error("Error saving university:", error);
     }
-    setShowUniversityModal(false);
-    setEditingUniversity(null);
-    setUniversityForm({
-      name: "",
-      location: "",
-      description: "",
-      imageUrl: "",
-    });
   };
 
-  const handleDeleteUniversity = (id: string) => {
+  const handleDeleteUniversity = async (id: string) => {
     if (confirm("Энэ их сургуулийг устгахдаа итгэлтэй байна уу?")) {
-      setUniversities((prev) => prev.filter((uni) => uni.id !== id));
+      try {
+        const response = await fetch(`${getUniversitiesUrl()}/${id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        if (response.ok) {
+          await fetchUniversities();
+        }
+      } catch (error) {
+        console.error("Error deleting university:", error);
+      }
     }
   };
 
-  const handleToggleUniversityStatus = (id: string) => {
-    setUniversities((prev) =>
-      prev.map((uni) =>
-        uni.id === id ? { ...uni, isActive: !uni.isActive } : uni
-      )
-    );
+  const handleToggleUniversityStatus = async (id: string) => {
+    try {
+      const response = await fetch(`${getUniversitiesUrl()}/${id}/toggle`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (response.ok) {
+        await fetchUniversities();
+      }
+    } catch (error) {
+      console.error("Error toggling university status:", error);
+    }
   };
 
   // Program handlers
@@ -263,36 +268,76 @@ export default function AdminPage() {
     setShowProgramModal(true);
   };
 
-  const handleSaveProgram = () => {
-    if (editingProgram) {
-      updateProgram(editingProgram.id, programForm);
-    } else {
-      const newProgram: Program = {
-        id: Date.now().toString(),
-        ...programForm,
-        googleFormLink: programForm.googleFormLink || "",
-        isActive: true,
-      };
-      addProgram(newProgram);
+  const handleSaveProgram = async () => {
+    try {
+      const url = editingProgram
+        ? `${getProgramsUrl()}/${editingProgram.id}`
+        : getProgramsUrl();
+      const method = editingProgram ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(programForm),
+      });
+
+      if (response.ok) {
+        await fetchPrograms();
+        await fetchStats(); // Refresh stats as well
+        setShowProgramModal(false);
+        setEditingProgram(null);
+        setProgramForm({
+          title: "",
+          description: "",
+          duration: "",
+          level: "",
+          imageUrl: "",
+          googleFormLink: "",
+        });
+      } else {
+        console.error("Failed to save program");
+      }
+    } catch (error) {
+      console.error("Error saving program:", error);
     }
-    setShowProgramModal(false);
-    setEditingProgram(null);
-    setProgramForm({
-      title: "",
-      description: "",
-      duration: "",
-      level: "",
-      imageUrl: "",
-      googleFormLink: "",
-    });
   };
 
-  const handleDeleteProgram = (id: string) => {
-    deleteProgram(id);
+  const handleDeleteProgram = async (id: string) => {
+    if (confirm("Энэ хөтөлбөрийг устгахдаа итгэлтэй байна уу?")) {
+      try {
+        const response = await fetch(`${getProgramsUrl()}/${id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        if (response.ok) {
+          await fetchPrograms();
+          await fetchStats();
+        }
+      } catch (error) {
+        console.error("Error deleting program:", error);
+      }
+    }
   };
 
-  const handleToggleProgramStatus = (id: string) => {
-    toggleProgramStatus(id);
+  const handleToggleProgramStatus = async (id: string) => {
+    try {
+      const response = await fetch(`${getProgramsUrl()}/${id}/toggle`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (response.ok) {
+        await fetchPrograms();
+      }
+    } catch (error) {
+      console.error("Error toggling program status:", error);
+    }
   };
 
   // News handlers
@@ -320,42 +365,150 @@ export default function AdminPage() {
     setShowNewsModal(true);
   };
 
-  const handleSaveNews = () => {
-    if (editingNews) {
-      setNews((prev) =>
-        prev.map((item) =>
-          item.id === editingNews.id ? { ...item, ...newsForm } : item
-        )
-      );
-    } else {
-      const newNews: News = {
-        id: Date.now().toString(),
-        ...newsForm,
-        isActive: true,
-      };
-      setNews((prev) => [...prev, newNews]);
+  const handleSaveNews = async () => {
+    try {
+      const url = editingNews
+        ? `${getNewsUrl()}/${editingNews.id}`
+        : getNewsUrl();
+      const method = editingNews ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(newsForm),
+      });
+
+      if (response.ok) {
+        await fetchNews();
+        setShowNewsModal(false);
+        setEditingNews(null);
+        setNewsForm({
+          title: "",
+          content: "",
+          author: "",
+          publishDate: new Date().toISOString().split("T")[0],
+          imageUrl: "",
+        });
+      } else {
+        console.error("Failed to save news");
+      }
+    } catch (error) {
+      console.error("Error saving news:", error);
     }
-    setShowNewsModal(false);
-    setEditingNews(null);
-    setNewsForm({
-      title: "",
-      content: "",
-      author: "",
-      publishDate: new Date().toISOString().split("T")[0],
-      imageUrl: "",
-    });
   };
 
-  const handleDeleteNews = (id: string) => {
-    setNews((prev) => prev.filter((item) => item.id !== id));
+  const handleDeleteNews = async (id: string) => {
+    if (confirm("Энэ мэдээг устгахдаа итгэлтэй байна уу?")) {
+      try {
+        const response = await fetch(`${getNewsUrl()}/${id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        if (response.ok) {
+          await fetchNews();
+        }
+      } catch (error) {
+        console.error("Error deleting news:", error);
+      }
+    }
   };
 
-  const handleToggleNewsStatus = (id: string) => {
-    setNews((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, isActive: !item.isActive } : item
-      )
-    );
+  const handleToggleNewsStatus = async (id: string) => {
+    try {
+      const response = await fetch(`${getNewsUrl()}/${id}/toggle`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (response.ok) {
+        await fetchNews();
+      }
+    } catch (error) {
+      console.error("Error toggling news status:", error);
+    }
+  };
+
+  // User management handlers
+  const handleCreateAdmin = async () => {
+    try {
+      const response = await fetch(getCreateAdminUrl(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(newAdminForm),
+      });
+
+      if (response.ok) {
+        await fetchUsers();
+        setShowUserModal(false);
+        setNewAdminForm({
+          firstName: "",
+          lastName: "",
+          email: "",
+          password: "",
+          phoneNumber: "",
+        });
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || "Failed to create admin");
+      }
+    } catch (error) {
+      console.error("Error creating admin:", error);
+      alert("Error creating admin");
+    }
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    if (confirm("Энэ хэрэглэгчийг устгахдаа итгэлтэй байна уу?")) {
+      try {
+        const response = await fetch(
+          `${getUsersUrl().replace("/users", "")}/users/${id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        if (response.ok) {
+          await fetchUsers();
+        }
+      } catch (error) {
+        console.error("Error deleting user:", error);
+      }
+    }
+  };
+
+  const handleToggleUserRole = async (id: string, currentRole: string) => {
+    const newRole = currentRole === "admin" ? "user" : "admin";
+    if (confirm(`Энэ хэрэглэгчийг ${newRole} болгохдоо итгэлтэй байна уу?`)) {
+      try {
+        const response = await fetch(
+          `${getUsersUrl().replace("/users", "")}/users/${id}/role`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({ role: newRole }),
+          }
+        );
+        if (response.ok) {
+          await fetchUsers();
+        }
+      } catch (error) {
+        console.error("Error updating user role:", error);
+      }
+    }
   };
 
   // Footer content handlers
@@ -373,16 +526,28 @@ export default function AdminPage() {
       return;
     }
 
-    fetchContent();
-    fetchStats();
-  }, [
-    user,
-    authLoading,
-    router,
-    programs.length,
-    news.length,
-    universities.length,
-  ]);
+    // Initialize all data fetching
+    initializeAdminData();
+  }, [user, authLoading, router]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const initializeAdminData = async () => {
+    try {
+      setLoading(true);
+      // Fetch all data in parallel for better performance
+      await Promise.all([
+        fetchContent(),
+        fetchStats(),
+        fetchPrograms(),
+        fetchNews(),
+        fetchUniversities(),
+        fetchUsers(),
+      ]);
+    } catch (error) {
+      console.error("Error initializing admin data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchContent = async () => {
     try {
@@ -416,8 +581,6 @@ export default function AdminPage() {
       console.error("Контент татахад алдаа гарлаа:", error);
       // Use sample content on error
       setSampleContent();
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -664,15 +827,83 @@ export default function AdminPage() {
 
   const fetchStats = async () => {
     try {
-      // In a real app, you would fetch these from your API
-      setStats({
-        totalUsers: 1, // admin user
-        totalPrograms: programs.length,
-        totalNews: news.length,
-        totalUniversities: universities.length,
+      const response = await fetch(getStatsUrl(), {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      } else {
+        console.error("Failed to fetch stats");
+      }
     } catch (error) {
       console.error("Статистик татахад алдаа гарлаа:", error);
+    }
+  };
+
+  const fetchPrograms = async () => {
+    try {
+      const response = await fetch(getAdminProgramsUrl(), {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPrograms(data);
+      }
+    } catch (error) {
+      console.error("Error fetching programs:", error);
+    }
+  };
+
+  const fetchNews = async () => {
+    try {
+      const response = await fetch(getAdminNewsUrl(), {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setNews(data);
+      }
+    } catch (error) {
+      console.error("Error fetching news:", error);
+    }
+  };
+
+  const fetchUniversities = async () => {
+    try {
+      const response = await fetch(getAdminUniversitiesUrl(), {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUniversities(data);
+      }
+    } catch (error) {
+      console.error("Error fetching universities:", error);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch(getUsersUrl(), {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data);
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
     }
   };
 
@@ -773,6 +1004,12 @@ export default function AdminPage() {
       name: "Их сургуулиуд",
       icon: "🎓",
       description: "Их сургуулийн жагсаалт, нэмэх, засах",
+    },
+    {
+      id: "users",
+      name: "Хэрэглэгчид",
+      icon: "👥",
+      description: "Хэрэглэгч удирдах, админ нэмэх, устгах",
     },
     {
       id: "footer",
@@ -959,9 +1196,11 @@ export default function AdminPage() {
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-gray-900">
-                    {stats.totalUsers}
+                    {stats.totalUsers - 1}
                   </div>
-                  <div className="text-sm text-gray-600">Нийт хэрэглэгч</div>
+                  <div className="text-sm text-gray-600">
+                    Нийт хэрэглэгч (таныхаас бусад)
+                  </div>
                 </div>
               </div>
             </div>
@@ -1613,6 +1852,185 @@ export default function AdminPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          ) : activeSection === "users" ? (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:gap-3 sm:items-center sm:justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Хэрэглэгчид - Удирдах самбар
+                  </h2>
+                  <p className="text-gray-500 text-sm">
+                    Бүх хэрэглэгчийн мэдээллийг нэг хэсэгт харах, засварлах
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <div className="relative w-full sm:w-72">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Хэрэглэгч хайх..."
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                      🔎
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setShowUserModal(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                    <span>Админ нэмэх</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Users Table */}
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Хэрэглэгч
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Имэйл
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Утас
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Эрх
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Бүртгэсэн огноо
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Үйлдэл
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {users
+                      .filter((user) => {
+                        if (!searchQuery.trim()) return true;
+                        const q = searchQuery.toLowerCase();
+                        return (
+                          user.firstName.toLowerCase().includes(q) ||
+                          user.lastName.toLowerCase().includes(q) ||
+                          user.email.toLowerCase().includes(q)
+                        );
+                      })
+                      .map((user) => (
+                        <tr key={user.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                                <svg
+                                  className="w-5 h-5 text-gray-600"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                  />
+                                </svg>
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {user.firstName} {user.lastName}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {user.email}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {user.phoneNumber}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <button
+                              onClick={() =>
+                                handleToggleUserRole(user.id, user.role)
+                              }
+                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full cursor-pointer transition-colors ${
+                                user.role === "admin"
+                                  ? "bg-purple-100 text-purple-800 hover:bg-purple-200"
+                                  : "bg-green-100 text-green-800 hover:bg-green-200"
+                              }`}
+                            >
+                              {user.role === "admin" ? "Админ" : "Хэрэглэгч"}
+                            </button>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {new Date(user.createdAt).toLocaleDateString(
+                              "mn-MN"
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleDeleteUser(user.id)}
+                                disabled={user.id === user?.id} // Can't delete yourself
+                                className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Устгах"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Statistics */}
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {users.filter((u) => u.role === "admin").length}
+                  </div>
+                  <div className="text-sm text-gray-600">Админ хэрэглэгч</div>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">
+                    {users.filter((u) => u.role === "user").length}
+                  </div>
+                  <div className="text-sm text-gray-600">Энгийн хэрэглэгч</div>
+                </div>
               </div>
             </div>
           ) : activeSection === "footer" ? (
@@ -2415,6 +2833,153 @@ export default function AdminPage() {
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {editingNews ? "Хадгалах" : "Нэмэх"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Admin Modal */}
+      {showUserModal && (
+        <div className="fixed inset-0 bg-white bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Шинэ админ нэмэх
+                </h3>
+                <button
+                  onClick={() => setShowUserModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Нэр
+                  </label>
+                  <input
+                    type="text"
+                    value={newAdminForm.firstName}
+                    onChange={(e) =>
+                      setNewAdminForm((prev) => ({
+                        ...prev,
+                        firstName: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Нэр оруулна уу"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Овог
+                  </label>
+                  <input
+                    type="text"
+                    value={newAdminForm.lastName}
+                    onChange={(e) =>
+                      setNewAdminForm((prev) => ({
+                        ...prev,
+                        lastName: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Овог оруулна уу"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    И-мэйл
+                  </label>
+                  <input
+                    type="email"
+                    value={newAdminForm.email}
+                    onChange={(e) =>
+                      setNewAdminForm((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="И-мэйл оруулна уу"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Утасны дугаар
+                  </label>
+                  <input
+                    type="tel"
+                    value={newAdminForm.phoneNumber}
+                    onChange={(e) =>
+                      setNewAdminForm((prev) => ({
+                        ...prev,
+                        phoneNumber: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Утасны дугаар оруулна уу"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Нууц үг
+                  </label>
+                  <input
+                    type="password"
+                    value={newAdminForm.password}
+                    onChange={(e) =>
+                      setNewAdminForm((prev) => ({
+                        ...prev,
+                        password: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Нууц үг оруулна уу (багадаа 6 тэмдэгт)"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowUserModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
+                >
+                  Цуцлах
+                </button>
+                <button
+                  onClick={handleCreateAdmin}
+                  disabled={
+                    !newAdminForm.firstName ||
+                    !newAdminForm.lastName ||
+                    !newAdminForm.email ||
+                    !newAdminForm.password ||
+                    !newAdminForm.phoneNumber
+                  }
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Админ үүсгэх
                 </button>
               </div>
             </div>

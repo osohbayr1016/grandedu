@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { getUniversitiesUrl } from "@/utils/api";
 
 interface University {
   id: string;
@@ -9,10 +10,9 @@ interface University {
   location: string;
   description: string;
   imageUrl: string;
-  programs: string[];
-  facilities: string[];
-  admissionRequirements: string[];
-  cityLife: string[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function UniversityDetailPage() {
@@ -20,115 +20,27 @@ export default function UniversityDetailPage() {
   const router = useRouter();
   const [university, setUniversity] = useState<University | null>(null);
 
-  // Sample university data
-  const universitiesData: University[] = [
-    {
-      id: "1",
-      name: "Сычуань их сургууль",
-      location: "Чэнду, Сычуань",
-      description: "Хятадын тэргүүлэгч их сургуулиудтай хамтран ажилладаг",
-      imageUrl: "https://example.com/sichuan.jpg",
-      programs: [
-        "Бакалаврын хөтөлбөр - 4 жил",
-        "Магистрын хөтөлбөр - 2 жил",
-        "Докторын хөтөлбөр - 3-4 жил",
-      ],
-      facilities: [
-        "Орчин үеийн сургалтын танхимууд",
-        "Номын сан",
-        "Спорт заал",
-        "Оюутны дотуур байр",
-        "Цахим сургалтын систем",
-      ],
-      admissionRequirements: [
-        "12 жилийн боловсрол",
-        "IELTS 6.0 эсвэл TOEFL 80+",
-        "Хятад хэлний HSK 4+",
-        "Академик дундаж 3.0+",
-        "Урьдчилсан мэдлэг",
-      ],
-      cityLife: [
-        "Чэнду - Хятадын 4-р том хот",
-        "Хятадын байгаль, соёлын төв",
-        "Хоолны соёл, технологийн хөгжил",
-        "Олон улсын компаниудын төв",
-        "Аялал жуулчлалын хөгжлийн",
-      ],
-    },
-    {
-      id: "2",
-      name: "Хятадын Шинжлэх Ухаан, Технологийн Их Сургууль",
-      location: "Хэфэй, Аньхой",
-      description: "Хятадын тэргүүлэгч их сургуулиудтай хамтран ажилладаг",
-      imageUrl: "https://example.com/ustc.jpg",
-      programs: [
-        "Инженерийн хөтөлбөрүүд",
-        "Шинжлэх ухааны хөтөлбөрүүд",
-        "Технологийн хөтөлбөрүүд",
-      ],
-      facilities: [
-        "Дэлгэрэнгүй лабораториуд",
-        "Судалгааны төвүүд",
-        "Олон улсын хамтын ажиллагаа",
-        "Инновацийн парк",
-      ],
-      admissionRequirements: [
-        "Математик, физикийн сайн мэдлэг",
-        "Англи хэлний түвшин",
-        "Хятад хэлний мэдлэг",
-        "Академик хөгжил",
-      ],
-      cityLife: [
-        "Хэфэй - Аньхой мужийн төв",
-        "Технологийн хөгжлийн хот",
-        "Байгаль орчны цэвэр",
-        "Хятадын соёлын төв",
-      ],
-    },
-    {
-      id: "3",
-      name: "Шанхайн Жяо Тонгийн Их Сургууль",
-      location: "Шанхай",
-      description: "Хятадын тэргүүлэгч их сургуулиудтай хамтран ажилладаг",
-      imageUrl: "https://example.com/sjtu.jpg",
-      programs: [
-        "Бизнес удирдлага",
-        "Инженерийн чиглэлүүд",
-        "Хууль эрх зүй",
-        "Хэл, соёл",
-      ],
-      facilities: [
-        "Олон улсын стандартын сургалт",
-        "Бизнес инкубатор",
-        "Хэлний сургалтын төв",
-        "Оюутны үйл ажиллагааны төв",
-      ],
-      admissionRequirements: [
-        "Англи хэлний түвшин",
-        "Хятад хэлний мэдлэг",
-        "Академик дундаж",
-        "Хувийн мэдээлэл",
-      ],
-      cityLife: [
-        "Шанхай - Хятадын хамгийн том хот",
-        "Олон улсын санхүүгийн төв",
-        "Худалдаа, үйлдвэрлэлийн төв",
-        "Олон улсын соёлын хөгжил",
-      ],
-    },
-  ];
-
   useEffect(() => {
-    const universityId = params.id as string;
-    const foundUniversity = universitiesData.find(
-      (uni) => uni.id === universityId
-    );
-    if (foundUniversity) {
-      setUniversity(foundUniversity);
-    } else {
+    fetchUniversity();
+  }, [params.id, router]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchUniversity = async () => {
+    try {
+      const universityId = params.id as string;
+      const response = await fetch(`${getUniversitiesUrl()}/${universityId}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        setUniversity(data);
+      } else {
+        console.error("Failed to fetch university");
+        router.push("/universities");
+      }
+    } catch (error) {
+      console.error("Error fetching university:", error);
       router.push("/universities");
     }
-  }, [params.id, router]);
+  };
 
   if (!university) {
     return null;
@@ -259,34 +171,10 @@ export default function UniversityDetailPage() {
                   </div>
                   Хөтөлбөрүүд
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {university.programs.map((program, index) => (
-                    <div
-                      key={index}
-                      className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    >
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                          <svg
-                            className="w-4 h-4 text-green-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                        </div>
-                        <span className="text-gray-800 font-medium">
-                          {program}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                <div className="text-center py-8">
+                  <p className="text-gray-600">
+                    Хөтөлбөрийн дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.
+                  </p>
                 </div>
               </div>
             </section>
@@ -312,27 +200,10 @@ export default function UniversityDetailPage() {
                   </div>
                   Суурь талбай, тоног төхөөрөмж
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {university.facilities.map((facility, index) => (
-                    <div key={index} className="flex items-center">
-                      <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center mr-3">
-                        <svg
-                          className="w-3 h-3 text-purple-600"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </div>
-                      <span className="text-gray-700">{facility}</span>
-                    </div>
-                  ))}
+                <div className="text-center py-8">
+                  <p className="text-gray-600">
+                    Суурь талбайн дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.
+                  </p>
                 </div>
               </div>
             </section>
@@ -358,29 +229,10 @@ export default function UniversityDetailPage() {
                   </div>
                   Элсэлтийн шаардлага
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {university.admissionRequirements.map(
-                    (requirement, index) => (
-                      <div key={index} className="flex items-center">
-                        <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center mr-3">
-                          <svg
-                            className="w-3 h-3 text-orange-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                        </div>
-                        <span className="text-gray-700">{requirement}</span>
-                      </div>
-                    )
-                  )}
+                <div className="text-center py-8">
+                  <p className="text-gray-600">
+                    Элсэлтийн шаардлагын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.
+                  </p>
                 </div>
               </div>
             </section>
@@ -412,27 +264,10 @@ export default function UniversityDetailPage() {
                   </div>
                   Хотын амьдрал
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {university.cityLife.map((life, index) => (
-                    <div key={index} className="flex items-center">
-                      <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center mr-3">
-                        <svg
-                          className="w-3 h-3 text-red-600"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </div>
-                      <span className="text-gray-700">{life}</span>
-                    </div>
-                  ))}
+                <div className="text-center py-8">
+                  <p className="text-gray-600">
+                    Хотын амьдралын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.
+                  </p>
                 </div>
               </div>
             </section>
