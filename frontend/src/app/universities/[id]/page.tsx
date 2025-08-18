@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import LoginForm from "@/components/LoginForm";
+import SignupForm from "@/components/SignupForm";
 import { getUniversitiesUrl } from "@/utils/api";
 
 interface University {
@@ -18,6 +21,7 @@ interface University {
 export default function UniversityDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { showAuth, setShowAuth, isLogin, setIsLogin } = useAuth();
   const [university, setUniversity] = useState<University | null>(null);
 
   useEffect(() => {
@@ -293,6 +297,25 @@ export default function UniversityDetailPage() {
           </div>
         </div>
       </main>
+
+      {/* Authentication Modal */}
+      {showAuth && (
+        <div className="fixed inset-0 bg-white bg-opacity-95 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="relative animate-scale-in">
+            <button
+              onClick={() => setShowAuth(false)}
+              className="absolute -top-4 -right-4 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center"
+            >
+              ×
+            </button>
+            {isLogin ? (
+              <LoginForm onSwitchToSignup={() => setIsLogin(false)} />
+            ) : (
+              <SignupForm onSwitchToLogin={() => setIsLogin(true)} />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

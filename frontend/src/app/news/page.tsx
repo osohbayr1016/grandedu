@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getHealthCheckUrl, getHomeContentUrl } from "@/utils/api";
+import { useAuth } from "@/contexts/AuthContext";
+import LoginForm from "@/components/LoginForm";
+import SignupForm from "@/components/SignupForm";
+import { getHealthCheckUrl, getHomeContentUrl, getNewsUrl } from "@/utils/api";
 import { defaultContent } from "@/utils/defaultContent";
 
 interface PageContent {
@@ -10,9 +13,23 @@ interface PageContent {
   };
 }
 
+interface News {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+  publishDate: string;
+  imageUrl: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function NewsPage() {
+  const { showAuth, setShowAuth, isLogin, setIsLogin } = useAuth();
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [pageContent, setPageContent] = useState<PageContent>({});
+  const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,27 +49,47 @@ export default function NewsPage() {
   }, []);
 
   useEffect(() => {
-    const fetchPageContent = async () => {
+    const fetchData = async () => {
       try {
-        // Reuse home content endpoint to keep design consistent (news content is under "news" section)
-        const response = await fetch(getHomeContentUrl(), {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(10000),
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setPageContent(data);
+        // Fetch page content and news data in parallel
+        const [contentResponse, newsResponse] = await Promise.all([
+          fetch(getHomeContentUrl(), {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(10000),
+          }),
+          fetch(getNewsUrl(), {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(10000),
+          }),
+        ]);
+
+        // Handle page content
+        if (contentResponse.ok) {
+          const contentData = await contentResponse.json();
+          setPageContent(contentData);
         } else {
           setPageContent({});
         }
-      } catch {
+
+        // Handle news data
+        if (newsResponse.ok) {
+          const newsData = await newsResponse.json();
+          setNews(newsData);
+        } else {
+          console.error("Failed to fetch news:", newsResponse.status);
+          setNews([]);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
         setPageContent({});
+        setNews([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchPageContent();
+    fetchData();
   }, []);
 
   const getContent = (
@@ -133,43 +170,105 @@ export default function NewsPage() {
         </div>
       </div>
 
-      {/* News list (same card style as home) */}
+      {/* News list */}
       <main className="py-12 sm:py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Example cards: replicate the home news card style with more spacing */}
-            {[1, 2, 3].map((idx) => (
-              <article
-                key={idx}
-                className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-200"
-              >
-                <div className="flex items-center text-xs sm:text-sm text-gray-500 mb-3">
-                  <span className="bg-blue-100 text-blue-800 px-2 sm:px-3 py-1 rounded-full text-xs font-medium">
-                    {getContent("news", "newsCardTag", "ХӨТӨЛБӨР")}
-                  </span>
-                  <span className="ml-2 sm:ml-3">
-                    {getContent("news", "newsCardDate", "2025 оны 6-р сар")}
-                  </span>
+          <div className="max-w-6xl mx-auto">
+            {news.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {news.map((newsItem) => (
+                  <article
+                    key={newsItem.id}
+                    className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-200 hover:shadow-xl transition-shadow"
+                  >
+                    {newsItem.imageUrl && (
+                      <div className="mb-4">
+                        <img
+                          src={newsItem.imageUrl}
+                          alt={newsItem.title}
+                          className="w-full h-48 object-cover rounded-lg"
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-center text-xs sm:text-sm text-gray-500 mb-3">
+                      <span className="bg-blue-100 text-blue-800 px-2 sm:px-3 py-1 rounded-full text-xs font-medium">
+                        МЭДЭЭ
+                      </span>
+                      <span className="ml-2 sm:ml-3">
+                        {new Date(newsItem.publishDate).toLocaleDateString(
+                          "mn-MN",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }
+                        )}
+                      </span>
+                    </div>
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3 line-clamp-2">
+                      {newsItem.title}
+                    </h2>
+                    <p className="text-gray-600 text-sm sm:text-base line-clamp-3 mb-3">
+                      {newsItem.content}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">
+                        Зохиогч: {newsItem.author}
+                      </span>
+                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                        Дэлгэрэнгүй →
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                  <svg
+                    className="w-12 h-12 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2v10a2 2 0 01-2 2z"
+                    />
+                  </svg>
                 </div>
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
-                  {getContent(
-                    "news",
-                    "newsCardTitle",
-                    "6+6 Хятад хэлний бэлтгэл хөтөлбөр (2025 оны 6-р сарын элсэлт)"
-                  )}
-                </h2>
-                <p className="text-gray-600 text-sm sm:text-base">
-                  {getContent(
-                    "news",
-                    "newsCardDescription",
-                    "Монголд 6 сар, Хятадт 6-11 сар хэлний бэлтгэл"
-                  )}
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Мэдээ олдсонгүй
+                </h3>
+                <p className="text-gray-600">
+                  Одоогоор мэдээ байхгүй байна. Удахгүй шинэ мэдээ нэмэгдэнэ.
                 </p>
-              </article>
-            ))}
+              </div>
+            )}
           </div>
         </div>
       </main>
+
+      {/* Authentication Modal */}
+      {showAuth && (
+        <div className="fixed inset-0 bg-white bg-opacity-95 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="relative animate-scale-in">
+            <button
+              onClick={() => setShowAuth(false)}
+              className="absolute -top-4 -right-4 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center"
+            >
+              ×
+            </button>
+            {isLogin ? (
+              <LoginForm onSwitchToSignup={() => setIsLogin(false)} />
+            ) : (
+              <SignupForm onSwitchToLogin={() => setIsLogin(true)} />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

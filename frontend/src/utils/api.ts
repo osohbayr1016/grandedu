@@ -33,10 +33,13 @@ export const getBestApiUrl = async (): Promise<string> => {
 export const getApiBaseUrl = () => {
   // Check if we're in a browser environment
   if (typeof window !== "undefined") {
-    // If not localhost, use production URL
-    if (window.location.hostname !== "localhost") {
+    // Always use production URL in deployed environment
+    if (
+      window.location.hostname !== "localhost" &&
+      window.location.hostname !== "127.0.0.1"
+    ) {
       console.log(
-        "Using production API URL:",
+        "Using production API URL (deployed):",
         "https://grandedu-g5yo.onrender.com"
       );
       return "https://grandedu-g5yo.onrender.com";
@@ -158,4 +161,57 @@ export const getCreateAdminUrl = () => {
   const url = `${getApiBaseUrl()}/api/auth/create-admin`;
   console.log("Create Admin URL:", url);
   return url;
+};
+
+// Utility function for authenticated fetch requests
+export const authenticatedFetch = async (
+  url: string,
+  options: RequestInit = {}
+) => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const defaultOptions: RequestInit = {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      ...options.headers,
+    },
+  };
+
+  const mergedOptions = {
+    ...defaultOptions,
+    ...options,
+    headers: {
+      ...defaultOptions.headers,
+      ...options.headers,
+    },
+  };
+
+  console.log("Making authenticated request to:", url);
+  console.log("Request options:", mergedOptions);
+
+  const response = await fetch(url, mergedOptions);
+
+  // If unauthorized, clear token and throw error
+  if (response.status === 401) {
+    console.log("Authentication failed, clearing token");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    throw new Error("Authentication failed. Please log in again.");
+  }
+
+  // If server error, log details
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Request failed:", response.status, errorText);
+    throw new Error(
+      `Request failed: ${response.status} ${response.statusText}`
+    );
+  }
+
+  return response;
 };

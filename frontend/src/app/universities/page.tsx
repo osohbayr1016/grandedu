@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import LoginForm from "@/components/LoginForm";
+import SignupForm from "@/components/SignupForm";
 import {
   getHealthCheckUrl,
   getHomeContentUrl,
@@ -28,6 +31,7 @@ interface University {
 
 export default function UniversitiesPage() {
   const router = useRouter();
+  const { showAuth, setShowAuth, isLogin, setIsLogin } = useAuth();
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [pageContent, setPageContent] = useState<PageContent>({});
   const [universities, setUniversities] = useState<University[]>([]);
@@ -251,6 +255,25 @@ export default function UniversitiesPage() {
           </div>
         </div>
       </main>
+
+      {/* Authentication Modal */}
+      {showAuth && (
+        <div className="fixed inset-0 bg-white bg-opacity-95 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="relative animate-scale-in">
+            <button
+              onClick={() => setShowAuth(false)}
+              className="absolute -top-4 -right-4 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center"
+            >
+              ×
+            </button>
+            {isLogin ? (
+              <LoginForm onSwitchToSignup={() => setIsLogin(false)} />
+            ) : (
+              <SignupForm onSwitchToLogin={() => setIsLogin(true)} />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

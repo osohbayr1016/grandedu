@@ -16,9 +16,15 @@ interface Program {
   description: string;
   duration: string;
   level: string;
-  imageUrl: string;
-  googleFormLink: string;
+  price?: string;
+  location?: string;
+  university?: string;
+  requirements?: string;
+  imageUrl?: string;
+  googleFormLink?: string;
   isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface PageContent {
@@ -28,14 +34,13 @@ interface PageContent {
 }
 
 export default function ProgramsPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, showAuth, setShowAuth, isLogin, setIsLogin } =
+    useAuth();
   const { programs } = usePrograms();
   const [pageContent, setPageContent] = useState<PageContent>({});
   const [contentLoading, setContentLoading] = useState(true);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [showAuth, setShowAuth] = useState<boolean>(false);
-  const [isLogin, setIsLogin] = useState<boolean>(true);
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -340,155 +345,190 @@ export default function ProgramsPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
-            {programs
-              .filter((program) => program.isActive)
-              .map((program) => (
-                <div
-                  key={program.id}
-                  className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 flex flex-col cursor-pointer transform hover:scale-105 hover:-translate-y-2 border border-gray-100"
-                  onClick={() => openModal(program)}
-                >
-                  {program.imageUrl ? (
-                    <div className="relative h-32 sm:h-48 overflow-hidden">
-                      <Image
-                        src={program.imageUrl}
-                        alt={program.title}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-110"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                    </div>
-                  ) : (
-                    <div className="h-32 sm:h-48 bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 flex items-center justify-center relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
-                      <div className="relative z-10 text-white text-center">
-                        <svg
-                          className="w-12 h-12 mx-auto mb-2 opacity-80"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                          />
-                        </svg>
-                        <p className="text-sm font-medium">
-                          {getContent(
-                            "programs",
-                            "fallbackImageText",
-                            "Хөтөлбөр"
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="p-6 flex flex-col h-full">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
-                        {program.title}
-                      </h3>
-                      <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs sm:text-sm font-medium border border-gray-200">
-                        {program.duration}
-                      </span>
-                    </div>
-
-                    <p className="text-gray-600 mb-4 text-sm sm:text-base leading-relaxed line-clamp-3">
-                      {program.description}
-                    </p>
-
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg p-3 group-hover:bg-blue-50 transition-colors duration-300">
-                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors duration-300">
-                          <svg
-                            className="w-4 h-4 text-blue-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                            />
-                          </svg>
-                        </div>
-                        <span className="font-medium">{program.level}</span>
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg p-3 group-hover:bg-purple-50 transition-colors duration-300">
-                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-purple-200 transition-colors duration-300">
-                          <svg
-                            className="w-4 h-4 text-purple-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                            />
-                          </svg>
-                        </div>
-                        <span className="font-medium">{program.duration}</span>
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg p-3 group-hover:bg-green-50 transition-colors duration-300">
-                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-green-200 transition-colors duration-300">
-                          <svg
-                            className="w-4 h-4 text-green-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                        </div>
-                        <span className="font-semibold text-green-700">
-                          {program.isActive ? "Идэвхтэй" : "Идэвхгүй"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleApply(program);
-                      }}
-                      className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 text-sm sm:text-base mt-auto transform hover:scale-105 shadow-md group-hover:shadow-lg"
+          <>
+            {programs.filter((program) => program.isActive).length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
+                {programs
+                  .filter((program) => program.isActive)
+                  .map((program) => (
+                    <div
+                      key={program.id}
+                      className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 flex flex-col cursor-pointer transform hover:scale-105 hover:-translate-y-2 border border-gray-100"
+                      onClick={() => openModal(program)}
                     >
-                      <span className="flex items-center justify-center">
-                        <svg
-                          className="w-4 h-4 mr-2"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      {program.imageUrl ? (
+                        <div className="relative h-32 sm:h-48 overflow-hidden">
+                          <Image
+                            src={program.imageUrl}
+                            alt={program.title}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-110"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           />
-                        </svg>
-                        {getContent("programs", "applyButton", "Хүсэлт илгээх")}
-                      </span>
-                    </button>
-                  </div>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                        </div>
+                      ) : (
+                        <div className="h-32 sm:h-48 bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 flex items-center justify-center relative overflow-hidden">
+                          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
+                          <div className="relative z-10 text-white text-center">
+                            <svg
+                              className="w-12 h-12 mx-auto mb-2 opacity-80"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                              />
+                            </svg>
+                            <p className="text-sm font-medium">
+                              {getContent(
+                                "programs",
+                                "fallbackImageText",
+                                "Хөтөлбөр"
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="p-6 flex flex-col h-full">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-xl sm:text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+                            {program.title}
+                          </h3>
+                          <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs sm:text-sm font-medium border border-gray-200">
+                            {program.duration}
+                          </span>
+                        </div>
+
+                        <p className="text-gray-600 mb-4 text-sm sm:text-base leading-relaxed line-clamp-3">
+                          {program.description}
+                        </p>
+
+                        <div className="space-y-3 mb-6">
+                          <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg p-3 group-hover:bg-blue-50 transition-colors duration-300">
+                            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors duration-300">
+                              <svg
+                                className="w-4 h-4 text-blue-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                                />
+                              </svg>
+                            </div>
+                            <span className="font-medium">{program.level}</span>
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg p-3 group-hover:bg-purple-50 transition-colors duration-300">
+                            <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-purple-200 transition-colors duration-300">
+                              <svg
+                                className="w-4 h-4 text-purple-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                                />
+                              </svg>
+                            </div>
+                            <span className="font-medium">
+                              {program.duration}
+                            </span>
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg p-3 group-hover:bg-green-50 transition-colors duration-300">
+                            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-green-200 transition-colors duration-300">
+                              <svg
+                                className="w-4 h-4 text-green-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>
+                            </div>
+                            <span className="font-semibold text-green-700">
+                              {program.isActive ? "Идэвхтэй" : "Идэвхгүй"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleApply(program);
+                          }}
+                          className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 text-sm sm:text-base mt-auto transform hover:scale-105 shadow-md group-hover:shadow-lg"
+                        >
+                          <span className="flex items-center justify-center">
+                            <svg
+                              className="w-4 h-4 mr-2"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                              />
+                            </svg>
+                            {getContent(
+                              "programs",
+                              "applyButton",
+                              "Хүсэлт илгээх"
+                            )}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                  <svg
+                    className="w-12 h-12 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                    />
+                  </svg>
                 </div>
-              ))}
-          </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Хөтөлбөр олдсонгүй
+                </h3>
+                <p className="text-gray-600">
+                  Одоогоор хөтөлбөр байхгүй байна. Удахгүй шинэ хөтөлбөр
+                  нэмэгдэнэ.
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
 

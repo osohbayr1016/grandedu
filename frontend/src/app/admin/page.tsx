@@ -15,6 +15,7 @@ import {
   getProgramsUrl,
   getNewsUrl,
   getUniversitiesUrl,
+  authenticatedFetch,
 } from "@/utils/api";
 
 interface PageContent {
@@ -180,12 +181,8 @@ export default function AdminPage() {
         : getUniversitiesUrl();
       const method = editingUniversity ? "PUT" : "POST";
 
-      const response = await fetch(url, {
+      const response = await authenticatedFetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
         body: JSON.stringify(universityForm),
       });
 
@@ -199,11 +196,15 @@ export default function AdminPage() {
           description: "",
           imageUrl: "",
         });
-      } else {
-        console.error("Failed to save university");
+        alert("Их сургууль амжилттай хадгалагдлаа!");
       }
     } catch (error) {
       console.error("Error saving university:", error);
+      alert("Их сургууль хадгалахад алдаа гарлаа: " + (error as Error).message);
+      // If authentication failed, redirect to login
+      if ((error as Error).message.includes("Authentication failed")) {
+        router.push("/");
+      }
     }
   };
 
@@ -551,11 +552,8 @@ export default function AdminPage() {
 
   const fetchContent = async () => {
     try {
-      const response = await fetch(getContentUrl(), {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const response = await authenticatedFetch(getContentUrl());
+
       if (response.ok) {
         const data = await response.json();
         setContent(data);
@@ -579,8 +577,13 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error("Контент татахад алдаа гарлаа:", error);
-      // Use sample content on error
-      setSampleContent();
+      // If authentication failed, redirect to login
+      if ((error as Error).message.includes("Authentication failed")) {
+        router.push("/");
+      } else {
+        // Use sample content on other errors
+        setSampleContent();
+      }
     }
   };
 
@@ -914,12 +917,8 @@ export default function AdminPage() {
   ) => {
     setSaving(true);
     try {
-      const response = await fetch(getContentUrl(), {
+      const response = await authenticatedFetch(getContentUrl(), {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
         body: JSON.stringify({
           page: "home",
           section,
@@ -932,9 +931,15 @@ export default function AdminPage() {
       if (response.ok) {
         await fetchContent();
         setEditingField(null);
+        alert("Контент амжилттай хадгалагдлаа!");
       }
     } catch (error) {
       console.error("Контент хадгалахад алдаа гарлаа:", error);
+      alert("Контент хадгалахад алдаа гарлаа: " + (error as Error).message);
+      // If authentication failed, redirect to login
+      if ((error as Error).message.includes("Authentication failed")) {
+        router.push("/");
+      }
     } finally {
       setSaving(false);
     }

@@ -1,6 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { getProgramsUrl } from "@/utils/api";
 
 interface Program {
   id: string;
@@ -8,9 +15,15 @@ interface Program {
   description: string;
   duration: string;
   level: string;
-  imageUrl: string;
-  googleFormLink: string;
+  price?: string;
+  location?: string;
+  university?: string;
+  requirements?: string;
+  imageUrl?: string;
+  googleFormLink?: string;
   isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface ProgramsContextType {
@@ -22,48 +35,42 @@ interface ProgramsContextType {
   toggleProgramStatus: (id: string) => void;
 }
 
-const defaultPrograms: Program[] = [
-  {
-    id: "1",
-    title: "Бакалаврын хөтөлбөр",
-    description: "4 жилийн бакалаврын зэрэг",
-    duration: "4 жил",
-    level: "Бакалавр",
-    imageUrl:
-      "https://images.unsplash.com/photo-1523050854058-8df90110c9e1?w=800&h=600&fit=crop",
-    googleFormLink: "https://forms.google.com/bachelor",
-    isActive: true,
-  },
-  {
-    id: "2",
-    title: "Магистрын хөтөлбөр",
-    description: "2 жилийн магистрын зэрэг",
-    duration: "2 жил",
-    level: "Магистр",
-    imageUrl:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop",
-    googleFormLink: "https://forms.google.com/master",
-    isActive: true,
-  },
-  {
-    id: "3",
-    title: "Докторын хөтөлбөр",
-    description: "3-4 жилийн докторын зэрэг",
-    duration: "3-4 жил",
-    level: "Доктор",
-    imageUrl:
-      "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&h=600&fit=crop",
-    googleFormLink: "https://forms.google.com/phd",
-    isActive: true,
-  },
-];
+// Remove mock data - will be fetched from API
 
 const ProgramsContext = createContext<ProgramsContextType | undefined>(
   undefined
 );
 
 export function ProgramsProvider({ children }: { children: ReactNode }) {
-  const [programs, setPrograms] = useState<Program[]>(defaultPrograms);
+  const [programs, setPrograms] = useState<Program[]>([]);
+
+  // Fetch programs from API on component mount
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      try {
+        const response = await fetch(getProgramsUrl(), {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          signal: AbortSignal.timeout(10000),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setPrograms(data);
+        } else {
+          console.error("Failed to fetch programs:", response.status);
+          setPrograms([]);
+        }
+      } catch (error) {
+        console.error("Error fetching programs:", error);
+        setPrograms([]);
+      }
+    };
+
+    fetchPrograms();
+  }, []);
 
   const updatePrograms = (newPrograms: Program[]) => {
     setPrograms(newPrograms);

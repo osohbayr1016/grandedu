@@ -15,8 +15,22 @@ const PORT = process.env.PORT || 5001;
 const prisma = new PrismaClient();
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "https://grandedu-frontend.vercel.app",
+      "https://grandedu.vercel.app",
+      /\.vercel\.app$/,
+      /localhost:\d+$/,
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Routes
 app.use("/api/auth", authRoutes);
