@@ -20,7 +20,7 @@ export default function Home() {
   const [pageContent, setPageContent] = useState<PageContent>({});
   const [contentLoading, setContentLoading] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
-  const { showAuth, setShowAuth, isLogin, setIsLogin } = useAuth();
+  const { user, showAuth, setShowAuth, isLogin, setIsLogin } = useAuth();
 
   useEffect(() => {
     const checkBackendHealth = async () => {
@@ -191,12 +191,14 @@ export default function Home() {
                 "Бидэнтэй холбогдоод хятадад амжилттай суралцаарай"
               )}
             </p>
-            <button
-              onClick={() => setShowAuth(true)}
-              className="bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-lg text-base sm:text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg animate-fade-in-up animate-delay-700"
-            >
-              {getContent("hero", "ctaButton", "Эхлэх")}
-            </button>
+            {!user && (
+              <button
+                onClick={() => setShowAuth(true)}
+                className="bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-lg text-base sm:text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg animate-fade-in-up animate-delay-700"
+              >
+                {getContent("hero", "ctaButton", "Нэвтрэх")}
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -644,19 +646,21 @@ export default function Home() {
 
       {/* Authentication Modal */}
       {showAuth && (
-        <div className="fixed inset-0 bg-white bg-opacity-95 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="relative animate-scale-in">
-            <button
-              onClick={() => setShowAuth(false)}
-              className="absolute -top-4 -right-4 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center"
-            >
-              ×
-            </button>
-            {isLogin ? (
-              <LoginForm onSwitchToSignup={() => setIsLogin(false)} />
-            ) : (
-              <SignupForm onSwitchToLogin={() => setIsLogin(true)} />
-            )}
+        <div className="fixed inset-0 bg-white bg-opacity-95 backdrop-blur-sm z-50 animate-fade-in overflow-y-auto">
+          <div className="min-h-full flex items-center justify-center p-4 py-8">
+            <div className="relative animate-scale-in">
+              <button
+                onClick={() => setShowAuth(false)}
+                className="absolute -top-4 -right-4 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center z-10"
+              >
+                ×
+              </button>
+              {isLogin ? (
+                <LoginForm onSwitchToSignup={() => setIsLogin(false)} />
+              ) : (
+                <SignupForm onSwitchToLogin={() => setIsLogin(true)} />
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -8,8 +8,18 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const schema = yup
   .object({
-    firstName: yup.string().required("Нэр заавал оруулна уу"),
-    lastName: yup.string().required("Овог заавал оруулна уу"),
+    firstName: yup
+      .string()
+      .required("Нэр заавал оруулна уу")
+      .min(2, "Нэр хамгийн багадаа 2 тэмдэгт байх ёстой")
+      .max(50, "Нэр хамгийн ихдээ 50 тэмдэгт байх ёстой")
+      .matches(/^[а-яёА-ЯЁa-zA-Z\s]+$/, "Нэрэнд зөвхөн үсэг орохыг зөвшөөрнө"),
+    lastName: yup
+      .string()
+      .required("Овог заавал оруулна уу")
+      .min(2, "Овог хамгийн багадаа 2 тэмдэгт байх ёстой")
+      .max(50, "Овог хамгийн ихдээ 50 тэмдэгт байх ёстой")
+      .matches(/^[а-яёА-ЯЁa-zA-Z\s]+$/, "Овогт зөвхөн үсэг орохыг зөвшөөрнө"),
     email: yup
       .string()
       .email("Хүчинтэй имэйл хаяг оруулна уу")

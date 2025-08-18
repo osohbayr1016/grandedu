@@ -6,6 +6,28 @@ import { PrismaClient } from "@prisma/client";
 const router = express.Router();
 const prisma = new PrismaClient();
 
+// Generate unique 6-digit user code
+const generateUserCode = async (): Promise<string> => {
+  let userCode: string;
+  let isUnique = false;
+
+  while (!isUnique) {
+    // Generate 6-digit random number
+    userCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Check if this code already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { userCode },
+    });
+
+    if (!existingUser) {
+      isUnique = true;
+    }
+  }
+
+  return userCode!;
+};
+
 // Signup
 router.post("/signup", async (req, res) => {
   try {
@@ -53,9 +75,13 @@ router.post("/signup", async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Generate unique user code
+    const userCode = await generateUserCode();
+
     // Create user
     const user = await prisma.user.create({
       data: {
+        userCode,
         firstName,
         lastName,
         email,
@@ -74,6 +100,7 @@ router.post("/signup", async (req, res) => {
       token,
       user: {
         id: user.id,
+        userCode: user.userCode,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
@@ -120,11 +147,22 @@ router.post("/login", async (req, res) => {
       expiresIn: "7d",
     });
 
+    // Generate userCode for existing users who don't have one
+    let userCode = user.userCode;
+    if (!userCode) {
+      userCode = await generateUserCode();
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { userCode },
+      });
+    }
+
     res.json({
       message: "Login successful",
       token,
       user: {
         id: user.id,
+        userCode: userCode,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,

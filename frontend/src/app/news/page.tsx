@@ -6,6 +6,7 @@ import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
 import { getHealthCheckUrl, getHomeContentUrl, getNewsUrl } from "@/utils/api";
 import { defaultContent } from "@/utils/defaultContent";
+import Link from "next/link";
 
 interface PageContent {
   [section: string]: {
@@ -177,9 +178,10 @@ export default function NewsPage() {
             {news.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {news.map((newsItem) => (
-                  <article
+                  <Link
                     key={newsItem.id}
-                    className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-200 hover:shadow-xl transition-shadow"
+                    href={`/news/${newsItem.id}`}
+                    className="block bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-200 hover:shadow-xl transition-shadow group"
                   >
                     {newsItem.imageUrl && (
                       <div className="mb-4">
@@ -205,7 +207,7 @@ export default function NewsPage() {
                         )}
                       </span>
                     </div>
-                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3 line-clamp-2">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
                       {newsItem.title}
                     </h2>
                     <p className="text-gray-600 text-sm sm:text-base line-clamp-3 mb-3">
@@ -215,11 +217,11 @@ export default function NewsPage() {
                       <span className="text-xs text-gray-500">
                         Зохиогч: {newsItem.author}
                       </span>
-                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                      <span className="text-blue-600 group-hover:text-blue-800 text-sm font-medium">
                         Дэлгэрэнгүй →
-                      </button>
+                      </span>
                     </div>
-                  </article>
+                  </Link>
                 ))}
               </div>
             ) : (

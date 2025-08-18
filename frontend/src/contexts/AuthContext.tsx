@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 
 interface User {
   id: string;
+  userCode?: string;
   firstName: string;
   lastName: string;
   email: string;

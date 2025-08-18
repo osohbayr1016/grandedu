@@ -139,13 +139,14 @@ export default function Navigation() {
                       aria-orientation="vertical"
                       className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-md ring-1 ring-black/5 z-50 overflow-hidden"
                     >
-                      <button
+                      <Link
+                        href="/profile"
                         role="menuitem"
                         onClick={() => setUserMenuOpen(false)}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 block"
                       >
                         Профайл
-                      </button>
+                      </Link>
                       <button
                         role="menuitem"
                         onClick={logout}
