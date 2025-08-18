@@ -28,6 +28,7 @@ interface Program {
 
 interface ProgramsContextType {
   programs: Program[];
+  fetchPrograms: () => Promise<void>;
   updatePrograms: (programs: Program[]) => void;
   addProgram: (program: Program) => void;
   updateProgram: (id: string, program: Partial<Program>) => void;
@@ -44,33 +45,31 @@ const ProgramsContext = createContext<ProgramsContextType | undefined>(
 export function ProgramsProvider({ children }: { children: ReactNode }) {
   const [programs, setPrograms] = useState<Program[]>([]);
 
-  // Fetch programs from API on component mount
-  useEffect(() => {
-    const fetchPrograms = async () => {
-      try {
-        const response = await fetch(getProgramsUrl(), {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          signal: AbortSignal.timeout(10000),
-        });
+  // Fetch programs function that can be called manually
+  const fetchPrograms = async () => {
+    try {
+      const response = await fetch(getProgramsUrl(), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        signal: AbortSignal.timeout(10000),
+      });
 
-        if (response.ok) {
-          const data = await response.json();
-          setPrograms(data);
-        } else {
-          console.error("Failed to fetch programs:", response.status);
-          setPrograms([]);
-        }
-      } catch (error) {
-        console.error("Error fetching programs:", error);
+      if (response.ok) {
+        const data = await response.json();
+        setPrograms(data);
+      } else {
+        console.error("Failed to fetch programs:", response.status);
         setPrograms([]);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching programs:", error);
+      setPrograms([]);
+    }
+  };
 
-    fetchPrograms();
-  }, []);
+  // No automatic fetch on mount - only fetch when explicitly called
 
   const updatePrograms = (newPrograms: Program[]) => {
     setPrograms(newPrograms);
@@ -106,6 +105,7 @@ export function ProgramsProvider({ children }: { children: ReactNode }) {
     <ProgramsContext.Provider
       value={{
         programs,
+        fetchPrograms,
         updatePrograms,
         addProgram,
         updateProgram,

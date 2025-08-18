@@ -36,7 +36,7 @@ interface PageContent {
 export default function ProgramsPage() {
   const { user, logout, showAuth, setShowAuth, isLogin, setIsLogin } =
     useAuth();
-  const { programs } = usePrograms();
+  const { programs, fetchPrograms } = usePrograms();
   const [pageContent, setPageContent] = useState<PageContent>({});
   const [contentLoading, setContentLoading] = useState(true);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
@@ -45,6 +45,7 @@ export default function ProgramsPage() {
 
   useEffect(() => {
     fetchPageContent();
+    fetchPrograms(); // Fetch programs when the programs page loads
   }, []);
 
   useEffect(() => {
