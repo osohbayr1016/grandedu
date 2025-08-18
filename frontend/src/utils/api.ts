@@ -163,6 +163,25 @@ export const getCreateAdminUrl = () => {
   return url;
 };
 
+// Password reset endpoints
+export const getForgotPasswordUrl = () => {
+  const url = `${getApiBaseUrl()}/api/auth/forgot-password`;
+  console.log("Forgot Password URL:", url);
+  return url;
+};
+
+export const getVerifyResetCodeUrl = () => {
+  const url = `${getApiBaseUrl()}/api/auth/verify-reset-code`;
+  console.log("Verify Reset Code URL:", url);
+  return url;
+};
+
+export const getResetPasswordUrl = () => {
+  const url = `${getApiBaseUrl()}/api/auth/reset-password`;
+  console.log("Reset Password URL:", url);
+  return url;
+};
+
 // Utility function for authenticated fetch requests
 export const authenticatedFetch = async (
   url: string,

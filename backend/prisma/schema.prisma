@@ -78,3 +78,18 @@ model PageContent {
 
   @@unique([page, section, field])
 }
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  email     String
+  code      String   // 6-digit verification code
+  token     String   @unique // JWT token for additional security
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([code])
+  @@index([token])
+}

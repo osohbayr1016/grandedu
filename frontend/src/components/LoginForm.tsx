@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
 const schema = yup
@@ -27,6 +28,7 @@ export default function LoginForm({ onSwitchToSignup }: LoginFormProps) {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
+  const router = useRouter();
 
   const {
     register,
@@ -160,6 +162,15 @@ export default function LoginForm({ onSwitchToSignup }: LoginFormProps) {
           {isLoading ? "Нэвтэрч байна..." : "Нэвтрэх"}
         </button>
       </form>
+
+      <div className="mt-4 text-center">
+        <button
+          onClick={() => router.push("/forgot-password")}
+          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+        >
+          Нууц үг мартсан уу?
+        </button>
+      </div>
 
       <div className="mt-4 sm:mt-6 text-center">
         <p className="text-gray-600 text-sm sm:text-base">

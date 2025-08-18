@@ -2,6 +2,7 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
+import { sendEmail, generatePasswordResetEmail } from "../utils/emailService";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -205,7 +206,7 @@ router.get("/users", async (req, res) => {
 router.get("/users/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const user = await prisma.user.findUnique({
       where: { id },
       select: {
@@ -237,7 +238,7 @@ router.get("/users/:id", async (req, res) => {
 router.patch("/users/:id/highlight", async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const user = await prisma.user.findUnique({
       where: { id },
       select: { isHighlighted: true },
@@ -399,6 +400,206 @@ router.post("/create-admin", async (req, res) => {
   } catch (error) {
     console.error("Create admin error:", error);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Generate 6-digit verification code
+const generateVerificationCode = (): string => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+// Forgot Password - Send reset code via email
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Имэйл хаяг заавал оруулна уу" });
+    }
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "Энэ имэйл хаягаар бүртгэлтэй хэрэглэгч олдсонгүй" });
+    }
+
+    // Generate verification code and reset token
+    const code = generateVerificationCode();
+    const resetToken = jwt.sign(
+      { email, code },
+      process.env.RESET_TOKEN_SECRET || process.env.JWT_SECRET!,
+      { expiresIn: "1h" }
+    );
+
+    // Calculate expiry time (1 hour from now)
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1);
+
+    // Delete any existing reset requests for this email
+    await prisma.passwordReset.deleteMany({
+      where: { email },
+    });
+
+    // Create new password reset record
+    await prisma.passwordReset.create({
+      data: {
+        email,
+        code,
+        token: resetToken,
+        expiresAt,
+      },
+    });
+
+    // Generate and send email
+    const emailTemplate = generatePasswordResetEmail(code, email);
+    const emailSent = await sendEmail({
+      to: email,
+      subject: emailTemplate.subject,
+      html: emailTemplate.html,
+    });
+
+    if (!emailSent) {
+      return res.status(500).json({ message: "Имэйл илгээхэд алдаа гарлаа" });
+    }
+
+    res.json({
+      message: "Нууц үг сэргээх код таны имэйл хаяг руу илгээгдлээ",
+      email: email,
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ message: "Серверийн алдаа гарлаа" });
+  }
+});
+
+// Verify Reset Code
+router.post("/verify-reset-code", async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      return res
+        .status(400)
+        .json({ message: "Имэйл хаяг болон код заавал оруулна уу" });
+    }
+
+    // Find reset request
+    const resetRequest = await prisma.passwordReset.findFirst({
+      where: {
+        email,
+        code,
+        used: false,
+      },
+    });
+
+    if (!resetRequest) {
+      return res.status(400).json({ message: "Буруу код эсвэл имэйл хаяг" });
+    }
+
+    // Check if expired
+    if (new Date() > resetRequest.expiresAt) {
+      return res
+        .status(400)
+        .json({ message: "Кодын хүчинтэй хугацаа дууссан байна" });
+    }
+
+    // Verify token
+    try {
+      jwt.verify(
+        resetRequest.token,
+        process.env.RESET_TOKEN_SECRET || process.env.JWT_SECRET!
+      );
+    } catch (tokenError) {
+      return res.status(400).json({ message: "Хүчингүй код" });
+    }
+
+    res.json({
+      message: "Код амжилттай баталгаажлаа",
+      resetToken: resetRequest.token,
+    });
+  } catch (error) {
+    console.error("Verify reset code error:", error);
+    res.status(500).json({ message: "Серверийн алдаа гарлаа" });
+  }
+});
+
+// Reset Password
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { resetToken, newPassword, confirmPassword } = req.body;
+
+    if (!resetToken || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "Бүх талбарыг бөглөнө үү" });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "Нууц үг таарахгүй байна" });
+    }
+
+    if (newPassword.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой" });
+    }
+
+    // Verify reset token
+    let decoded;
+    try {
+      decoded = jwt.verify(
+        resetToken,
+        process.env.RESET_TOKEN_SECRET || process.env.JWT_SECRET!
+      ) as any;
+    } catch (tokenError) {
+      return res
+        .status(400)
+        .json({ message: "Хүчингүй эсвэл хугацаа дууссан токен" });
+    }
+
+    // Find reset request
+    const resetRequest = await prisma.passwordReset.findUnique({
+      where: { token: resetToken },
+    });
+
+    if (!resetRequest || resetRequest.used) {
+      return res
+        .status(400)
+        .json({ message: "Хүчингүй эсвэл хэдийн ашигласан токен" });
+    }
+
+    // Check if expired
+    if (new Date() > resetRequest.expiresAt) {
+      return res
+        .status(400)
+        .json({ message: "Кодын хүчинтэй хугацаа дууссан байна" });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update user password
+    await prisma.user.update({
+      where: { email: resetRequest.email },
+      data: { password: hashedPassword, updatedAt: new Date() },
+    });
+
+    // Mark reset request as used
+    await prisma.passwordReset.update({
+      where: { token: resetToken },
+      data: { used: true, updatedAt: new Date() },
+    });
+
+    res.json({
+      message: "Нууц үг амжилттай өөрчлөгдлөө",
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ message: "Серверийн алдаа гарлаа" });
   }
 });
 
