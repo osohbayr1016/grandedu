@@ -548,7 +548,7 @@ export default function AdminPage() {
       setFooterSaving(true);
 
       // Save footer content to backend
-      const response = await authenticatedFetch("/api/content/footer", {
+      const response = await authenticatedFetch(`${getContentUrl()}/footer`, {
         method: "POST",
         body: JSON.stringify(footerContent),
       });
