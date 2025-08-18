@@ -153,8 +153,12 @@ export default function AdminPage() {
     password: "",
     phoneNumber: "",
   });
-  const [userFilter, setUserFilter] = useState<"all" | "starred" | "admin" | "user">("all");
+  const [userFilter, setUserFilter] = useState<
+    "all" | "starred" | "admin" | "user"
+  >("all");
   const [userSortBy, setUserSortBy] = useState<"name" | "id" | "date">("date");
+  const [footerSaving, setFooterSaving] = useState(false);
+  const [footerHasChanges, setFooterHasChanges] = useState(false);
 
   const handleAddUniversity = () => {
     setEditingUniversity(null);
@@ -474,18 +478,17 @@ export default function AdminPage() {
   const handleDeleteUser = async (id: string) => {
     if (confirm("Энэ хэрэглэгчийг устгахдаа итгэлтэй байна уу?")) {
       try {
-        const response = await authenticatedFetch(
-          `${getUsersUrl()}/${id}`,
-          {
-            method: "DELETE",
-          }
-        );
+        const response = await authenticatedFetch(`${getUsersUrl()}/${id}`, {
+          method: "DELETE",
+        });
         if (response.ok) {
           await fetchUsers();
         }
       } catch (error) {
         console.error("Error deleting user:", error);
-        alert("Хэрэглэгчийг устгахад алдаа гарлаа: " + (error as Error).message);
+        alert(
+          "Хэрэглэгчийг устгахад алдаа гарлаа: " + (error as Error).message
+        );
       }
     }
   };
@@ -506,7 +509,9 @@ export default function AdminPage() {
         }
       } catch (error) {
         console.error("Error updating user role:", error);
-        alert("Хэрэглэгчийн эрх өөрчлөхөд алдаа гарлаа: " + (error as Error).message);
+        alert(
+          "Хэрэглэгчийн эрх өөрчлөхөд алдаа гарлаа: " + (error as Error).message
+        );
       }
     }
   };
@@ -524,7 +529,9 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error("Error toggling user highlight:", error);
-      alert("Хэрэглэгчийг тэмдэглэхэд алдаа гарлаа: " + (error as Error).message);
+      alert(
+        "Хэрэглэгчийг тэмдэглэхэд алдаа гарлаа: " + (error as Error).message
+      );
     }
   };
 
@@ -533,6 +540,31 @@ export default function AdminPage() {
     updateFooterContent({
       [field]: value,
     });
+    setFooterHasChanges(true);
+  };
+
+  const handleSaveFooter = async () => {
+    try {
+      setFooterSaving(true);
+      
+      // Save footer content to backend
+      const response = await authenticatedFetch("/api/content/footer", {
+        method: "POST",
+        body: JSON.stringify(footerContent),
+      });
+
+      if (response.ok) {
+        setFooterHasChanges(false);
+        alert("Хөл хэсгийн мэдээлэл амжилттай хадгалагдлаа!");
+      } else {
+        throw new Error("Failed to save footer content");
+      }
+    } catch (error) {
+      console.error("Error saving footer content:", error);
+      alert("Хөл хэсгийн мэдээлэл хадгалахад алдаа гарлаа: " + (error as Error).message);
+    } finally {
+      setFooterSaving(false);
+    }
   };
 
   useEffect(() => {
@@ -546,6 +578,19 @@ export default function AdminPage() {
     // Initialize all data fetching
     initializeAdminData();
   }, [user, authLoading, router]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Add keyboard shortcut for saving footer (Ctrl+S)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 's' && activeSection === "footer" && footerHasChanges && !footerSaving) {
+        e.preventDefault();
+        handleSaveFooter();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeSection, footerHasChanges, footerSaving]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const initializeAdminData = async () => {
     try {
@@ -1923,10 +1968,16 @@ export default function AdminPage() {
               {/* Filter and Sort Controls */}
               <div className="flex flex-col sm:flex-row gap-3 mb-6 p-4 bg-gray-50 rounded-lg">
                 <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Шүүлтүүр</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Шүүлтүүр
+                  </label>
                   <select
                     value={userFilter}
-                    onChange={(e) => setUserFilter(e.target.value as "all" | "starred" | "admin" | "user")}
+                    onChange={(e) =>
+                      setUserFilter(
+                        e.target.value as "all" | "starred" | "admin" | "user"
+                      )
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   >
                     <option value="all">Бүх хэрэглэгч</option>
@@ -1936,10 +1987,14 @@ export default function AdminPage() {
                   </select>
                 </div>
                 <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Эрэмбэлэх</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Эрэмбэлэх
+                  </label>
                   <select
                     value={userSortBy}
-                    onChange={(e) => setUserSortBy(e.target.value as "name" | "id" | "date")}
+                    onChange={(e) =>
+                      setUserSortBy(e.target.value as "name" | "id" | "date")
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   >
                     <option value="date">Огнооны дагуу</option>
@@ -1949,12 +2004,15 @@ export default function AdminPage() {
                 </div>
                 <div className="flex items-end">
                   <div className="text-sm text-gray-600 px-3 py-2 bg-white rounded-lg border">
-                    {users.filter((u) => {
-                      if (userFilter === "starred") return u.isHighlighted;
-                      if (userFilter === "admin") return u.role === "admin";
-                      if (userFilter === "user") return u.role === "user";
-                      return true;
-                    }).length} хэрэглэгч
+                    {
+                      users.filter((u) => {
+                        if (userFilter === "starred") return u.isHighlighted;
+                        if (userFilter === "admin") return u.role === "admin";
+                        if (userFilter === "user") return u.role === "user";
+                        return true;
+                      }).length
+                    }{" "}
+                    хэрэглэгч
                   </div>
                 </div>
               </div>
@@ -1993,24 +2051,28 @@ export default function AdminPage() {
                         // Search filter
                         if (searchQuery.trim()) {
                           const q = searchQuery.toLowerCase();
-                          const matchesSearch = 
+                          const matchesSearch =
                             user.firstName.toLowerCase().includes(q) ||
                             user.lastName.toLowerCase().includes(q) ||
                             user.email.toLowerCase().includes(q) ||
-                            (user.userCode && user.userCode.toLowerCase().includes(q));
+                            (user.userCode &&
+                              user.userCode.toLowerCase().includes(q));
                           if (!matchesSearch) return false;
                         }
-                        
+
                         // Category filter
                         if (userFilter === "starred") return user.isHighlighted;
-                        if (userFilter === "admin") return user.role === "admin";
+                        if (userFilter === "admin")
+                          return user.role === "admin";
                         if (userFilter === "user") return user.role === "user";
                         return true;
                       })
                       .sort((a, b) => {
                         if (userSortBy === "name") {
-                          const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
-                          const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
+                          const nameA =
+                            `${a.firstName} ${a.lastName}`.toLowerCase();
+                          const nameB =
+                            `${b.firstName} ${b.lastName}`.toLowerCase();
                           return nameA.localeCompare(nameB);
                         }
                         if (userSortBy === "id") {
@@ -2019,7 +2081,10 @@ export default function AdminPage() {
                           return idA.localeCompare(idB);
                         }
                         // Default: sort by date (newest first)
-                        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                        return (
+                          new Date(b.createdAt).getTime() -
+                          new Date(a.createdAt).getTime()
+                        );
                       })
                       .map((user) => (
                         <tr key={user.id} className="hover:bg-gray-50">
@@ -2046,13 +2111,19 @@ export default function AdminPage() {
                                     {user.firstName} {user.lastName}
                                   </div>
                                   {user.isHighlighted && (
-                                    <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg
+                                      className="w-4 h-4 text-yellow-500"
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
                                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                     </svg>
                                   )}
                                 </div>
                                 <button
-                                  onClick={() => router.push(`/admin/users/${user.id}`)}
+                                  onClick={() =>
+                                    router.push(`/admin/users/${user.id}`)
+                                  }
                                   className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
                                 >
                                   Дэлгэрэнгүй харах
@@ -2099,13 +2170,25 @@ export default function AdminPage() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex space-x-2">
                               <button
-                                onClick={() => handleToggleUserHighlight(user.id)}
+                                onClick={() =>
+                                  handleToggleUserHighlight(user.id)
+                                }
                                 className={`p-1 rounded hover:bg-yellow-50 transition-colors ${
-                                  user.isHighlighted ? "text-yellow-500" : "text-gray-400 hover:text-yellow-500"
+                                  user.isHighlighted
+                                    ? "text-yellow-500"
+                                    : "text-gray-400 hover:text-yellow-500"
                                 }`}
-                                title={user.isHighlighted ? "Тэмдэглэл хасах" : "Тэмдэглэх"}
+                                title={
+                                  user.isHighlighted
+                                    ? "Тэмдэглэл хасах"
+                                    : "Тэмдэглэх"
+                                }
                               >
-                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
                                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                 </svg>
                               </button>
@@ -2167,7 +2250,7 @@ export default function AdminPage() {
                     Хөл хэсэг - Контент засвар
                   </h2>
                   <p className="text-gray-500 text-sm">
-                    Хөл хэсгийн бүх мэдээллийг засварлах
+                    Хөл хэсгийн бүх мэдээллийг засварлах. Хадгалах: <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-200 border border-gray-300 rounded-lg">Ctrl + S</kbd>
                   </p>
                 </div>
               </div>
@@ -2335,6 +2418,45 @@ export default function AdminPage() {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Save Button */}
+              <div className="mt-6 flex justify-between items-center">
+                {footerHasChanges && (
+                  <div className="flex items-center space-x-2 text-orange-600">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <span className="text-sm font-medium">Хадгалаагүй өөрчлөлт байна</span>
+                  </div>
+                )}
+                <button
+                  onClick={handleSaveFooter}
+                  disabled={footerSaving}
+                  title="Хөл хэсгийн өөрчлөлт хадгалах (Ctrl+S)"
+                  className={`px-6 py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 ${
+                    footerHasChanges 
+                      ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                >
+                  {footerSaving ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Хадгалж байна...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>{footerHasChanges ? "Өөрчлөлт хадгалах" : "Хөл хэсэг хадгалах"}</span>
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Preview Section */}

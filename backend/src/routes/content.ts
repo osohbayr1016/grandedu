@@ -145,4 +145,65 @@ router.patch("/:id/toggle", auth, async (req: Request, res: Response) => {
   }
 });
 
+// Save footer content
+router.post("/footer", auth, async (req: Request, res: Response) => {
+  try {
+    const footerData = req.body;
+    const footerFields = [
+      'companyDescription',
+      'email', 
+      'phone',
+      'address',
+      'facebook',
+      'instagram', 
+      'youtube',
+      'privacyPolicy',
+      'termsOfService',
+      'copyright'
+    ];
+
+    // Save each footer field as a separate content entry
+    const promises = footerFields.map(async (field) => {
+      if (footerData[field] !== undefined) {
+        const existingContent = await prisma.pageContent.findFirst({
+          where: {
+            page: "footer",
+            section: "footer",
+            field: field,
+          },
+        });
+
+        if (existingContent) {
+          // Update existing content
+          return await prisma.pageContent.update({
+            where: { id: existingContent.id },
+            data: {
+              content: footerData[field],
+              updatedAt: new Date(),
+            },
+          });
+        } else {
+          // Create new content
+          return await prisma.pageContent.create({
+            data: {
+              page: "footer",
+              section: "footer", 
+              field: field,
+              content: footerData[field],
+              type: "text",
+              order: 0,
+            },
+          });
+        }
+      }
+    });
+
+    await Promise.all(promises);
+    res.json({ message: "Footer content saved successfully" });
+  } catch (error) {
+    console.error("Error saving footer content:", error);
+    res.status(500).json({ error: "Failed to save footer content" });
+  }
+});
+
 export default router;
