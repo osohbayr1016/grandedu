@@ -9,8 +9,29 @@ interface EmailOptions {
 
 // Create transporter with Gmail configuration
 const createTransporter = () => {
+  // Gmail SMTP configuration for production
+  if (process.env.EMAIL_SERVICE === "gmail" || !process.env.EMAIL_SERVICE) {
+    return nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false, // For production environments
+      },
+      // Add retry and timeout settings
+      connectionTimeout: 60000, // 60 seconds
+      greetingTimeout: 30000, // 30 seconds
+      socketTimeout: 60000, // 60 seconds
+    });
+  }
+
+  // Fallback to generic service configuration
   return nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || "gmail",
+    service: process.env.EMAIL_SERVICE,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
@@ -35,8 +56,27 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
 
     const transporter = createTransporter();
 
-    // Test the connection first
-    await transporter.verify();
+    console.log("Testing SMTP connection...");
+
+    // Test the connection first with detailed error reporting
+    try {
+      await transporter.verify();
+      console.log("SMTP connection verified successfully");
+    } catch (verifyError) {
+      console.error("SMTP verification failed:", verifyError);
+      console.error("Email config check:", {
+        host:
+          process.env.EMAIL_SERVICE === "gmail" ? "smtp.gmail.com" : "unknown",
+        user: process.env.EMAIL_USER
+          ? `${process.env.EMAIL_USER.substring(0, 3)}***`
+          : "missing",
+        hasPassword: !!process.env.EMAIL_PASSWORD,
+        passwordLength: process.env.EMAIL_PASSWORD
+          ? process.env.EMAIL_PASSWORD.length
+          : 0,
+      });
+      throw verifyError;
+    }
 
     const mailOptions = {
       from: {
@@ -49,8 +89,14 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
       text: options.text || options.html.replace(/<[^>]*>/g, ""), // Strip HTML for text version
     };
 
+    console.log("Attempting to send email to:", options.to);
+    console.log("From:", mailOptions.from);
+    console.log("Subject:", options.subject);
+
     const result = await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully:", result.messageId);
+    console.log("✅ Email sent successfully!");
+    console.log("Message ID:", result.messageId);
+    console.log("Response:", result.response);
     return true;
   } catch (error) {
     console.error("Error sending email:", error);
@@ -192,6 +238,67 @@ export const generatePasswordResetEmail = (
   return { subject, html };
 };
 
+// Alternative email service using SendGrid or similar
+const createAlternativeTransporter = () => {
+  // You can configure SendGrid, Mailgun, or other services here
+  // For now, we'll use a different Gmail configuration
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true, // Use SSL
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
+  });
+};
+
+// Send email with fallback to alternative configuration
+export const sendEmailWithFallback = async (
+  options: EmailOptions
+): Promise<boolean> => {
+  console.log("🚀 Attempting email send with primary configuration...");
+
+  // Try primary configuration first
+  try {
+    return await sendEmail(options);
+  } catch (primaryError) {
+    console.warn("❌ Primary email service failed, trying alternative...");
+    console.error("Primary error:", primaryError);
+
+    // Try alternative configuration
+    try {
+      const altTransporter = createAlternativeTransporter();
+
+      const mailOptions = {
+        from: {
+          name: process.env.EMAIL_FROM_NAME || "GrandEdu Team",
+          address: process.env.EMAIL_FROM || process.env.EMAIL_USER!,
+        },
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text || options.html.replace(/<[^>]*>/g, ""),
+      };
+
+      console.log("Testing alternative SMTP connection...");
+      await altTransporter.verify();
+      console.log("✅ Alternative SMTP verified");
+
+      const result = await altTransporter.sendMail(mailOptions);
+      console.log("✅ Email sent via alternative service!");
+      console.log("Message ID:", result.messageId);
+      return true;
+    } catch (altError) {
+      console.error("❌ Alternative email service also failed:", altError);
+      return false;
+    }
+  }
+};
+
 // Test email configuration
 export const testEmailConfig = async (): Promise<boolean> => {
   try {
@@ -201,6 +308,17 @@ export const testEmailConfig = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error("Email configuration error:", error);
-    return false;
+
+    // Try alternative configuration
+    try {
+      console.log("Testing alternative email configuration...");
+      const altTransporter = createAlternativeTransporter();
+      await altTransporter.verify();
+      console.log("Alternative email configuration is valid");
+      return true;
+    } catch (altError) {
+      console.error("Alternative email configuration error:", altError);
+      return false;
+    }
   }
 };

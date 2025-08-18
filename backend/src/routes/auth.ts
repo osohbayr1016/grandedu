@@ -2,7 +2,11 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
-import { sendEmail, generatePasswordResetEmail } from "../utils/emailService";
+import {
+  sendEmail,
+  sendEmailWithFallback,
+  generatePasswordResetEmail,
+} from "../utils/emailService";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -469,11 +473,11 @@ router.post("/forgot-password", async (req, res) => {
 
     console.log("Password reset record created in database");
 
-    // Generate and send email
+    // Generate and send email with fallback
     const emailTemplate = generatePasswordResetEmail(code, email);
-    console.log("Attempting to send email...");
+    console.log("📧 Attempting to send password reset email...");
 
-    const emailSent = await sendEmail({
+    const emailSent = await sendEmailWithFallback({
       to: email,
       subject: emailTemplate.subject,
       html: emailTemplate.html,
@@ -547,6 +551,55 @@ router.post("/verify-reset-code", async (req, res) => {
   } catch (error) {
     console.error("Verify reset code error:", error);
     res.status(500).json({ message: "Серверийн алдаа гарлаа" });
+  }
+});
+
+// Test email configuration endpoint
+router.post("/test-email", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    console.log("🧪 Testing email configuration for:", email);
+
+    // Import the test function
+    const {
+      testEmailConfig,
+      sendEmailWithFallback,
+    } = require("../utils/emailService");
+
+    // Test email configuration
+    const configValid = await testEmailConfig();
+    console.log("Email config test result:", configValid);
+
+    // Try sending a test email
+    const testEmailSent = await sendEmailWithFallback({
+      to: email,
+      subject: "GrandEdu - Email Test",
+      html: `
+        <h2>Email Configuration Test</h2>
+        <p>This is a test email from GrandEdu to verify email configuration.</p>
+        <p>If you receive this email, the configuration is working correctly!</p>
+        <p>Time: ${new Date().toISOString()}</p>
+      `,
+    });
+
+    res.json({
+      message: "Email test completed",
+      configValid,
+      testEmailSent,
+      email,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Email test error:", error);
+    res.status(500).json({
+      message: "Email test failed",
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 });
 
