@@ -182,11 +182,13 @@ router.get("/users", async (req, res) => {
     const users = await prisma.user.findMany({
       select: {
         id: true,
+        userCode: true,
         firstName: true,
         lastName: true,
         email: true,
         phoneNumber: true,
         role: true,
+        isHighlighted: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -195,6 +197,76 @@ router.get("/users", async (req, res) => {
     res.json(users);
   } catch (error) {
     console.error("Get users error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get single user details (admin only)
+router.get("/users/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        userCode: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phoneNumber: true,
+        role: true,
+        isHighlighted: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("Get user details error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Toggle user highlight/star (admin only)
+router.patch("/users/:id/highlight", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { isHighlighted: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { isHighlighted: !user.isHighlighted, updatedAt: new Date() },
+      select: {
+        id: true,
+        userCode: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phoneNumber: true,
+        role: true,
+        isHighlighted: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    res.json(updatedUser);
+  } catch (error) {
+    console.error("Toggle user highlight error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -234,11 +306,13 @@ router.patch("/users/:id/role", async (req, res) => {
       data: { role, updatedAt: new Date() },
       select: {
         id: true,
+        userCode: true,
         firstName: true,
         lastName: true,
         email: true,
         phoneNumber: true,
         role: true,
+        isHighlighted: true,
         createdAt: true,
         updatedAt: true,
       },

@@ -193,10 +193,13 @@ export default function Home() {
             </p>
             {!user && (
               <button
-                onClick={() => setShowAuth(true)}
+                onClick={() => {
+                  setIsLogin(false); // Set to signup mode
+                  setShowAuth(true);
+                }}
                 className="bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-lg text-base sm:text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg animate-fade-in-up animate-delay-700"
               >
-                {getContent("hero", "ctaButton", "Нэвтрэх")}
+                {getContent("hero", "ctaButton", "Эхлэх")}
               </button>
             )}
           </div>

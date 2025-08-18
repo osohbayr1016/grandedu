@@ -134,11 +134,13 @@ export default function AdminPage() {
   const [users, setUsers] = useState<
     Array<{
       id: string;
+      userCode: string | null;
       firstName: string;
       lastName: string;
       email: string;
       phoneNumber: string;
       role: string;
+      isHighlighted: boolean;
       createdAt: string;
       updatedAt: string;
     }>
@@ -151,6 +153,8 @@ export default function AdminPage() {
     password: "",
     phoneNumber: "",
   });
+  const [userFilter, setUserFilter] = useState<"all" | "starred" | "admin" | "user">("all");
+  const [userSortBy, setUserSortBy] = useState<"name" | "id" | "date">("date");
 
   const handleAddUniversity = () => {
     setEditingUniversity(null);
@@ -470,13 +474,10 @@ export default function AdminPage() {
   const handleDeleteUser = async (id: string) => {
     if (confirm("Энэ хэрэглэгчийг устгахдаа итгэлтэй байна уу?")) {
       try {
-        const response = await fetch(
-          `${getUsersUrl().replace("/users", "")}/users/${id}`,
+        const response = await authenticatedFetch(
+          `${getUsersUrl()}/${id}`,
           {
             method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
           }
         );
         if (response.ok) {
@@ -484,6 +485,7 @@ export default function AdminPage() {
         }
       } catch (error) {
         console.error("Error deleting user:", error);
+        alert("Хэрэглэгчийг устгахад алдаа гарлаа: " + (error as Error).message);
       }
     }
   };
@@ -492,14 +494,10 @@ export default function AdminPage() {
     const newRole = currentRole === "admin" ? "user" : "admin";
     if (confirm(`Энэ хэрэглэгчийг ${newRole} болгохдоо итгэлтэй байна уу?`)) {
       try {
-        const response = await fetch(
-          `${getUsersUrl().replace("/users", "")}/users/${id}/role`,
+        const response = await authenticatedFetch(
+          `${getUsersUrl()}/${id}/role`,
           {
             method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
             body: JSON.stringify({ role: newRole }),
           }
         );
@@ -508,7 +506,25 @@ export default function AdminPage() {
         }
       } catch (error) {
         console.error("Error updating user role:", error);
+        alert("Хэрэглэгчийн эрх өөрчлөхөд алдаа гарлаа: " + (error as Error).message);
       }
+    }
+  };
+
+  const handleToggleUserHighlight = async (id: string) => {
+    try {
+      const response = await authenticatedFetch(
+        `${getUsersUrl()}/${id}/highlight`,
+        {
+          method: "PATCH",
+        }
+      );
+      if (response.ok) {
+        await fetchUsers();
+      }
+    } catch (error) {
+      console.error("Error toggling user highlight:", error);
+      alert("Хэрэглэгчийг тэмдэглэхэд алдаа гарлаа: " + (error as Error).message);
     }
   };
 
@@ -896,17 +912,16 @@ export default function AdminPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch(getUsersUrl(), {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const response = await authenticatedFetch(getUsersUrl());
       if (response.ok) {
         const data = await response.json();
         setUsers(data);
       }
     } catch (error) {
       console.error("Error fetching users:", error);
+      if ((error as Error).message.includes("Authentication failed")) {
+        router.push("/");
+      }
     }
   };
 
@@ -1905,6 +1920,45 @@ export default function AdminPage() {
                 </div>
               </div>
 
+              {/* Filter and Sort Controls */}
+              <div className="flex flex-col sm:flex-row gap-3 mb-6 p-4 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Шүүлтүүр</label>
+                  <select
+                    value={userFilter}
+                    onChange={(e) => setUserFilter(e.target.value as "all" | "starred" | "admin" | "user")}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  >
+                    <option value="all">Бүх хэрэглэгч</option>
+                    <option value="starred">⭐ Тэмдэглэгдсэн</option>
+                    <option value="admin">👑 Админ</option>
+                    <option value="user">👤 Энгийн хэрэглэгч</option>
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Эрэмбэлэх</label>
+                  <select
+                    value={userSortBy}
+                    onChange={(e) => setUserSortBy(e.target.value as "name" | "id" | "date")}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  >
+                    <option value="date">Огнооны дагуу</option>
+                    <option value="name">Нэрийн дагуу</option>
+                    <option value="id">ID-ний дагуу</option>
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <div className="text-sm text-gray-600 px-3 py-2 bg-white rounded-lg border">
+                    {users.filter((u) => {
+                      if (userFilter === "starred") return u.isHighlighted;
+                      if (userFilter === "admin") return u.role === "admin";
+                      if (userFilter === "user") return u.role === "user";
+                      return true;
+                    }).length} хэрэглэгч
+                  </div>
+                </div>
+              </div>
+
               {/* Users Table */}
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -1912,6 +1966,9 @@ export default function AdminPage() {
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Хэрэглэгч
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        ID
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Имэйл
@@ -1933,13 +1990,36 @@ export default function AdminPage() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {users
                       .filter((user) => {
-                        if (!searchQuery.trim()) return true;
-                        const q = searchQuery.toLowerCase();
-                        return (
-                          user.firstName.toLowerCase().includes(q) ||
-                          user.lastName.toLowerCase().includes(q) ||
-                          user.email.toLowerCase().includes(q)
-                        );
+                        // Search filter
+                        if (searchQuery.trim()) {
+                          const q = searchQuery.toLowerCase();
+                          const matchesSearch = 
+                            user.firstName.toLowerCase().includes(q) ||
+                            user.lastName.toLowerCase().includes(q) ||
+                            user.email.toLowerCase().includes(q) ||
+                            (user.userCode && user.userCode.toLowerCase().includes(q));
+                          if (!matchesSearch) return false;
+                        }
+                        
+                        // Category filter
+                        if (userFilter === "starred") return user.isHighlighted;
+                        if (userFilter === "admin") return user.role === "admin";
+                        if (userFilter === "user") return user.role === "user";
+                        return true;
+                      })
+                      .sort((a, b) => {
+                        if (userSortBy === "name") {
+                          const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
+                          const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
+                          return nameA.localeCompare(nameB);
+                        }
+                        if (userSortBy === "id") {
+                          const idA = a.userCode || "zzz";
+                          const idB = b.userCode || "zzz";
+                          return idA.localeCompare(idB);
+                        }
+                        // Default: sort by date (newest first)
+                        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                       })
                       .map((user) => (
                         <tr key={user.id} className="hover:bg-gray-50">
@@ -1961,11 +2041,35 @@ export default function AdminPage() {
                                 </svg>
                               </div>
                               <div>
-                                <div className="text-sm font-medium text-gray-900">
-                                  {user.firstName} {user.lastName}
+                                <div className="flex items-center space-x-2">
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {user.firstName} {user.lastName}
+                                  </div>
+                                  {user.isHighlighted && (
+                                    <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                  )}
                                 </div>
+                                <button
+                                  onClick={() => router.push(`/admin/users/${user.id}`)}
+                                  className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                                >
+                                  Дэлгэрэнгүй харах
+                                </button>
                               </div>
                             </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {user.userCode ? (
+                              <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-mono font-semibold">
+                                {user.userCode}
+                              </div>
+                            ) : (
+                              <div className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+                                Уүсгэгдэж байна...
+                              </div>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {user.email}
@@ -1995,6 +2099,17 @@ export default function AdminPage() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex space-x-2">
                               <button
+                                onClick={() => handleToggleUserHighlight(user.id)}
+                                className={`p-1 rounded hover:bg-yellow-50 transition-colors ${
+                                  user.isHighlighted ? "text-yellow-500" : "text-gray-400 hover:text-yellow-500"
+                                }`}
+                                title={user.isHighlighted ? "Тэмдэглэл хасах" : "Тэмдэглэх"}
+                              >
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                              </button>
+                              <button
                                 onClick={() => handleDeleteUser(user.id)}
                                 disabled={user.id === user?.id} // Can't delete yourself
                                 className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -2023,7 +2138,7 @@ export default function AdminPage() {
               </div>
 
               {/* Statistics */}
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-blue-600">
                     {users.filter((u) => u.role === "admin").length}
@@ -2035,6 +2150,12 @@ export default function AdminPage() {
                     {users.filter((u) => u.role === "user").length}
                   </div>
                   <div className="text-sm text-gray-600">Энгийн хэрэглэгч</div>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-yellow-600">
+                    {users.filter((u) => u.isHighlighted).length}
+                  </div>
+                  <div className="text-sm text-gray-600">⭐ Тэмдэглэгдсэн</div>
                 </div>
               </div>
             </div>
