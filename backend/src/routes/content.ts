@@ -150,16 +150,16 @@ router.post("/footer", auth, async (req: Request, res: Response) => {
   try {
     const footerData = req.body;
     const footerFields = [
-      'companyDescription',
-      'email', 
-      'phone',
-      'address',
-      'facebook',
-      'instagram', 
-      'youtube',
-      'privacyPolicy',
-      'termsOfService',
-      'copyright'
+      "companyDescription",
+      "email",
+      "phone",
+      "address",
+      "facebook",
+      "instagram",
+      "youtube",
+      "privacyPolicy",
+      "termsOfService",
+      "copyright",
     ];
 
     // Save each footer field as a separate content entry
@@ -187,7 +187,7 @@ router.post("/footer", auth, async (req: Request, res: Response) => {
           return await prisma.pageContent.create({
             data: {
               page: "footer",
-              section: "footer", 
+              section: "footer",
               field: field,
               content: footerData[field],
               type: "text",

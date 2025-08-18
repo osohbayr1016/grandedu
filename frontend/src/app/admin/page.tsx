@@ -546,7 +546,7 @@ export default function AdminPage() {
   const handleSaveFooter = async () => {
     try {
       setFooterSaving(true);
-      
+
       // Save footer content to backend
       const response = await authenticatedFetch("/api/content/footer", {
         method: "POST",
@@ -561,7 +561,10 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error("Error saving footer content:", error);
-      alert("Хөл хэсгийн мэдээлэл хадгалахад алдаа гарлаа: " + (error as Error).message);
+      alert(
+        "Хөл хэсгийн мэдээлэл хадгалахад алдаа гарлаа: " +
+          (error as Error).message
+      );
     } finally {
       setFooterSaving(false);
     }
@@ -582,14 +585,20 @@ export default function AdminPage() {
   // Add keyboard shortcut for saving footer (Ctrl+S)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 's' && activeSection === "footer" && footerHasChanges && !footerSaving) {
+      if (
+        e.ctrlKey &&
+        e.key === "s" &&
+        activeSection === "footer" &&
+        footerHasChanges &&
+        !footerSaving
+      ) {
         e.preventDefault();
         handleSaveFooter();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activeSection, footerHasChanges, footerSaving]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const initializeAdminData = async () => {
@@ -2250,7 +2259,10 @@ export default function AdminPage() {
                     Хөл хэсэг - Контент засвар
                   </h2>
                   <p className="text-gray-500 text-sm">
-                    Хөл хэсгийн бүх мэдээллийг засварлах. Хадгалах: <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-200 border border-gray-300 rounded-lg">Ctrl + S</kbd>
+                    Хөл хэсгийн бүх мэдээллийг засварлах. Хадгалах:{" "}
+                    <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-200 border border-gray-300 rounded-lg">
+                      Ctrl + S
+                    </kbd>
                   </p>
                 </div>
               </div>
@@ -2424,10 +2436,22 @@ export default function AdminPage() {
               <div className="mt-6 flex justify-between items-center">
                 {footerHasChanges && (
                   <div className="flex items-center space-x-2 text-orange-600">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z"
+                      />
                     </svg>
-                    <span className="text-sm font-medium">Хадгалаагүй өөрчлөлт байна</span>
+                    <span className="text-sm font-medium">
+                      Хадгалаагүй өөрчлөлт байна
+                    </span>
                   </div>
                 )}
                 <button
@@ -2435,25 +2459,55 @@ export default function AdminPage() {
                   disabled={footerSaving}
                   title="Хөл хэсгийн өөрчлөлт хадгалах (Ctrl+S)"
                   className={`px-6 py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 ${
-                    footerHasChanges 
-                      ? 'bg-orange-600 hover:bg-orange-700 text-white' 
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    footerHasChanges
+                      ? "bg-orange-600 hover:bg-orange-700 text-white"
+                      : "bg-blue-600 hover:bg-blue-700 text-white"
                   }`}
                 >
                   {footerSaving ? (
                     <>
-                      <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <svg
+                        className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
                       </svg>
                       <span>Хадгалж байна...</span>
                     </>
                   ) : (
                     <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
-                      <span>{footerHasChanges ? "Өөрчлөлт хадгалах" : "Хөл хэсэг хадгалах"}</span>
+                      <span>
+                        {footerHasChanges
+                          ? "Өөрчлөлт хадгалах"
+                          : "Хөл хэсэг хадгалах"}
+                      </span>
                     </>
                   )}
                 </button>
