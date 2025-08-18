@@ -4,7 +4,26 @@ import Link from "next/link";
 import { useFooter } from "@/contexts/FooterContext";
 
 export default function Footer() {
-  const { footerContent } = useFooter();
+  const { footerContent, loading } = useFooter();
+
+  if (loading) {
+    return (
+      <footer
+        id="contact"
+        className="bg-gray-50 border-t border-gray-200 mt-12"
+      >
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="text-center">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-300 rounded w-1/4 mx-auto mb-4"></div>
+              <div className="h-3 bg-gray-300 rounded w-1/2 mx-auto"></div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
   return (
     <footer id="contact" className="bg-gray-50 border-t border-gray-200 mt-12">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">

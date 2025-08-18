@@ -145,6 +145,36 @@ router.patch("/:id/toggle", auth, async (req: Request, res: Response) => {
   }
 });
 
+// Get footer content
+router.get("/footer", async (req: Request, res: Response) => {
+  try {
+    const footerContent = await prisma.pageContent.findMany({
+      where: {
+        page: "footer",
+        section: "footer",
+        isActive: true,
+      },
+      orderBy: {
+        order: "asc",
+      },
+    });
+
+    // Group content by section and field
+    const groupedContent = footerContent.reduce((acc, item) => {
+      if (!acc[item.section]) {
+        acc[item.section] = {};
+      }
+      acc[item.section][item.field] = item.content;
+      return acc;
+    }, {} as Record<string, Record<string, string>>);
+
+    res.json(groupedContent);
+  } catch (error) {
+    console.error("Error fetching footer content:", error);
+    res.status(500).json({ error: "Failed to fetch footer content" });
+  }
+});
+
 // Save footer content
 router.post("/footer", auth, async (req: Request, res: Response) => {
   try {

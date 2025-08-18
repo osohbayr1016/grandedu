@@ -556,6 +556,11 @@ export default function AdminPage() {
       if (response.ok) {
         setFooterHasChanges(false);
         alert("Хөл хэсгийн мэдээлэл амжилттай хадгалагдлаа!");
+
+        // Refresh footer content in context to reflect changes immediately
+        // This will update the footer component across the entire app
+        // We don't need to call anything here since the admin form updates
+        // the context directly via handleFooterContentChange
       } else {
         throw new Error("Failed to save footer content");
       }
