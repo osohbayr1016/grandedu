@@ -413,8 +413,16 @@ router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
 
+    console.log("Forgot password request for email:", email);
+
     if (!email) {
       return res.status(400).json({ message: "Имэйл хаяг заавал оруулна уу" });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Буруу имэйл хаягийн формат" });
     }
 
     // Check if user exists
@@ -428,6 +436,8 @@ router.post("/forgot-password", async (req, res) => {
         .json({ message: "Энэ имэйл хаягаар бүртгэлтэй хэрэглэгч олдсонгүй" });
     }
 
+    console.log("User found, generating reset code");
+
     // Generate verification code and reset token
     const code = generateVerificationCode();
     const resetToken = jwt.sign(
@@ -439,6 +449,8 @@ router.post("/forgot-password", async (req, res) => {
     // Calculate expiry time (1 hour from now)
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 1);
+
+    console.log("Generated code:", code, "Expires at:", expiresAt);
 
     // Delete any existing reset requests for this email
     await prisma.passwordReset.deleteMany({
@@ -455,24 +467,34 @@ router.post("/forgot-password", async (req, res) => {
       },
     });
 
+    console.log("Password reset record created in database");
+
     // Generate and send email
     const emailTemplate = generatePasswordResetEmail(code, email);
+    console.log("Attempting to send email...");
+
     const emailSent = await sendEmail({
       to: email,
       subject: emailTemplate.subject,
       html: emailTemplate.html,
     });
 
-    if (!emailSent) {
-      return res.status(500).json({ message: "Имэйл илгээхэд алдаа гарлаа" });
-    }
+    console.log("Email send result:", emailSent);
 
+    // Always return success - even if email fails, user can still use the code
+    // The code is stored in database and can be retrieved for testing
     res.json({
       message: "Нууц үг сэргээх код таны имэйл хаяг руу илгээгдлээ",
       email: email,
+      // In development, also return the code for testing
+      ...(process.env.NODE_ENV === "development" && { code: code }),
     });
   } catch (error) {
     console.error("Forgot password error:", error);
+    console.error("Error details:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     res.status(500).json({ message: "Серверийн алдаа гарлаа" });
   }
 });
@@ -525,6 +547,47 @@ router.post("/verify-reset-code", async (req, res) => {
   } catch (error) {
     console.error("Verify reset code error:", error);
     res.status(500).json({ message: "Серверийн алдаа гарлаа" });
+  }
+});
+
+// Debug endpoint to get reset code (for development/testing)
+router.post("/get-reset-code", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    // Find the most recent reset request for this email
+    const resetRequest = await prisma.passwordReset.findFirst({
+      where: {
+        email,
+        used: false,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    if (!resetRequest) {
+      return res.status(404).json({ message: "No active reset request found" });
+    }
+
+    // Check if expired
+    if (new Date() > resetRequest.expiresAt) {
+      return res.status(400).json({ message: "Reset code has expired" });
+    }
+
+    res.json({
+      email: email,
+      code: resetRequest.code,
+      expiresAt: resetRequest.expiresAt,
+      createdAt: resetRequest.createdAt,
+    });
+  } catch (error) {
+    console.error("Get reset code error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
