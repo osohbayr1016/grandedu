@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { createContext, useContext, useState, ReactNode } from "react";
 import { getProgramsUrl } from "@/utils/api";
 
 interface Program {
@@ -21,7 +15,9 @@ interface Program {
   requirements?: string;
   imageUrl?: string;
   googleFormLink?: string;
+  adminNote?: string; // Admin-only notes
   isActive: boolean;
+  isHighlighted?: boolean; // Whether program is highlighted/featured
   createdAt: string;
   updatedAt: string;
 }

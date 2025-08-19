@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
-import { getUniversitiesUrl } from "@/utils/api";
+import { getUniversitiesUrl, getContentUrl } from "@/utils/api";
 
 interface University {
   id: string;
@@ -21,12 +21,82 @@ interface University {
 export default function UniversityDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { showAuth, setShowAuth, isLogin, setIsLogin } = useAuth();
+  const { user, showAuth, setShowAuth, isLogin, setIsLogin } = useAuth();
   const [university, setUniversity] = useState<University | null>(null);
+  const [universitySectionContent, setUniversitySectionContent] = useState({
+    programsTitle: "Хөтөлбөрүүд",
+    programsDescription: "Хөтөлбөрийн дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.",
+    programsAdminNote: "",
+    admissionRequirementsTitle: "Элсэлтийн шаардлага",
+    admissionRequirementsDescription:
+      "Элсэлтийн шаардлагын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.",
+    cityLifeTitle: "Хотын амьдрал",
+    cityLifeDescription:
+      "Хотын амьдралын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.",
+  });
 
   useEffect(() => {
     fetchUniversity();
   }, [params.id, router]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load university-specific content when university is loaded
+  useEffect(() => {
+    if (university?.id) {
+      loadUniversitySectionContentLocal(university.id);
+    }
+  }, [university?.id]);
+
+  const loadUniversitySectionContentLocal = async (universityId: string) => {
+    try {
+      const response = await fetch(
+        `${getContentUrl()}/university-sections/${universityId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Start with defaults
+        const defaultContent = {
+          programsTitle: "Хөтөлбөрүүд",
+          programsDescription:
+            "Хөтөлбөрийн дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.",
+          programsAdminNote: "",
+          admissionRequirementsTitle: "Элсэлтийн шаардлага",
+          admissionRequirementsDescription:
+            "Элсэлтийн шаардлагын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.",
+          cityLifeTitle: "Хотын амьдрал",
+          cityLifeDescription:
+            "Хотын амьдралын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.",
+        };
+
+        const contentToSet = { ...defaultContent };
+
+        // Override with any saved content
+        if (
+          data.universitySections &&
+          typeof data.universitySections === "object"
+        ) {
+          Object.keys(defaultContent).forEach((key) => {
+            if (data.universitySections[key]) {
+              contentToSet[key as keyof typeof defaultContent] =
+                data.universitySections[key];
+            }
+          });
+        }
+
+        setUniversitySectionContent(contentToSet);
+      }
+    } catch (error) {
+      console.warn("Error loading university section content:", error);
+      // Keep defaults on error
+    }
+  };
 
   const fetchUniversity = async () => {
     try {
@@ -173,41 +243,43 @@ export default function UniversityDetailPage() {
                       />
                     </svg>
                   </div>
-                  Хөтөлбөрүүд
+                  {universitySectionContent.programsTitle}
                 </h2>
                 <div className="text-center py-8">
                   <p className="text-gray-600">
-                    Хөтөлбөрийн дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.
+                    {universitySectionContent.programsDescription}
                   </p>
-                </div>
-              </div>
-            </section>
-
-            {/* Facilities Section */}
-            <section className="mb-12">
-              <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-200">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                    <svg
-                      className="w-6 h-6 text-purple-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                      />
-                    </svg>
-                  </div>
-                  Суурь талбай, тоног төхөөрөмж
-                </h2>
-                <div className="text-center py-8">
-                  <p className="text-gray-600">
-                    Суурь талбайн дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.
-                  </p>
+                  {/* Admin-only note */}
+                  {user?.role === "admin" &&
+                    universitySectionContent.programsAdminNote.trim() && (
+                      <div className="mt-4 mx-auto max-w-md">
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                          <div className="flex items-start space-x-2">
+                            <svg
+                              className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z"
+                              />
+                            </svg>
+                            <div>
+                              <p className="text-sm font-medium text-amber-800">
+                                Админы тэмдэглэл
+                              </p>
+                              <p className="text-sm text-amber-700 mt-1">
+                                {universitySectionContent.programsAdminNote}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                 </div>
               </div>
             </section>
@@ -231,11 +303,11 @@ export default function UniversityDetailPage() {
                       />
                     </svg>
                   </div>
-                  Элсэлтийн шаардлага
+                  {universitySectionContent.admissionRequirementsTitle}
                 </h2>
                 <div className="text-center py-8">
                   <p className="text-gray-600">
-                    Элсэлтийн шаардлагын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.
+                    {universitySectionContent.admissionRequirementsDescription}
                   </p>
                 </div>
               </div>
@@ -266,11 +338,11 @@ export default function UniversityDetailPage() {
                       />
                     </svg>
                   </div>
-                  Хотын амьдрал
+                  {universitySectionContent.cityLifeTitle}
                 </h2>
                 <div className="text-center py-8">
                   <p className="text-gray-600">
-                    Хотын амьдралын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.
+                    {universitySectionContent.cityLifeDescription}
                   </p>
                 </div>
               </div>

@@ -22,7 +22,9 @@ interface Program {
   requirements?: string;
   imageUrl?: string;
   googleFormLink?: string;
+  adminNote?: string; // Admin-only notes
   isActive: boolean;
+  isHighlighted?: boolean; // Whether program is highlighted/featured
   createdAt: string;
   updatedAt: string;
 }
@@ -351,14 +353,44 @@ export default function ProgramsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
                 {programs
                   .filter((program) => program.isActive)
+                  .sort((a, b) => {
+                    // Sort highlighted programs first
+                    if (a.isHighlighted && !b.isHighlighted) return -1;
+                    if (!a.isHighlighted && b.isHighlighted) return 1;
+                    // If both or neither are highlighted, sort by creation date (newest first)
+                    return (
+                      new Date(b.createdAt).getTime() -
+                      new Date(a.createdAt).getTime()
+                    );
+                  })
                   .map((program) => (
                     <div
                       key={program.id}
-                      className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 flex flex-col cursor-pointer transform hover:scale-105 hover:-translate-y-2 border border-gray-100"
+                      className={`group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 flex flex-col cursor-pointer transform hover:scale-105 hover:-translate-y-2 border ${
+                        program.isHighlighted
+                          ? "border-yellow-300 ring-2 ring-yellow-200"
+                          : "border-gray-100"
+                      } relative`}
                       onClick={() => openModal(program)}
                     >
+                      {/* Featured Badge for Highlighted Programs */}
+                      {program.isHighlighted && (
+                        <div className="absolute top-3 right-3 z-10">
+                          <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center space-x-1">
+                            <svg
+                              className="w-3 h-3"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                            </svg>
+                            <span>ОНЦЛОХ</span>
+                          </div>
+                        </div>
+                      )}
+
                       {program.imageUrl ? (
-                        <div className="relative h-32 sm:h-48 overflow-hidden">
+                        <div className="relative h-32 sm:h-48 overflow-hidden rounded-t-2xl">
                           <Image
                             src={program.imageUrl}
                             alt={program.title}
@@ -409,6 +441,39 @@ export default function ProgramsPage() {
                         <p className="text-gray-600 mb-4 text-sm sm:text-base leading-relaxed line-clamp-3">
                           {program.description}
                         </p>
+
+                        {/* Admin-only note */}
+                        {user?.role === "admin" &&
+                          program.adminNote &&
+                          program.adminNote.trim() && (
+                            <div className="mb-4">
+                              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                <div className="flex items-start space-x-2">
+                                  <svg
+                                    className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                                    />
+                                  </svg>
+                                  <div>
+                                    <p className="text-xs font-medium text-amber-800">
+                                      Админы тэмдэглэл
+                                    </p>
+                                    <p className="text-xs text-amber-700 mt-1">
+                                      {program.adminNote}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
 
                         <div className="space-y-3 mb-6">
                           <div className="flex items-center text-sm text-gray-600 bg-gray-50 rounded-lg p-3 group-hover:bg-blue-50 transition-colors duration-300">

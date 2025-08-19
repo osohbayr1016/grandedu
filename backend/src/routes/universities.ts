@@ -54,7 +54,7 @@ router.get("/:id", async (req, res) => {
 // Create university (admin only)
 router.post("/", auth, async (req, res) => {
   try {
-    const { name, location, description, imageUrl } = req.body;
+    const { name, location, description, imageUrl, adminNote } = req.body;
 
     if (!name || !location) {
       return res
@@ -68,6 +68,7 @@ router.post("/", auth, async (req, res) => {
         location,
         description: description || "",
         imageUrl,
+        adminNote: adminNote || null,
       },
     });
 
@@ -82,7 +83,7 @@ router.post("/", auth, async (req, res) => {
 router.put("/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, location, description, imageUrl } = req.body;
+    const { name, location, description, imageUrl, adminNote } = req.body;
 
     const university = await prisma.university.update({
       where: { id },
@@ -91,6 +92,7 @@ router.put("/:id", auth, async (req, res) => {
         location,
         description,
         imageUrl,
+        adminNote: adminNote || null,
         updatedAt: new Date(),
       },
     });

@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { FooterProvider } from "@/contexts/FooterContext";
 import { ProgramsProvider } from "@/contexts/ProgramsContext";
+import { UniversityProvider } from "@/contexts/UniversityContext";
 import Footer from "@/components/Footer";
 import Navigation from "@/components/Navigation";
 
@@ -25,9 +26,11 @@ export default function RootLayout({
         <AuthProvider>
           <FooterProvider>
             <ProgramsProvider>
-              <Navigation />
-              {children}
-              <Footer />
+              <UniversityProvider>
+                <Navigation />
+                {children}
+                <Footer />
+              </UniversityProvider>
             </ProgramsProvider>
           </FooterProvider>
         </AuthProvider>

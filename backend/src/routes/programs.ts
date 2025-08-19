@@ -1,5 +1,6 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
+import { auth } from "../middleware/auth";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -64,6 +65,7 @@ router.post("/", async (req, res) => {
       requirements,
       imageUrl,
       googleFormLink,
+      adminNote,
     } = req.body;
 
     if (!title || !description || !duration) {
@@ -84,6 +86,7 @@ router.post("/", async (req, res) => {
         requirements,
         imageUrl,
         googleFormLink,
+        adminNote: adminNote || null,
       },
     });
 
@@ -109,6 +112,7 @@ router.put("/:id", async (req, res) => {
       requirements,
       imageUrl,
       googleFormLink,
+      adminNote,
     } = req.body;
 
     const program = await prisma.program.update({
@@ -124,6 +128,7 @@ router.put("/:id", async (req, res) => {
         requirements,
         imageUrl,
         googleFormLink,
+        adminNote: adminNote || null,
         updatedAt: new Date(),
       },
     });
@@ -159,6 +164,34 @@ router.patch("/:id/toggle", async (req, res) => {
     res.json(updatedProgram);
   } catch (error) {
     console.error("Toggle program status error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Toggle program highlight status (admin only)
+router.patch("/:id/highlight", auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const program = await prisma.program.findUnique({
+      where: { id },
+    });
+
+    if (!program) {
+      return res.status(404).json({ message: "Program not found" });
+    }
+
+    const updatedProgram = await prisma.program.update({
+      where: { id },
+      data: {
+        isHighlighted: !program.isHighlighted,
+        updatedAt: new Date(),
+      },
+    });
+
+    res.json(updatedProgram);
+  } catch (error) {
+    console.error("Toggle program highlight error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });

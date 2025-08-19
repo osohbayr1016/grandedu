@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFooter } from "@/contexts/FooterContext";
+import { useUniversity } from "@/contexts/UniversityContext";
 import { useRouter } from "next/navigation";
 import {
   getContentUrl,
@@ -51,6 +52,7 @@ interface University {
   description: string;
   imageUrl: string;
   isActive: boolean;
+  adminNote?: string; // Admin-only notes
 }
 
 interface Program {
@@ -62,6 +64,8 @@ interface Program {
   imageUrl: string;
   googleFormLink: string;
   isActive: boolean;
+  isHighlighted?: boolean; // Whether program is highlighted/featured
+  adminNote?: string; // Admin-only notes
 }
 
 interface News {
@@ -77,6 +81,12 @@ interface News {
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
   const { footerContent, updateFooterContent } = useFooter();
+  const {
+    universitySectionContent,
+    updateUniversitySectionContent,
+    loadUniversitySectionContent,
+    resetToDefaults,
+  } = useUniversity();
   // Note: Not using usePrograms context in admin to avoid conflicts
   const router = useRouter();
   const [content, setContent] = useState<PageContent[]>([]);
@@ -96,6 +106,7 @@ export default function AdminPage() {
     location: "",
     description: "",
     imageUrl: "",
+    adminNote: "",
   });
 
   // Program form state
@@ -108,6 +119,7 @@ export default function AdminPage() {
     level: "",
     imageUrl: "",
     googleFormLink: "",
+    adminNote: "",
   });
 
   // News form state
@@ -159,6 +171,11 @@ export default function AdminPage() {
   const [userSortBy, setUserSortBy] = useState<"name" | "id" | "date">("date");
   const [footerSaving, setFooterSaving] = useState(false);
   const [footerHasChanges, setFooterHasChanges] = useState(false);
+  const [universitySectionSaving, setUniversitySectionSaving] = useState(false);
+  const [universitySectionHasChanges, setUniversitySectionHasChanges] =
+    useState(false);
+  const [selectedUniversityForContent, setSelectedUniversityForContent] =
+    useState<string>("");
 
   const handleAddUniversity = () => {
     setEditingUniversity(null);
@@ -167,6 +184,7 @@ export default function AdminPage() {
       location: "",
       description: "",
       imageUrl: "",
+      adminNote: "",
     });
     setShowUniversityModal(true);
   };
@@ -178,6 +196,7 @@ export default function AdminPage() {
       location: university.location,
       description: university.description,
       imageUrl: university.imageUrl,
+      adminNote: university.adminNote || "",
     });
     setShowUniversityModal(true);
   };
@@ -203,6 +222,7 @@ export default function AdminPage() {
           location: "",
           description: "",
           imageUrl: "",
+          adminNote: "",
         });
         alert("Их сургууль амжилттай хадгалагдлаа!");
       }
@@ -260,6 +280,7 @@ export default function AdminPage() {
       level: "",
       imageUrl: "",
       googleFormLink: "",
+      adminNote: "",
     });
     setShowProgramModal(true);
   };
@@ -273,6 +294,7 @@ export default function AdminPage() {
       level: program.level,
       imageUrl: program.imageUrl,
       googleFormLink: program.googleFormLink,
+      adminNote: program.adminNote || "",
     });
     setShowProgramModal(true);
   };
@@ -305,6 +327,7 @@ export default function AdminPage() {
           level: "",
           imageUrl: "",
           googleFormLink: "",
+          adminNote: "",
         });
       } else {
         console.error("Failed to save program");
@@ -346,6 +369,22 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error("Error toggling program status:", error);
+    }
+  };
+
+  const handleToggleProgramHighlight = async (id: string) => {
+    try {
+      const response = await fetch(`${getProgramsUrl()}/${id}/highlight`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (response.ok) {
+        await fetchPrograms();
+      }
+    } catch (error) {
+      console.error("Error toggling program highlight:", error);
     }
   };
 
@@ -575,6 +614,109 @@ export default function AdminPage() {
     }
   };
 
+  // University section content handlers
+  const handleUniversitySectionContentChange = (
+    field: string,
+    value: string
+  ) => {
+    updateUniversitySectionContent({
+      [field]: value,
+    });
+    setUniversitySectionHasChanges(true);
+  };
+
+  const handleSaveUniversitySection = async () => {
+    try {
+      if (!selectedUniversityForContent) {
+        alert("Эхлээд их сургууль сонгоно уу!");
+        return;
+      }
+
+      setUniversitySectionSaving(true);
+
+      // Save university section content to backend
+      const response = await authenticatedFetch(
+        `${getContentUrl()}/university-sections/${selectedUniversityForContent}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(universitySectionContent),
+        }
+      );
+
+      if (response.ok) {
+        setUniversitySectionHasChanges(false);
+        alert("Их сургуулийн хэсгийн мэдээлэл амжилттай хадгалагдлаа!");
+
+        // Refresh university section content in context to reflect changes immediately
+        // This will update the university sections across the entire app
+        // We don't need to call anything here since the admin form updates
+        // the context directly via handleUniversitySectionContentChange
+      } else {
+        throw new Error("Failed to save university section content");
+      }
+    } catch (error) {
+      console.error("Error saving university section content:", error);
+      alert(
+        "Их сургуулийн хэсгийн мэдээлэл хадгалахад алдаа гарлаа: " +
+          (error as Error).message
+      );
+    } finally {
+      setUniversitySectionSaving(false);
+    }
+  };
+
+  // Handle university selection for content editing
+  const handleUniversitySelect = async (universityId: string) => {
+    setSelectedUniversityForContent(universityId);
+    if (universityId) {
+      await loadUniversitySectionContent(universityId);
+      setUniversitySectionHasChanges(false);
+    }
+  };
+
+  // Reset university content to defaults by deleting from database
+  const handleResetToDefaultsPermanently = async () => {
+    if (!selectedUniversityForContent) {
+      alert("Эхлээд их сургууль сонгоно уу!");
+      return;
+    }
+
+    if (
+      !confirm(
+        "Энэ их сургуулийн бүх тохируулгыг устгаж анхдагш утгад буцаах уу? Энэ үйлдлийг буцаах боломжгүй."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await authenticatedFetch(
+        `${getContentUrl()}/university-sections/${selectedUniversityForContent}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        // Reset to defaults in the UI
+        resetToDefaults();
+        setUniversitySectionHasChanges(false);
+        alert("Их сургуулийн контент амжилттай анхдагш утгад буцлаа!");
+      } else {
+        throw new Error("Failed to reset university content");
+      }
+    } catch (error) {
+      console.error("Error resetting university content:", error);
+      alert("Контент устгахад алдаа гарлаа: " + (error as Error).message);
+    }
+  };
+
   useEffect(() => {
     if (authLoading) return;
 
@@ -599,12 +741,27 @@ export default function AdminPage() {
       ) {
         e.preventDefault();
         handleSaveFooter();
+      } else if (
+        e.ctrlKey &&
+        e.key === "s" &&
+        activeSection === "university-sections" &&
+        universitySectionHasChanges &&
+        !universitySectionSaving
+      ) {
+        e.preventDefault();
+        handleSaveUniversitySection();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeSection, footerHasChanges, footerSaving]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [
+    activeSection,
+    footerHasChanges,
+    footerSaving,
+    universitySectionHasChanges,
+    universitySectionSaving,
+  ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const initializeAdminData = async () => {
     try {
@@ -1096,6 +1253,12 @@ export default function AdminPage() {
       icon: "📞",
       description: "Хөл хэсгийн мэдээлэл, холбоо барих, сошиал",
     },
+    {
+      id: "university-sections",
+      name: "Их сургуулийн хэсгүүд",
+      icon: "🏛️",
+      description: "Их сургуулийн хуудасны хэсгүүдийн контент засвар",
+    },
   ];
 
   const filteredFields = useMemo(() => {
@@ -1465,8 +1628,32 @@ export default function AdminPage() {
                               </svg>
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className="text-sm font-medium text-gray-900 flex items-center">
                                 {university.name}
+                                {university.adminNote && (
+                                  <div className="ml-2 group relative">
+                                    <svg
+                                      className="w-4 h-4 text-amber-500 cursor-help"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                                      />
+                                    </svg>
+                                    <div className="invisible group-hover:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap max-w-xs z-50">
+                                      <div className="font-medium text-amber-300 mb-1">
+                                        Админы тэмдэглэл:
+                                      </div>
+                                      {university.adminNote}
+                                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1659,8 +1846,32 @@ export default function AdminPage() {
                               </svg>
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className="text-sm font-medium text-gray-900 flex items-center">
                                 {program.title}
+                                {program.adminNote && (
+                                  <div className="ml-2 group relative">
+                                    <svg
+                                      className="w-4 h-4 text-amber-500 cursor-help"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                                      />
+                                    </svg>
+                                    <div className="invisible group-hover:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap max-w-xs z-50">
+                                      <div className="font-medium text-amber-300 mb-1">
+                                        Админы тэмдэглэл:
+                                      </div>
+                                      {program.adminNote}
+                                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1714,6 +1925,39 @@ export default function AdminPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
+                            <button
+                              onClick={() =>
+                                handleToggleProgramHighlight(program.id)
+                              }
+                              className={`p-1 rounded transition-colors ${
+                                program.isHighlighted
+                                  ? "text-yellow-600 hover:text-yellow-700 bg-yellow-50 hover:bg-yellow-100"
+                                  : "text-gray-400 hover:text-yellow-600 hover:bg-yellow-50"
+                              }`}
+                              title={
+                                program.isHighlighted
+                                  ? "Highlight-с хасах"
+                                  : "Highlight болгох"
+                              }
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill={
+                                  program.isHighlighted
+                                    ? "currentColor"
+                                    : "none"
+                                }
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                                />
+                              </svg>
+                            </button>
                             <button
                               onClick={() => handleEditProgram(program)}
                               className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
@@ -2595,6 +2839,292 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
+          ) : activeSection === "university-sections" ? (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:gap-3 sm:items-center sm:justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Их сургуулийн хэсгүүд - Контент засвар
+                  </h2>
+                  <p className="text-gray-500 text-sm">
+                    Их сургуулийн хуудасны хэсгүүдийн мэдээллийг засварлах.
+                    Хадгалах:{" "}
+                    <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-200 border border-gray-300 rounded-lg">
+                      Ctrl + S
+                    </kbd>
+                  </p>
+                </div>
+              </div>
+
+              {/* University Selector */}
+              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Их сургууль сонгох
+                  </label>
+                  {selectedUniversityForContent && (
+                    <button
+                      onClick={handleResetToDefaultsPermanently}
+                      className="px-3 py-1 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                    >
+                      Анхдагш утгаар сэргээх
+                    </button>
+                  )}
+                </div>
+                <select
+                  value={selectedUniversityForContent}
+                  onChange={(e) => handleUniversitySelect(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">-- Их сургууль сонгоно уу --</option>
+                  {universities.map((university) => (
+                    <option key={university.id} value={university.id}>
+                      {university.name} ({university.location})
+                    </option>
+                  ))}
+                </select>
+                {!selectedUniversityForContent && (
+                  <p className="text-sm text-blue-600 mt-2">
+                    Контент засварлахын тулд их сургууль сонгох шаардлагатай.
+                  </p>
+                )}
+              </div>
+
+              {selectedUniversityForContent && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Programs Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                        Хөтөлбөрүүд хэсэг
+                      </h3>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Гарчиг
+                        </label>
+                        <input
+                          type="text"
+                          value={universitySectionContent.programsTitle}
+                          onChange={(e) =>
+                            handleUniversitySectionContentChange(
+                              "programsTitle",
+                              e.target.value
+                            )
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Тайлбар
+                        </label>
+                        <textarea
+                          value={universitySectionContent.programsDescription}
+                          onChange={(e) =>
+                            handleUniversitySectionContentChange(
+                              "programsDescription",
+                              e.target.value
+                            )
+                          }
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Админы тэмдэглэл
+                          <span className="text-xs text-gray-500 ml-1">
+                            (зөвхөн админууд харна)
+                          </span>
+                        </label>
+                        <textarea
+                          value={universitySectionContent.programsAdminNote}
+                          onChange={(e) =>
+                            handleUniversitySectionContentChange(
+                              "programsAdminNote",
+                              e.target.value
+                            )
+                          }
+                          rows={2}
+                          placeholder="Ямар газрын хөтөлбөр вэ гэх мэт..."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Энэ талбар хоосон байвал юу ч харагдахгүй. Бичсэн
+                          тохиолдолд зөвхөн админ эрхтэй хэрэглэгчид харна.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Admission Requirements Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                        Элсэлтийн шаардлага хэсэг
+                      </h3>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Гарчиг
+                        </label>
+                        <input
+                          type="text"
+                          value={
+                            universitySectionContent.admissionRequirementsTitle
+                          }
+                          onChange={(e) =>
+                            handleUniversitySectionContentChange(
+                              "admissionRequirementsTitle",
+                              e.target.value
+                            )
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Тайлбар
+                        </label>
+                        <textarea
+                          value={
+                            universitySectionContent.admissionRequirementsDescription
+                          }
+                          onChange={(e) =>
+                            handleUniversitySectionContentChange(
+                              "admissionRequirementsDescription",
+                              e.target.value
+                            )
+                          }
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+
+                    {/* City Life Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                        Хотын амьдрал хэсэг
+                      </h3>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Гарчиг
+                        </label>
+                        <input
+                          type="text"
+                          value={universitySectionContent.cityLifeTitle}
+                          onChange={(e) =>
+                            handleUniversitySectionContentChange(
+                              "cityLifeTitle",
+                              e.target.value
+                            )
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Тайлбар
+                        </label>
+                        <textarea
+                          value={universitySectionContent.cityLifeDescription}
+                          onChange={(e) =>
+                            handleUniversitySectionContentChange(
+                              "cityLifeDescription",
+                              e.target.value
+                            )
+                          }
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Save Button */}
+                  <div className="mt-6 flex justify-between items-center">
+                    {universitySectionHasChanges && (
+                      <div className="flex items-center space-x-2 text-orange-600">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z"
+                          />
+                        </svg>
+                        <span className="text-sm font-medium">
+                          Хадгалаагүй өөрчлөлт байна
+                        </span>
+                      </div>
+                    )}
+                    <button
+                      onClick={handleSaveUniversitySection}
+                      disabled={universitySectionSaving}
+                      title="Их сургуулийн хэсгүүдийн өөрчлөлт хадгалах (Ctrl+S)"
+                      className={`px-6 py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 ${
+                        universitySectionHasChanges
+                          ? "bg-orange-600 hover:bg-orange-700 text-white"
+                          : "bg-blue-600 hover:bg-blue-700 text-white"
+                      }`}
+                    >
+                      {universitySectionSaving ? (
+                        <>
+                          <svg
+                            className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          <span>Хадгалж байна...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12"
+                            />
+                          </svg>
+                          <span>Хадгалах</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           ) : (
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:gap-3 sm:items-center sm:justify-between mb-6">
@@ -2823,6 +3353,30 @@ export default function AdminPage() {
                     placeholder="https://example.com/image.jpg"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Админы тэмдэглэл
+                    <span className="text-xs text-gray-500 ml-1">
+                      (зөвхөн админууд харна)
+                    </span>
+                  </label>
+                  <textarea
+                    value={universityForm.adminNote}
+                    onChange={(e) =>
+                      setUniversityForm((prev) => ({
+                        ...prev,
+                        adminNote: e.target.value,
+                      }))
+                    }
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Энэ их сургуулийн талаарх админы тэмдэглэл..."
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Энэ тэмдэглэл зөвхөн админ эрхтэй хэрэглэгчид харна.
+                  </p>
+                </div>
               </div>
 
               <div className="flex justify-end space-x-3 mt-6">
@@ -2983,6 +3537,30 @@ export default function AdminPage() {
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Энэ хөтөлбөрт өргөдөл гаргах Google Form-ын холбоос
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Админы тэмдэглэл
+                    <span className="text-xs text-gray-500 ml-1">
+                      (зөвхөн админууд харна)
+                    </span>
+                  </label>
+                  <textarea
+                    value={programForm.adminNote}
+                    onChange={(e) =>
+                      setProgramForm((prev) => ({
+                        ...prev,
+                        adminNote: e.target.value,
+                      }))
+                    }
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Энэ хөтөлбөрийн талаарх админы тэмдэглэл..."
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Энэ тэмдэглэл зөвхөн админ эрхтэй хэрэглэгчид харна.
                   </p>
                 </div>
               </div>

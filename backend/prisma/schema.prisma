@@ -36,7 +36,9 @@ model Program {
   requirements String?
   imageUrl    String?
   googleFormLink String?
+  adminNote   String?  // Admin-only notes about this program
   isActive    Boolean  @default(true)
+  isHighlighted Boolean @default(false) // Whether program is highlighted/featured
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -59,6 +61,7 @@ model University {
   location    String
   description String
   imageUrl    String?
+  adminNote   String?  // Admin-only notes about this university
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
