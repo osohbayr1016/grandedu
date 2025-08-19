@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
-import { getHealthCheckUrl, getHomeContentUrl } from "@/utils/api";
+import { getHomeContentUrl } from "@/utils/api";
 import { defaultContent } from "@/utils/defaultContent";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -16,39 +16,10 @@ interface PageContent {
 }
 
 export default function Home() {
-  const [isConnected, setIsConnected] = useState<boolean>(false);
   const [pageContent, setPageContent] = useState<PageContent>({});
   const [contentLoading, setContentLoading] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
   const { user, showAuth, setShowAuth, isLogin, setIsLogin } = useAuth();
-
-  useEffect(() => {
-    const checkBackendHealth = async () => {
-      try {
-        const response = await fetch(getHealthCheckUrl(), {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          signal: AbortSignal.timeout(5000), // 5 second timeout
-        });
-
-        if (response.ok) {
-          setIsConnected(true);
-        } else {
-          setIsConnected(false);
-        }
-      } catch (error) {
-        console.error("Backend health check failed:", error);
-        setIsConnected(false);
-      }
-    };
-
-    checkBackendHealth();
-    const interval = setInterval(checkBackendHealth, 10000); // Check every 10 seconds
-
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     fetchPageContent();
@@ -101,8 +72,8 @@ export default function Home() {
     field: string,
     fallback: string = ""
   ) => {
-    // If backend is not connected or content is empty, use default content
-    if (!isConnected || Object.keys(pageContent).length === 0) {
+    // If content is empty, use default content
+    if (Object.keys(pageContent).length === 0) {
       const defaultSection = defaultContent[
         section as keyof typeof defaultContent
       ] as Record<string, string> | undefined;
@@ -630,22 +601,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Backend Status Indicator */}
-      <div className="fixed bottom-4 right-4 animate-fade-in-up animate-delay-1200">
-        <div className="bg-white rounded-lg shadow-lg p-3 border border-gray-200">
-          <div className="flex items-center space-x-2">
-            <div
-              className={`w-2 h-2 rounded-full ${
-                isConnected ? "bg-green-500" : "bg-red-500"
-              }`}
-            ></div>
-            <span className="text-xs text-gray-600">
-              {isConnected ? "Backend Connected" : "Backend Disconnected"}
-            </span>
-          </div>
-        </div>
-      </div>
 
       {/* Authentication Modal */}
       {showAuth && (

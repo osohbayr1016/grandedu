@@ -1,12 +1,16 @@
 # GrandEdu Deployment Checklist
 
-## Admin Editing Issues - Fixes Applied
+## Backend Connection Issues - Fixes Applied ✅
 
-### 1. Backend CORS Configuration ✅
+### 1. Enhanced CORS Configuration ✅
 
-- **Issue**: Basic CORS configuration may not work in production
-- **Fix**: Updated `backend/src/server.ts` with specific origins and credentials
-- **Location**: Lines 18-31
+- **Issue**: Restrictive CORS configuration blocking frontend requests
+- **Fix**: Updated `backend/src/server.ts` with dynamic origin checking for all Vercel deployments
+- **Location**: Lines 18-51
+- **Features**: 
+  - Allows all Vercel subdomains (*.vercel.app)
+  - Better error logging for blocked origins
+  - More flexible localhost handling
 
 ### 2. Authentication Middleware Enhancement ✅
 

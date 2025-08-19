@@ -17,20 +17,78 @@ const prisma = new PrismaClient();
 // Middleware
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://grandedu-frontend.vercel.app",
-      "https://grandedu.vercel.app",
-      /\.vercel\.app$/,
-      /localhost:\d+$/,
-    ],
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      console.log("CORS: Request from origin:", origin);
+
+      // Allow localhost for development
+      if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
+        console.log("CORS: Allowing localhost");
+        return callback(null, true);
+      }
+
+      // Allow Vercel deployments
+      if (origin.includes("vercel.app")) {
+        console.log("CORS: Allowing Vercel domain");
+        return callback(null, true);
+      }
+
+      // Allow your custom domain
+      if (origin.includes("grandedu.mn")) {
+        console.log("CORS: Allowing grandedu.mn domain");
+        return callback(null, true);
+      }
+
+      // Allow specific domains
+      const allowed = [
+        "https://grandedu-frontend.vercel.app",
+        "https://grandedu.vercel.app",
+        "https://grandedu.mn",
+        "https://www.grandedu.mn",
+        "http://grandedu.mn",
+        "http://www.grandedu.mn",
+      ];
+
+      if (allowed.includes(origin)) {
+        console.log("CORS: Allowing from allowed list:", origin);
+        return callback(null, true);
+      }
+
+      console.log("CORS: Blocked origin:", origin);
+      callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "Accept",
+      "Origin",
+      "X-Requested-With",
+    ],
+    preflightContinue: false,
+    optionsSuccessStatus: 200,
   })
 );
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// Handle preflight requests explicitly
+app.options("*", (req, res) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin);
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PUT,DELETE,PATCH,OPTIONS"
+  );
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, Accept, Origin, X-Requested-With"
+  );
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.sendStatus(200);
+});
 
 // Routes
 app.use("/api/auth", authRoutes);

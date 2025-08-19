@@ -67,6 +67,52 @@ export const getHealthCheckUrl = () => {
   return url;
 };
 
+// Connection test utility
+export const testBackendConnection = async (): Promise<{
+  success: boolean;
+  error?: string;
+  url: string;
+  timestamp: string;
+}> => {
+  const url = getApiBaseUrl();
+  const healthUrl = `${url}/api/health`;
+  
+  try {
+    console.log("Testing backend connection to:", healthUrl);
+    const response = await fetch(healthUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      // Add timeout to avoid hanging
+      signal: AbortSignal.timeout(10000), // 10 seconds
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log("Backend connection successful:", data);
+    
+    return {
+      success: true,
+      url: healthUrl,
+      timestamp: new Date().toISOString(),
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error("Backend connection failed:", errorMessage);
+    
+    return {
+      success: false,
+      error: errorMessage,
+      url: healthUrl,
+      timestamp: new Date().toISOString(),
+    };
+  }
+};
+
 // Auth endpoints
 export const getLoginUrl = () => {
   const url = `${getApiBaseUrl()}/api/auth/login`;
