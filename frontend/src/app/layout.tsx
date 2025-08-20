@@ -13,6 +13,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "GrandEdu - Хятадад зуучлах баталгаат хамт олон",
   description: "Монголын оюутан залуусыг Хятад улс руу зуучлах вэбсайт",
+  icons: {
+    icon: "/favicon.jpg",
+    shortcut: "/favicon.jpg",
+    apple: "/favicon.jpg",
+  },
 };
 
 export default function RootLayout({
