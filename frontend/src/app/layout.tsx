@@ -27,6 +27,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="mn">
+      <head>
+        <link rel="icon" href="/favicon.jpg" type="image/jpeg" />
+        <link rel="shortcut icon" href="/favicon.jpg" type="image/jpeg" />
+        <link rel="apple-touch-icon" href="/favicon.jpg" />
+        <meta name="msapplication-TileImage" content="/favicon.jpg" />
+      </head>
       <body className={`${inter.className} bg-white`}>
         <AuthProvider>
           <FooterProvider>

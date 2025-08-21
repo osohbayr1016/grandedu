@@ -93,7 +93,7 @@ export default function AdminPage() {
   const [groupedContent, setGroupedContent] = useState<GroupedContent>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState("universities");
+  const [activeSection, setActiveSection] = useState("hero");
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -766,9 +766,12 @@ export default function AdminPage() {
   const initializeAdminData = async () => {
     try {
       setLoading(true);
+
+      // Always set sample content first to ensure it's available
+      setSampleContent();
+
       // Fetch all data in parallel for better performance
       await Promise.all([
-        fetchContent(),
         fetchStats(),
         fetchPrograms(),
         fetchNews(),
@@ -821,98 +824,13 @@ export default function AdminPage() {
 
   const setSampleContent = () => {
     const sampleContent: PageContent[] = [
-      // Navigation content
-      {
-        id: "nav-1",
-        page: "home",
-        section: "navigation",
-        field: "homeLink",
-        content: "Нүүр",
-        type: "text",
-        order: 1,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: "nav-2",
-        page: "home",
-        section: "navigation",
-        field: "programsLink",
-        content: "Хөтөлбөрүүд",
-        type: "text",
-        order: 2,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: "nav-3",
-        page: "home",
-        section: "navigation",
-        field: "universitiesLink",
-        content: "Их сургуулиуд",
-        type: "text",
-        order: 3,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: "nav-4",
-        page: "home",
-        section: "navigation",
-        field: "newsLink",
-        content: "Мэдээ",
-        type: "text",
-        order: 4,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: "nav-5",
-        page: "home",
-        section: "navigation",
-        field: "contactLink",
-        content: "Холбоо барих",
-        type: "text",
-        order: 5,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: "nav-6",
-        page: "home",
-        section: "navigation",
-        field: "loginButton",
-        content: "Нэвтрэх",
-        type: "text",
-        order: 6,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: "nav-7",
-        page: "home",
-        section: "navigation",
-        field: "signupButton",
-        content: "Бүртгүүлэх",
-        type: "text",
-        order: 7,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
       // Hero content
       {
         id: "hero-1",
         page: "home",
         section: "hero",
-        field: "mainTitle",
-        content: "Хятадад зуучлах баталгаат хамт олон",
+        field: "title",
+        content: "Хятадын их сургуулиудад суралцах боломж",
         type: "text",
         order: 1,
         isActive: true,
@@ -924,7 +842,7 @@ export default function AdminPage() {
         page: "home",
         section: "hero",
         field: "subtitle",
-        content: "Монголын оюутан залуусыг Хятад улс руу зуучлах вэбсайт",
+        content: "Монголын оюутнуудад зориулсан боловсролын зуучлал",
         type: "text",
         order: 2,
         isActive: true,
@@ -937,7 +855,7 @@ export default function AdminPage() {
         section: "hero",
         field: "description",
         content:
-          "Хятадын тэргүүлэгч их сургуулиудтай хамтран ажиллаж, танд хамгийн сайн боловсролын боломжийг санал болгож байна.",
+          "Хятадын тэргүүн их сургуулиудад суралцах боломжийг таньд санал болгож байна",
         type: "text",
         order: 3,
         isActive: true,
@@ -948,7 +866,7 @@ export default function AdminPage() {
         id: "hero-4",
         page: "home",
         section: "hero",
-        field: "ctaButton",
+        field: "buttonText",
         content: "Дэлгэрэнгүй мэдэх",
         type: "text",
         order: 4,
@@ -960,8 +878,9 @@ export default function AdminPage() {
         id: "hero-5",
         page: "home",
         section: "hero",
-        field: "learnMoreButton",
-        content: "Илүү их мэдэх",
+        field: "backgroundImage",
+        content:
+          "https://images.unsplash.com/photo-1523050854058-8df90110c9e1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
         type: "text",
         order: 5,
         isActive: true,
@@ -973,8 +892,8 @@ export default function AdminPage() {
         id: "news-1",
         page: "home",
         section: "news",
-        field: "sectionTitle",
-        content: "Сүүлийн мэдээ",
+        field: "title",
+        content: "Мэдээ мэдээлэл",
         type: "text",
         order: 1,
         isActive: true,
@@ -985,22 +904,10 @@ export default function AdminPage() {
         id: "news-2",
         page: "home",
         section: "news",
-        field: "sectionDescription",
-        content: "Хамгийн сүүлийн үеийн мэдээ, мэдээлэл",
+        field: "subtitle",
+        content: "Хамгийн сүүлийн үеийн мэдээ",
         type: "text",
         order: 2,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: "news-3",
-        page: "home",
-        section: "news",
-        field: "viewAllNewsButton",
-        content: "Бүх мэдээг харах",
-        type: "text",
-        order: 3,
         isActive: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -1010,7 +917,7 @@ export default function AdminPage() {
         id: "programs-1",
         page: "home",
         section: "programs",
-        field: "sectionTitle",
+        field: "title",
         content: "Хөтөлбөрүүд",
         type: "text",
         order: 1,
@@ -1022,22 +929,10 @@ export default function AdminPage() {
         id: "programs-2",
         page: "home",
         section: "programs",
-        field: "sectionDescription",
-        content: "Хятадын их сургуулиудын хөтөлбөрүүд",
+        field: "subtitle",
+        content: "Хятадын их сургуулиудад суралцах боломжууд",
         type: "text",
         order: 2,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: "programs-3",
-        page: "home",
-        section: "programs",
-        field: "viewAllProgramsButton",
-        content: "Бүх хөтөлбөрийг харах",
-        type: "text",
-        order: 3,
         isActive: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -1058,6 +953,30 @@ export default function AdminPage() {
       {}
     );
     setGroupedContent(grouped);
+
+    // Merge with saved content from localStorage
+    const savedContent = localStorage.getItem("adminContent");
+    if (savedContent) {
+      try {
+        const parsed = JSON.parse(savedContent);
+        setGroupedContent((prev) => {
+          const merged = { ...prev };
+          // Merge each section from localStorage
+          Object.keys(parsed).forEach((section) => {
+            if (parsed[section]) {
+              merged[section] = {
+                ...merged[section],
+                ...parsed[section],
+              };
+            }
+          });
+          return merged;
+        });
+        console.log("Merged content from localStorage with sample content");
+      } catch (error) {
+        console.error("Error loading from localStorage:", error);
+      }
+    }
   };
 
   const fetchStats = async () => {
@@ -1148,6 +1067,7 @@ export default function AdminPage() {
   ) => {
     setSaving(true);
     try {
+      // Try to save to backend first
       const response = await authenticatedFetch(getContentUrl(), {
         method: "POST",
         body: JSON.stringify({
@@ -1160,17 +1080,62 @@ export default function AdminPage() {
       });
 
       if (response.ok) {
-        await fetchContent();
+        // Update local state immediately
+        setGroupedContent((prev) => ({
+          ...prev,
+          [section]: {
+            ...prev[section],
+            [field]: content,
+          },
+        }));
+
+        // Save to localStorage as backup
+        const existingContent = JSON.parse(
+          localStorage.getItem("adminContent") || "{}"
+        );
+        localStorage.setItem(
+          "adminContent",
+          JSON.stringify({
+            ...existingContent,
+            [section]: {
+              ...existingContent[section],
+              [field]: content,
+            },
+          })
+        );
+
         setEditingField(null);
         alert("Контент амжилттай хадгалагдлаа!");
       }
     } catch (error) {
       console.error("Контент хадгалахад алдаа гарлаа:", error);
-      alert("Контент хадгалахад алдаа гарлаа: " + (error as Error).message);
-      // If authentication failed, redirect to login
-      if ((error as Error).message.includes("Authentication failed")) {
-        router.push("/");
-      }
+
+      // Even if backend save fails, update local state for immediate feedback
+      setGroupedContent((prev) => ({
+        ...prev,
+        [section]: {
+          ...prev[section],
+          [field]: content,
+        },
+      }));
+
+      // Save to localStorage as backup
+      const existingContent = JSON.parse(
+        localStorage.getItem("adminContent") || "{}"
+      );
+      localStorage.setItem(
+        "adminContent",
+        JSON.stringify({
+          ...existingContent,
+          [section]: {
+            ...existingContent[section],
+            [field]: content,
+          },
+        })
+      );
+
+      setEditingField(null);
+      alert("Контент хадгалагдлаа (локал хадгалсан)!");
     } finally {
       setSaving(false);
     }
@@ -1211,12 +1176,6 @@ export default function AdminPage() {
 
   // Only show sections that actually exist in your GrandEdu website
   const sections = [
-    {
-      id: "navigation",
-      name: "Хэлний сан",
-      icon: "🌐",
-      description: "Вэбсайтын хэлний сан, цэс, товчнууд",
-    },
     {
       id: "hero",
       name: "Үндсэн хэсэг",
@@ -2535,6 +2494,27 @@ export default function AdminPage() {
                           e.target.value
                         )
                       }
+                      onKeyDown={(e) => {
+                        if (e.key === "Tab") {
+                          e.preventDefault();
+                          const target = e.target as HTMLTextAreaElement;
+                          const start = target.selectionStart;
+                          const end = target.selectionEnd;
+                          const newValue =
+                            target.value.substring(0, start) +
+                            "\t" +
+                            target.value.substring(end);
+                          handleFooterContentChange(
+                            "companyDescription",
+                            newValue
+                          );
+                          // Set cursor position after the tab
+                          setTimeout(() => {
+                            target.selectionStart = target.selectionEnd =
+                              start + 1;
+                          }, 0);
+                        }
+                      }}
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
@@ -3137,17 +3117,100 @@ export default function AdminPage() {
                     Энэ хэсгийн бүх текст, гарчиг, тайлбарыг засварлана
                   </p>
                 </div>
-                <div className="relative w-full sm:w-72">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Талбар эсвэл контентийг хайх"
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                  />
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                    🔎
-                  </span>
+                <div className="flex gap-3">
+                  <div className="relative w-full sm:w-72">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Талбар эсвэл контентийг хайх"
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                      🔎
+                    </span>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await authenticatedFetch(
+                          getContentUrl()
+                        );
+                        if (response.ok) {
+                          const data = await response.json();
+                          if (data && Array.isArray(data) && data.length > 0) {
+                            setContent(data);
+                            const grouped = data.reduce(
+                              (acc: GroupedContent, item: PageContent) => {
+                                if (!acc[item.section]) {
+                                  acc[item.section] = {};
+                                }
+                                acc[item.section][item.field] = item.content;
+                                return acc;
+                              },
+                              {}
+                            );
+                            setGroupedContent(grouped);
+                            alert("Контент шинэчлэгдлээ!");
+                          } else {
+                            alert(
+                              "Backend-ээс контент олдсонгүй. Sample контент ашиглана."
+                            );
+                          }
+                        }
+                      } catch (error) {
+                        console.error("Контент шинэчлэхэд алдаа:", error);
+                        alert(
+                          "Backend-тэй холбогдох боломжгүй. Sample контент ашиглана."
+                        );
+                      }
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
+                    </svg>
+                    <span>Шинэчлэх</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (
+                        confirm(
+                          "Бүх локал өөрчлөлтийг устгаж, анхны контентийг сэргээх үү?"
+                        )
+                      ) {
+                        localStorage.removeItem("adminContent");
+                        setSampleContent();
+                        alert("Анхны контент сэргээгдлээ!");
+                      }
+                    }}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                    <span>Сэргээх</span>
+                  </button>
                 </div>
               </div>
 
@@ -3330,6 +3393,27 @@ export default function AdminPage() {
                         description: e.target.value,
                       }))
                     }
+                    onKeyDown={(e) => {
+                      if (e.key === "Tab") {
+                        e.preventDefault();
+                        const target = e.target as HTMLTextAreaElement;
+                        const start = target.selectionStart;
+                        const end = target.selectionEnd;
+                        const newValue =
+                          target.value.substring(0, start) +
+                          "\t" +
+                          target.value.substring(end);
+                        setUniversityForm((prev) => ({
+                          ...prev,
+                          description: newValue,
+                        }));
+                        // Set cursor position after the tab
+                        setTimeout(() => {
+                          target.selectionStart = target.selectionEnd =
+                            start + 1;
+                        }, 0);
+                      }
+                    }}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Их сургуулийн тайлбар оруулна уу"
@@ -3369,6 +3453,27 @@ export default function AdminPage() {
                         adminNote: e.target.value,
                       }))
                     }
+                    onKeyDown={(e) => {
+                      if (e.key === "Tab") {
+                        e.preventDefault();
+                        const target = e.target as HTMLTextAreaElement;
+                        const start = target.selectionStart;
+                        const end = target.selectionEnd;
+                        const newValue =
+                          target.value.substring(0, start) +
+                          "\t" +
+                          target.value.substring(end);
+                        setUniversityForm((prev) => ({
+                          ...prev,
+                          adminNote: newValue,
+                        }));
+                        // Set cursor position after the tab
+                        setTimeout(() => {
+                          target.selectionStart = target.selectionEnd =
+                            start + 1;
+                        }, 0);
+                      }
+                    }}
                     rows={2}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Энэ их сургуулийн талаарх админы тэмдэглэл..."
@@ -3459,6 +3564,27 @@ export default function AdminPage() {
                         description: e.target.value,
                       }))
                     }
+                    onKeyDown={(e) => {
+                      if (e.key === "Tab") {
+                        e.preventDefault();
+                        const target = e.target as HTMLTextAreaElement;
+                        const start = target.selectionStart;
+                        const end = target.selectionEnd;
+                        const newValue =
+                          target.value.substring(0, start) +
+                          "\t" +
+                          target.value.substring(end);
+                        setProgramForm((prev) => ({
+                          ...prev,
+                          description: newValue,
+                        }));
+                        // Set cursor position after the tab
+                        setTimeout(() => {
+                          target.selectionStart = target.selectionEnd =
+                            start + 1;
+                        }, 0);
+                      }
+                    }}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Хөтөлбөрийн тайлбар оруулна уу"
@@ -3555,6 +3681,27 @@ export default function AdminPage() {
                         adminNote: e.target.value,
                       }))
                     }
+                    onKeyDown={(e) => {
+                      if (e.key === "Tab") {
+                        e.preventDefault();
+                        const target = e.target as HTMLTextAreaElement;
+                        const start = target.selectionStart;
+                        const end = target.selectionEnd;
+                        const newValue =
+                          target.value.substring(0, start) +
+                          "\t" +
+                          target.value.substring(end);
+                        setProgramForm((prev) => ({
+                          ...prev,
+                          adminNote: newValue,
+                        }));
+                        // Set cursor position after the tab
+                        setTimeout(() => {
+                          target.selectionStart = target.selectionEnd =
+                            start + 1;
+                        }, 0);
+                      }
+                    }}
                     rows={2}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Энэ хөтөлбөрийн талаарх админы тэмдэглэл..."
@@ -3645,6 +3792,27 @@ export default function AdminPage() {
                         content: e.target.value,
                       }))
                     }
+                    onKeyDown={(e) => {
+                      if (e.key === "Tab") {
+                        e.preventDefault();
+                        const target = e.target as HTMLTextAreaElement;
+                        const start = target.selectionStart;
+                        const end = target.selectionEnd;
+                        const newValue =
+                          target.value.substring(0, start) +
+                          "\t" +
+                          target.value.substring(end);
+                        setNewsForm((prev) => ({
+                          ...prev,
+                          content: newValue,
+                        }));
+                        // Set cursor position after the tab
+                        setTimeout(() => {
+                          target.selectionStart = target.selectionEnd =
+                            start + 1;
+                        }, 0);
+                      }
+                    }}
                     rows={4}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Мэдээний агуулга оруулна уу"
