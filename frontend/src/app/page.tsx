@@ -5,7 +5,12 @@ import Link from "next/link";
 
 import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
-import { getHomeContentUrl } from "@/utils/api";
+import {
+  getHomeContentUrl,
+  getNewsUrl,
+  getProgramsUrl,
+  getUniversitiesUrl,
+} from "@/utils/api";
 import { defaultContent } from "@/utils/defaultContent";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -15,14 +20,53 @@ interface PageContent {
   };
 }
 
+interface News {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+  publishDate: string;
+  imageUrl?: string;
+  isActive: boolean;
+}
+
+interface Program {
+  id: string;
+  title: string;
+  description: string;
+  duration: string;
+  level: string;
+  price?: string;
+  location?: string;
+  university?: string;
+  requirements?: string;
+  imageUrl?: string;
+  isHighlighted: boolean;
+  isActive: boolean;
+}
+
+interface University {
+  id: string;
+  name: string;
+  location: string;
+  description: string;
+  imageUrl?: string;
+  isActive: boolean;
+}
+
 export default function Home() {
   const [pageContent, setPageContent] = useState<PageContent>({});
   const [contentLoading, setContentLoading] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [news, setNews] = useState<News[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [universities, setUniversities] = useState<University[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
   const { user, showAuth, setShowAuth, isLogin, setIsLogin } = useAuth();
 
   useEffect(() => {
     fetchPageContent();
+    fetchRealData();
   }, []);
 
   // Scroll state kept for floating menu animation, nav now global
@@ -66,6 +110,37 @@ export default function Home() {
     }
   };
 
+  const fetchRealData = async () => {
+    try {
+      // Fetch news, programs, and universities in parallel
+      const [newsResponse, programsResponse, universitiesResponse] =
+        await Promise.all([
+          fetch(getNewsUrl()),
+          fetch(getProgramsUrl()),
+          fetch(getUniversitiesUrl()),
+        ]);
+
+      if (newsResponse.ok) {
+        const newsData = await newsResponse.json();
+        setNews(newsData);
+      }
+
+      if (programsResponse.ok) {
+        const programsData = await programsResponse.json();
+        setPrograms(programsData);
+      }
+
+      if (universitiesResponse.ok) {
+        const universitiesData = await universitiesResponse.json();
+        setUniversities(universitiesData);
+      }
+    } catch (error) {
+      console.error("Error fetching real data:", error);
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
   // Helper function to get content with fallback
   const getContent = (
     section: string,
@@ -90,7 +165,7 @@ export default function Home() {
     );
   };
 
-  if (contentLoading) {
+  if (contentLoading || dataLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
@@ -240,31 +315,45 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* News Card */}
-            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 max-w-md mx-auto sm:mx-0 animate-fade-in-up animate-delay-300">
-              <div className="flex items-center text-xs sm:text-sm text-gray-500 mb-3">
-                <span className="bg-blue-100 text-blue-800 px-2 sm:px-3 py-1 rounded-full text-xs font-medium">
-                  {getContent("news", "newsCardTag", "ХӨТӨЛБӨР")}
-                </span>
-                <span className="ml-2 sm:ml-3">
-                  {getContent("news", "newsCardDate", "2025 оны 6-р сар")}
-                </span>
+            {/* News Cards */}
+            {news.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {news.slice(0, 3).map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="bg-white rounded-lg shadow-lg p-4 sm:p-6 animate-fade-in-up animate-delay-300"
+                    style={{ animationDelay: `${(index + 1) * 200}ms` }}
+                  >
+                    <div className="flex items-center text-xs sm:text-sm text-gray-500 mb-3">
+                      <span className="bg-blue-100 text-blue-800 px-2 sm:px-3 py-1 rounded-full text-xs font-medium">
+                        МЭДЭЭ
+                      </span>
+                      <span className="ml-2 sm:ml-3">
+                        {new Date(item.publishDate).toLocaleDateString(
+                          "mn-MN",
+                          {
+                            year: "numeric",
+                            month: "long",
+                          }
+                        )}
+                      </span>
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
+                      {item.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm sm:text-base">
+                      {item.content.length > 100
+                        ? `${item.content.substring(0, 100)}...`
+                        : item.content}
+                    </p>
+                  </div>
+                ))}
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
-                {getContent(
-                  "news",
-                  "newsCardTitle",
-                  "6+6 Хятад хэлний бэлтгэл хөтөлбөр (2025 оны 6-р сарын элсэлт)"
-                )}
-              </h3>
-              <p className="text-gray-600 text-sm sm:text-base">
-                {getContent(
-                  "news",
-                  "newsCardDescription",
-                  "Монголд 6 сар, Хятадт 6-11 сар хэлний бэлтгэл"
-                )}
-              </p>
-            </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500 text-lg">Хоосон байна</p>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -287,161 +376,58 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              {/* Program Card 1 */}
-              <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-200">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
-                  <svg
-                    className="w-5 h-5 sm:w-6 sm:h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+            {programs.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                {programs.slice(0, 4).map((program, index) => (
+                  <div
+                    key={program.id}
+                    className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-200"
+                    style={{ animationDelay: `${(index + 1) * 200}ms` }}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">
-                  {getContent(
-                    "programs",
-                    "program1Title",
-                    "Хятад хэлний бэлтгэл"
-                  )}
-                </h3>
-
-                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                  {getContent(
-                    "programs",
-                    "program1Description",
-                    "Хятад хэлний суурь мэдлэг"
-                  )}
-                </p>
-                <Link
-                  href="/programs"
-                  className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
-                >
-                  {getContent("programs", "viewMoreButton", "Дэлгэрэнгүй →")}
-                </Link>
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
+                      <svg
+                        className="w-5 h-5 sm:w-6 sm:h-6 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">
+                      {program.title}
+                    </h3>
+                    <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
+                      {program.description}
+                    </p>
+                    <div className="text-sm text-gray-500 mb-3">
+                      <p>Хугацаа: {program.duration}</p>
+                      <p>Түвшин: {program.level}</p>
+                      {program.price && <p>Үнэ: {program.price}</p>}
+                    </div>
+                    <Link
+                      href="/programs"
+                      className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
+                    >
+                      {getContent(
+                        "programs",
+                        "viewMoreButton",
+                        "Дэлгэрэнгүй →"
+                      )}
+                    </Link>
+                  </div>
+                ))}
               </div>
-
-              {/* Program Card 2 */}
-              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-400">
-                <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mb-4">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
-                  {getContent(
-                    "programs",
-                    "program2Title",
-                    "Бакалаврын хөтөлбөр"
-                  )}
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  {getContent(
-                    "programs",
-                    "program2Description",
-                    "4 жилийн дээд боловсрол"
-                  )}
-                </p>
-                <Link
-                  href="/programs"
-                  className="text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  {getContent("programs", "viewMoreButton", "Дэлгэрэнгүй →")}
-                </Link>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500 text-lg">Хоосон байна</p>
               </div>
-
-              {/* Program Card 3 */}
-              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-600">
-                <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mb-4">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
-                  {getContent(
-                    "programs",
-                    "program3Title",
-                    "Магистрын хөтөлбөр"
-                  )}
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  {getContent(
-                    "programs",
-                    "program3Description",
-                    "2 жилийн магистрын зэрэг"
-                  )}
-                </p>
-                <Link
-                  href="/programs"
-                  className="text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  {getContent("programs", "viewMoreButton", "Дэлгэрэнгүй →")}
-                </Link>
-              </div>
-
-              {/* Program Card 4 */}
-              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-800">
-                <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center mb-4">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
-                  {getContent("programs", "program4Title", "Докторын хөтөлбөр")}
-                </h3>
-
-                <p className="text-gray-600 mb-4">
-                  {getContent(
-                    "programs",
-                    "program4Description",
-                    "3-4 жилийн докторын зэрэг"
-                  )}
-                </p>
-                <Link
-                  href="/programs"
-                  className="text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  {getContent("programs", "viewMoreButton", "Дэлгэрэнгүй →")}
-                </Link>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
@@ -468,136 +454,60 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {/* University Card 1 */}
-              <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-300">
-                <div className="h-32 sm:h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                  <div className="text-white text-center px-2">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white bg-opacity-20 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
-                      <svg
-                        className="w-6 h-6 sm:w-8 sm:h-8"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                      </svg>
-                    </div>
-                    <h3 className="text-sm sm:text-lg font-bold">
-                      {getContent(
-                        "universities",
-                        "university1Name",
-                        "Сычуань их сургууль"
-                      )}
-                    </h3>
-                  </div>
-                </div>
-                <div className="p-4 sm:p-6">
-                  <p className="text-gray-600 mb-2 sm:mb-3 text-sm sm:text-base">
-                    {getContent(
-                      "universities",
-                      "university1Location",
-                      "Чэнду, Сычуань"
-                    )}
-                  </p>
-                  <Link
-                    href="/universities"
-                    className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
+            {universities.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {universities.slice(0, 3).map((university, index) => (
+                  <div
+                    key={university.id}
+                    className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-300"
+                    style={{ animationDelay: `${(index + 1) * 200}ms` }}
                   >
-                    {getContent(
-                      "universities",
-                      "viewMoreButton",
-                      "Дэлгэрэнгүй →"
-                    )}
-                  </Link>
-                </div>
-              </div>
-
-              {/* University Card 2 */}
-              <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-500">
-                <div className="h-32 sm:h-48 bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
-                  <div className="text-white text-center px-2">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white bg-opacity-20 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
-                      <svg
-                        className="w-6 h-6 sm:w-8 sm:h-8"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                      </svg>
+                    <div className="h-32 sm:h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                      <div className="text-white text-center px-2">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white bg-opacity-20 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
+                          <svg
+                            className="w-6 h-6 sm:w-8 sm:h-8"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                          </svg>
+                        </div>
+                        <h3 className="text-sm sm:text-lg font-bold">
+                          {university.name}
+                        </h3>
+                      </div>
                     </div>
-                    <h3 className="text-sm sm:text-lg font-bold">
-                      {getContent(
-                        "universities",
-                        "university2Name",
-                        "Хятадын Шинжлэх Ухаан, Технологийн Их Сургууль"
+                    <div className="p-4 sm:p-6">
+                      <p className="text-gray-600 mb-2 sm:mb-3 text-sm sm:text-base">
+                        {university.location}
+                      </p>
+                      {university.description && (
+                        <p className="text-gray-600 mb-3 text-sm">
+                          {university.description.length > 100
+                            ? `${university.description.substring(0, 100)}...`
+                            : university.description}
+                        </p>
                       )}
-                    </h3>
-                  </div>
-                </div>
-                <div className="p-4 sm:p-6">
-                  <p className="text-gray-600 mb-2 sm:mb-3 text-sm sm:text-base">
-                    {getContent(
-                      "universities",
-                      "university2Location",
-                      "Хэфэй, Аньхой"
-                    )}
-                  </p>
-                  <Link
-                    href="/universities"
-                    className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
-                  >
-                    {getContent(
-                      "universities",
-                      "viewMoreButton",
-                      "Дэлгэрэнгүй →"
-                    )}
-                  </Link>
-                </div>
-              </div>
-
-              {/* University Card 3 */}
-              <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-700">
-                <div className="h-32 sm:h-48 bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
-                  <div className="text-white text-center px-2">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white bg-opacity-20 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
-                      <svg
-                        className="w-6 h-6 sm:w-8 sm:h-8"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
+                      <Link
+                        href="/universities"
+                        className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
                       >
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                      </svg>
+                        {getContent(
+                          "universities",
+                          "viewMoreButton",
+                          "Дэлгэрэнгүй →"
+                        )}
+                      </Link>
                     </div>
-                    <h3 className="text-sm sm:text-lg font-bold">
-                      {getContent(
-                        "universities",
-                        "university3Name",
-                        "Шанхайн Жяо Тонгийн Их Сургууль"
-                      )}
-                    </h3>
                   </div>
-                </div>
-                <div className="p-4 sm:p-6">
-                  <p className="text-gray-600 mb-2 sm:mb-3 text-sm sm:text-base">
-                    {getContent(
-                      "universities",
-                      "university3Location",
-                      "Шанхай"
-                    )}
-                  </p>
-                  <Link
-                    href="/universities"
-                    className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
-                  >
-                    {getContent(
-                      "universities",
-                      "viewMoreButton",
-                      "Дэлгэрэнгүй →"
-                    )}
-                  </Link>
-                </div>
+                ))}
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500 text-lg">Хоосон байна</p>
+              </div>
+            )}
           </div>
         </div>
       </section>
