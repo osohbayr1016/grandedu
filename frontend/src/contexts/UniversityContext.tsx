@@ -30,16 +30,14 @@ interface UniversityContextType {
   resetToDefaults: () => void;
 }
 
-const defaultUniversitySectionContent: UniversitySectionContent = {
-  programsTitle: "Хөтөлбөрүүд",
-  programsDescription: "Хөтөлбөрийн дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.",
-  programsAdminNote: "", // Empty by default
-  admissionRequirementsTitle: "Элсэлтийн шаардлага",
-  admissionRequirementsDescription:
-    "Элсэлтийн шаардлагын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.",
-  cityLifeTitle: "Хотын амьдрал",
-  cityLifeDescription:
-    "Хотын амьдралын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.",
+const emptyUniversitySectionContent: UniversitySectionContent = {
+  programsTitle: "",
+  programsDescription: "",
+  programsAdminNote: "",
+  admissionRequirementsTitle: "",
+  admissionRequirementsDescription: "",
+  cityLifeTitle: "",
+  cityLifeDescription: "",
 };
 
 const UniversityContext = createContext<UniversityContextType | undefined>(
@@ -48,7 +46,7 @@ const UniversityContext = createContext<UniversityContextType | undefined>(
 
 export function UniversityProvider({ children }: { children: ReactNode }) {
   const [universitySectionContent, setUniversitySectionContent] =
-    useState<UniversitySectionContent>(defaultUniversitySectionContent);
+    useState<UniversitySectionContent>(emptyUniversitySectionContent);
   const [loading, setLoading] = useState(true);
 
   const updateUniversitySectionContent = (
@@ -78,39 +76,29 @@ export function UniversityProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const data = await response.json();
 
-        // Start with defaults for university-specific content
-        const contentToSet = { ...defaultUniversitySectionContent };
-
-        // Transform the grouped content back to UniversitySectionContent format
         if (
           data.universitySections &&
           typeof data.universitySections === "object"
         ) {
-          // Map the backend data to our UniversitySectionContent interface
-          Object.keys(defaultUniversitySectionContent).forEach((key) => {
-            if (data.universitySections[key]) {
-              contentToSet[key as keyof UniversitySectionContent] =
-                data.universitySections[key];
-            }
-          });
+          setUniversitySectionContent((prev) => ({
+            ...prev,
+            ...data.universitySections,
+          }));
+        } else {
+          setUniversitySectionContent(emptyUniversitySectionContent);
         }
-
-        // Always set the content (either defaults or with overrides)
-        setUniversitySectionContent(contentToSet);
       } else {
         console.warn(
           "Failed to fetch university section content, using defaults"
         );
-        // If request fails, set to defaults
-        setUniversitySectionContent({ ...defaultUniversitySectionContent });
+        setUniversitySectionContent(emptyUniversitySectionContent);
       }
     } catch (error) {
       console.warn(
         "Error fetching university section content, using defaults:",
         error
       );
-      // If error occurs, set to defaults
-      setUniversitySectionContent({ ...defaultUniversitySectionContent });
+      setUniversitySectionContent(emptyUniversitySectionContent);
     } finally {
       setLoading(false);
     }
@@ -125,7 +113,7 @@ export function UniversityProvider({ children }: { children: ReactNode }) {
   };
 
   const resetToDefaults = () => {
-    setUniversitySectionContent(defaultUniversitySectionContent);
+    setUniversitySectionContent(emptyUniversitySectionContent);
   };
 
   useEffect(() => {

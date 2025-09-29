@@ -10,7 +10,6 @@ import {
   getHomeContentUrl,
   getUniversitiesUrl,
 } from "@/utils/api";
-import { defaultContent } from "@/utils/defaultContent";
 
 interface PageContent {
   [section: string]: {
@@ -97,21 +96,10 @@ export default function UniversitiesPage() {
     field: string,
     fallback: string = ""
   ) => {
-    if (!isConnected || Object.keys(pageContent).length === 0) {
-      const defaultSection = defaultContent[
-        section as keyof typeof defaultContent
-      ] as Record<string, string> | undefined;
-      return defaultSection?.[field] || fallback;
+    if (!isConnected) {
+      return fallback;
     }
-    return (
-      pageContent[section]?.[field] ||
-      (
-        defaultContent[section as keyof typeof defaultContent] as
-          | Record<string, string>
-          | undefined
-      )?.[field] ||
-      fallback
-    );
+    return pageContent[section]?.[field] ?? fallback;
   };
 
   if (loading) {

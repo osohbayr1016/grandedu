@@ -29,15 +29,13 @@ export default function UniversityDetailPage() {
   const { user, showAuth, setShowAuth, isLogin, setIsLogin } = useAuth();
   const [university, setUniversity] = useState<University | null>(null);
   const [universitySectionContent, setUniversitySectionContent] = useState({
-    programsTitle: "Хөтөлбөрүүд",
-    programsDescription: "Хөтөлбөрийн дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.",
+    programsTitle: "",
+    programsDescription: "",
     programsAdminNote: "",
-    admissionRequirementsTitle: "Элсэлтийн шаардлага",
-    admissionRequirementsDescription:
-      "Элсэлтийн шаардлагын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.",
-    cityLifeTitle: "Хотын амьдрал",
-    cityLifeDescription:
-      "Хотын амьдралын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.",
+    admissionRequirementsTitle: "",
+    admissionRequirementsDescription: "",
+    cityLifeTitle: "",
+    cityLifeDescription: "",
   });
 
   useEffect(() => {
@@ -66,40 +64,18 @@ export default function UniversityDetailPage() {
       if (response.ok) {
         const data = await response.json();
 
-        // Start with defaults
-        const defaultContent = {
-          programsTitle: "Хөтөлбөрүүд",
-          programsDescription:
-            "Хөтөлбөрийн дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.",
-          programsAdminNote: "",
-          admissionRequirementsTitle: "Элсэлтийн шаардлага",
-          admissionRequirementsDescription:
-            "Элсэлтийн шаардлагын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.",
-          cityLifeTitle: "Хотын амьдрал",
-          cityLifeDescription:
-            "Хотын амьдралын дэлгэрэнгүй мэдээлэл удахгүй нэмэгдэнэ.",
-        };
-
-        const contentToSet = { ...defaultContent };
-
-        // Override with any saved content
         if (
           data.universitySections &&
           typeof data.universitySections === "object"
         ) {
-          Object.keys(defaultContent).forEach((key) => {
-            if (data.universitySections[key]) {
-              contentToSet[key as keyof typeof defaultContent] =
-                data.universitySections[key];
-            }
-          });
+          setUniversitySectionContent((prev) => ({
+            ...prev,
+            ...data.universitySections,
+          }));
         }
-
-        setUniversitySectionContent(contentToSet);
       }
     } catch (error) {
       console.warn("Error loading university section content:", error);
-      // Keep defaults on error
     }
   };
 

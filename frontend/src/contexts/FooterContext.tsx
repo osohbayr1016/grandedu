@@ -29,25 +29,12 @@ interface FooterContextType {
   refreshFooterContent: () => Promise<void>;
 }
 
-const defaultFooterContent: FooterContent = {
-  companyDescription:
-    "Хятадын их сургуулиудад суралцах боломжийг таньд санал болгож байна.",
-  email: "info@grandedu.mn",
-  phone: "+976 0000-0000",
-  address: "Улаанбаатар, Монгол",
-  facebook: "#",
-  instagram: "#",
-  youtube: "#",
-  privacyPolicy: "#",
-  termsOfService: "#",
-  copyright: "© 2024 GrandEdu. Бүх эрх хуулиар хамгаалагдсан.",
-};
-
 const FooterContext = createContext<FooterContextType | undefined>(undefined);
 
 export function FooterProvider({ children }: { children: ReactNode }) {
-  const [footerContent, setFooterContent] =
-    useState<FooterContent>(defaultFooterContent);
+  const [footerContent, setFooterContent] = useState<FooterContent | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
 
   const updateFooterContent = (content: Partial<FooterContent>) => {
@@ -73,28 +60,16 @@ export function FooterProvider({ children }: { children: ReactNode }) {
 
         // Transform the grouped content back to FooterContent format
         if (data.footer && typeof data.footer === "object") {
-          const transformedContent: Partial<FooterContent> = {};
-
-          // Map the backend data to our FooterContent interface
-          Object.keys(defaultFooterContent).forEach((key) => {
-            if (data.footer[key]) {
-              transformedContent[key as keyof FooterContent] = data.footer[key];
-            }
-          });
-
-          // Update only the fields that exist in the backend
-          if (Object.keys(transformedContent).length > 0) {
-            setFooterContent((prev) => ({
-              ...prev,
-              ...transformedContent,
-            }));
-          }
+          setFooterContent((prev) => ({
+            ...(prev || {}),
+            ...data.footer,
+          }));
         }
       } else {
         console.warn("Failed to fetch footer content, using defaults");
       }
     } catch (error) {
-      console.warn("Error fetching footer content, using defaults:", error);
+      console.warn("Error fetching footer content:", error);
     } finally {
       setLoading(false);
     }
@@ -111,7 +86,18 @@ export function FooterProvider({ children }: { children: ReactNode }) {
   return (
     <FooterContext.Provider
       value={{
-        footerContent,
+        footerContent: footerContent || {
+          companyDescription: "",
+          email: "",
+          phone: "",
+          address: "",
+          facebook: "",
+          instagram: "",
+          youtube: "",
+          privacyPolicy: "",
+          termsOfService: "",
+          copyright: "",
+        },
         updateFooterContent,
         loading,
         refreshFooterContent,

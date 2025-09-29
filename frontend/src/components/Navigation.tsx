@@ -1,10 +1,11 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { defaultContent } from "@/utils/defaultContent";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+
+import { getNavigationContentUrl } from "@/utils/api";
 
 export default function Navigation() {
   const { user, logout, setShowAuth } = useAuth();
@@ -12,12 +13,56 @@ export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [navContent, setNavContent] = useState({
+    logo: "GrandEdu",
+    homeLink: "Нүүр",
+    programsLink: "Хөтөлбөрүүд",
+    newsLink: "Мэдээ",
+    universitiesLink: "Их сургуулиуд",
+    contactLink: "Холбоо барих",
+    adminButton: "Admin Panel",
+    logoutButton: "Гарах",
+    loginButton: "Нэвтрэх",
+  });
   const userMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 8);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const fetchNavigationContent = async () => {
+      try {
+        const response = await fetch(getNavigationContentUrl(), {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          signal: AbortSignal.timeout(10000),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.navigation && typeof data.navigation === "object") {
+            setNavContent((prev) => ({
+              ...prev,
+              ...data.navigation,
+            }));
+          }
+        } else {
+          console.warn("Failed to fetch navigation content; using defaults");
+        }
+      } catch (error) {
+        console.warn(
+          "Error fetching navigation content; using defaults",
+          error
+        );
+      }
+    };
+
+    fetchNavigationContent();
   }, []);
 
   useEffect(() => {
@@ -44,7 +89,7 @@ export default function Navigation() {
         <div className="flex justify-between items-center py-4 ">
           <div className="flex items-center ">
             <Link href="/" className="text-xl font-bold text-black">
-              {defaultContent.navigation.logo}
+              {navContent.logo}
             </Link>
           </div>
 
@@ -57,7 +102,7 @@ export default function Navigation() {
                   : "text-gray-600"
               }`}
             >
-              {defaultContent.navigation.homeLink}
+              {navContent.homeLink}
             </Link>
             <Link
               href="/programs"
@@ -67,7 +112,7 @@ export default function Navigation() {
                   : "text-gray-600"
               }`}
             >
-              {defaultContent.navigation.programsLink}
+              {navContent.programsLink}
             </Link>
             <Link
               href="/news"
@@ -77,7 +122,7 @@ export default function Navigation() {
                   : "text-gray-600"
               }`}
             >
-              {defaultContent.navigation.newsLink}
+              {navContent.newsLink}
             </Link>
             <Link
               href="/universities"
@@ -87,10 +132,10 @@ export default function Navigation() {
                   : "text-gray-600"
               }`}
             >
-              {defaultContent.navigation.universitiesLink}
+              {navContent.universitiesLink}
             </Link>
             <a href="#contact" className="text-gray-600 hover:text-blue-700">
-              {defaultContent.navigation.contactLink}
+              {navContent.contactLink}
             </a>
           </div>
 
@@ -102,7 +147,7 @@ export default function Navigation() {
                     href="/admin"
                     className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm"
                   >
-                    {defaultContent.navigation.adminButton}
+                    {navContent.adminButton}
                   </Link>
                 )}
                 <div ref={userMenuRef} className="relative">
@@ -152,7 +197,7 @@ export default function Navigation() {
                         onClick={logout}
                         className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                       >
-                        {defaultContent.navigation.logoutButton}
+                        {navContent.logoutButton}
                       </button>
                     </div>
                   )}
@@ -163,7 +208,7 @@ export default function Navigation() {
                 onClick={() => setShowAuth(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
               >
-                {defaultContent.navigation.loginButton}
+                {navContent.loginButton}
               </button>
             )}
             <button
@@ -197,7 +242,7 @@ export default function Navigation() {
                   : "text-gray-700"
               }`}
             >
-              {defaultContent.navigation.homeLink}
+              {navContent.homeLink}
             </Link>
             <Link
               href="/programs"
@@ -207,7 +252,7 @@ export default function Navigation() {
                   : "text-gray-700"
               }`}
             >
-              {defaultContent.navigation.programsLink}
+              {navContent.programsLink}
             </Link>
             <Link
               href="/news"
@@ -217,7 +262,7 @@ export default function Navigation() {
                   : "text-gray-700"
               }`}
             >
-              {defaultContent.navigation.newsLink}
+              {navContent.newsLink}
             </Link>
             <Link
               href="/universities"
@@ -227,13 +272,13 @@ export default function Navigation() {
                   : "text-gray-700"
               }`}
             >
-              {defaultContent.navigation.universitiesLink}
+              {navContent.universitiesLink}
             </Link>
             <a
               href="#contact"
               className="block px-2 py-2 rounded hover:bg-gray-100 text-gray-700"
             >
-              {defaultContent.navigation.contactLink}
+              {navContent.contactLink}
             </a>
             {!user && (
               <button
@@ -243,7 +288,7 @@ export default function Navigation() {
                 }}
                 className="block w-full text-left px-2 py-2 rounded hover:bg-gray-100 text-blue-600 font-medium"
               >
-                {defaultContent.navigation.loginButton}
+                {navContent.loginButton}
               </button>
             )}
           </div>

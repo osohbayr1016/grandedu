@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface University {
   id: string;
@@ -36,6 +36,8 @@ interface News {
 }
 
 interface AdminStateManagerProps {
+  initialActiveSection: string;
+  onActiveSectionChange: (section: string) => void;
   children: (state: {
     // Modal states
     showUniversityModal: boolean;
@@ -142,6 +144,8 @@ interface AdminStateManagerProps {
 }
 
 export default function AdminStateManager({
+  initialActiveSection,
+  onActiveSectionChange,
   children,
 }: AdminStateManagerProps) {
   // Modal states
@@ -195,7 +199,7 @@ export default function AdminStateManager({
 
   // Other states
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeSection, setActiveSection] = useState("hero");
+  const [activeSection, setActiveSectionState] = useState(initialActiveSection);
   const [saving, setSaving] = useState(false);
   const [footerSaving, setFooterSaving] = useState(false);
   const [footerHasChanges, setFooterHasChanges] = useState(false);
@@ -204,6 +208,15 @@ export default function AdminStateManager({
     useState(false);
   const [selectedUniversityForContent, setSelectedUniversityForContent] =
     useState<string>("");
+
+  useEffect(() => {
+    setActiveSectionState(initialActiveSection);
+  }, [initialActiveSection]);
+
+  const setActiveSection = (section: string) => {
+    setActiveSectionState(section);
+    onActiveSectionChange(section);
+  };
 
   return children({
     showUniversityModal,

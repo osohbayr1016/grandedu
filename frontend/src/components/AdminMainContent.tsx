@@ -76,6 +76,7 @@ interface AdminMainContentProps {
     description: string;
     icon: string;
   }>;
+  onActiveSectionChange: (section: string) => void;
   groupedContent: GroupedContent;
   stats: DashboardStats;
   universities: University[];
@@ -93,6 +94,7 @@ interface AdminMainContentProps {
 export default function AdminMainContent({
   activeSection,
   sections,
+  onActiveSectionChange,
   groupedContent,
   stats,
   universities,
@@ -112,7 +114,10 @@ export default function AdminMainContent({
 
       <DashboardStats stats={stats} />
 
-      <AdminStateManager>
+      <AdminStateManager
+        initialActiveSection={activeSection}
+        onActiveSectionChange={onActiveSectionChange}
+      >
         {(state) => {
           const eventHandlers = AdminEventHandler();
 

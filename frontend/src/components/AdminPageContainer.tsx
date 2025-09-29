@@ -87,7 +87,7 @@ export default function AdminPageContainer() {
 
   // State management
   const [loading, setLoading] = useState(true);
-  const [activeSection] = useState("hero");
+  const [activeSection, setActiveSection] = useState("hero");
   const [content, setContent] = useState<PageContent[]>([]);
   const [groupedContent, setGroupedContent] = useState<GroupedContent>({});
   const [stats, setStats] = useState<DashboardStats>({
@@ -240,6 +240,7 @@ export default function AdminPageContainer() {
 
         <AdminMainContent
           activeSection={activeSection}
+          onActiveSectionChange={setActiveSection}
           sections={sections}
           groupedContent={groupedContent}
           stats={stats}

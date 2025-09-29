@@ -5,7 +5,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
 import { getHealthCheckUrl, getHomeContentUrl, getNewsUrl } from "@/utils/api";
-import { defaultContent } from "@/utils/defaultContent";
 import Link from "next/link";
 
 interface PageContent {
@@ -98,21 +97,10 @@ export default function NewsPage() {
     field: string,
     fallback: string = ""
   ) => {
-    if (!isConnected || Object.keys(pageContent).length === 0) {
-      const defaultSection = defaultContent[
-        section as keyof typeof defaultContent
-      ] as Record<string, string> | undefined;
-      return defaultSection?.[field] || fallback;
+    if (!isConnected) {
+      return fallback;
     }
-    return (
-      pageContent[section]?.[field] ||
-      (
-        defaultContent[section as keyof typeof defaultContent] as
-          | Record<string, string>
-          | undefined
-      )?.[field] ||
-      fallback
-    );
+    return pageContent[section]?.[field] ?? fallback;
   };
 
   if (loading) {

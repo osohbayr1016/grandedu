@@ -8,7 +8,6 @@ import { usePrograms } from "@/contexts/ProgramsContext";
 import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
 import { getProgramsContentUrl, getNavigationContentUrl } from "@/utils/api";
-import { defaultContent } from "@/utils/defaultContent";
 
 interface Program {
   id: string;
@@ -111,28 +110,13 @@ export default function ProgramsPage() {
     }
   };
 
-  // Helper function to get content with fallback
+  // Helper function to get content without default fallbacks
   const getContent = (
     section: string,
     field: string,
     fallback: string = ""
   ) => {
-    // If content is not loaded, use default content
-    if (Object.keys(pageContent).length === 0) {
-      const defaultSection = defaultContent[
-        section as keyof typeof defaultContent
-      ] as Record<string, string> | undefined;
-      return defaultSection?.[field] || fallback;
-    }
-    return (
-      pageContent[section]?.[field] ||
-      (
-        defaultContent[section as keyof typeof defaultContent] as
-          | Record<string, string>
-          | undefined
-      )?.[field] ||
-      fallback
-    );
+    return pageContent[section]?.[field] ?? fallback;
   };
 
   const openModal = (program: Program) => {
