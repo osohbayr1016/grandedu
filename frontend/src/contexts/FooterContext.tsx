@@ -31,16 +31,45 @@ interface FooterContextType {
 
 const FooterContext = createContext<FooterContextType | undefined>(undefined);
 
+const defaultFooterContent: FooterContent = {
+  companyDescription: "",
+  email: "",
+  phone: "",
+  address: "",
+  facebook: "",
+  instagram: "",
+  youtube: "",
+  privacyPolicy: "",
+  termsOfService: "",
+  copyright: "",
+};
+
+const sanitizeFooterUpdates = (content: Partial<FooterContent>) => {
+  const sanitized: Partial<FooterContent> = {};
+
+  (
+    Object.entries(content) as [
+      keyof FooterContent,
+      FooterContent[keyof FooterContent]
+    ][]
+  ).forEach(([key, value]) => {
+    if (typeof value === "string") {
+      sanitized[key] = value;
+    }
+  });
+
+  return sanitized;
+};
+
 export function FooterProvider({ children }: { children: ReactNode }) {
-  const [footerContent, setFooterContent] = useState<FooterContent | null>(
-    null
-  );
+  const [footerContent, setFooterContent] =
+    useState<FooterContent>(defaultFooterContent);
   const [loading, setLoading] = useState(true);
 
   const updateFooterContent = (content: Partial<FooterContent>) => {
     setFooterContent((prev) => ({
       ...prev,
-      ...content,
+      ...sanitizeFooterUpdates(content),
     }));
   };
 
@@ -61,8 +90,8 @@ export function FooterProvider({ children }: { children: ReactNode }) {
         // Transform the grouped content back to FooterContent format
         if (data.footer && typeof data.footer === "object") {
           setFooterContent((prev) => ({
-            ...(prev || {}),
-            ...data.footer,
+            ...prev,
+            ...sanitizeFooterUpdates(data.footer),
           }));
         }
       } else {
@@ -86,18 +115,7 @@ export function FooterProvider({ children }: { children: ReactNode }) {
   return (
     <FooterContext.Provider
       value={{
-        footerContent: footerContent || {
-          companyDescription: "",
-          email: "",
-          phone: "",
-          address: "",
-          facebook: "",
-          instagram: "",
-          youtube: "",
-          privacyPolicy: "",
-          termsOfService: "",
-          copyright: "",
-        },
+        footerContent,
         updateFooterContent,
         loading,
         refreshFooterContent,
