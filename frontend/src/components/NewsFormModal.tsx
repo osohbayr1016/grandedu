@@ -9,7 +9,7 @@ interface News {
   content: string;
   author: string;
   publishDate: string;
-  imageUrl: string;
+  imageUrl?: string;
   isActive: boolean;
 }
 
@@ -43,7 +43,7 @@ export default function NewsFormModal({
         content: editingNews.content,
         author: editingNews.author,
         publishDate: editingNews.publishDate,
-        imageUrl: editingNews.imageUrl,
+        imageUrl: editingNews.imageUrl || "",
       });
     } else {
       const today = new Date().toISOString().split("T")[0];

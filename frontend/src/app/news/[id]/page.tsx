@@ -7,6 +7,7 @@ import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
 import { getNewsUrl } from "@/utils/api";
 import Link from "next/link";
+import { createTimeoutSignal } from "@/utils/requestUtils";
 
 interface News {
   id: string;
@@ -41,7 +42,7 @@ export default function NewsDetailPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        signal: AbortSignal.timeout(10000),
+        signal: createTimeoutSignal(10000),
       });
 
       if (response.ok) {
@@ -68,7 +69,7 @@ export default function NewsDetailPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        signal: AbortSignal.timeout(10000),
+        signal: createTimeoutSignal(10000),
       });
 
       if (response.ok) {

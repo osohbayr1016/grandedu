@@ -9,7 +9,7 @@ interface University {
   name: string;
   location: string;
   description: string;
-  imageUrl: string;
+  imageUrl?: string;
   isActive: boolean;
   adminNote?: string;
 }
@@ -20,10 +20,14 @@ interface Program {
   description: string;
   duration: string;
   level: string;
-  imageUrl: string;
-  googleFormLink: string;
+  price?: string;
+  location?: string;
+  university?: string;
+  requirements?: string;
+  imageUrl?: string;
+  googleFormLink?: string;
+  isHighlighted: boolean;
   isActive: boolean;
-  isHighlighted?: boolean;
   adminNote?: string;
 }
 
@@ -33,7 +37,7 @@ interface News {
   content: string;
   author: string;
   publishDate: string;
-  imageUrl: string;
+  imageUrl?: string;
   isActive: boolean;
 }
 

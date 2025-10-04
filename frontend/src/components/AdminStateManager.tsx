@@ -7,7 +7,7 @@ interface University {
   name: string;
   location: string;
   description: string;
-  imageUrl: string;
+  imageUrl?: string;
   isActive: boolean;
   adminNote?: string;
 }
@@ -18,10 +18,14 @@ interface Program {
   description: string;
   duration: string;
   level: string;
-  imageUrl: string;
-  googleFormLink: string;
+  price?: string;
+  location?: string;
+  university?: string;
+  requirements?: string;
+  imageUrl?: string;
+  googleFormLink?: string;
+  isHighlighted: boolean;
   isActive: boolean;
-  isHighlighted?: boolean;
   adminNote?: string;
 }
 
@@ -31,7 +35,7 @@ interface News {
   content: string;
   author: string;
   publishDate: string;
-  imageUrl: string;
+  imageUrl?: string;
   isActive: boolean;
 }
 
@@ -60,14 +64,14 @@ interface AdminStateManagerProps {
       name: string;
       location: string;
       description: string;
-      imageUrl: string;
+      imageUrl?: string | undefined;
       adminNote: string;
     };
     setUniversityForm: (form: {
       name: string;
       location: string;
       description: string;
-      imageUrl: string;
+      imageUrl?: string | undefined;
       adminNote: string;
     }) => void;
     programForm: {
@@ -75,8 +79,12 @@ interface AdminStateManagerProps {
       description: string;
       duration: string;
       level: string;
-      imageUrl: string;
-      googleFormLink: string;
+      price?: string | undefined;
+      location?: string | undefined;
+      university?: string | undefined;
+      requirements?: string | undefined;
+      imageUrl?: string | undefined;
+      googleFormLink?: string | undefined;
       adminNote: string;
     };
     setProgramForm: (form: {
@@ -84,8 +92,12 @@ interface AdminStateManagerProps {
       description: string;
       duration: string;
       level: string;
-      imageUrl: string;
-      googleFormLink: string;
+      price?: string | undefined;
+      location?: string | undefined;
+      university?: string | undefined;
+      requirements?: string | undefined;
+      imageUrl?: string | undefined;
+      googleFormLink?: string | undefined;
       adminNote: string;
     }) => void;
     newsForm: {
@@ -93,14 +105,14 @@ interface AdminStateManagerProps {
       content: string;
       author: string;
       publishDate: string;
-      imageUrl: string;
+      imageUrl?: string | undefined;
     };
     setNewsForm: (form: {
       title: string;
       content: string;
       author: string;
       publishDate: string;
-      imageUrl: string;
+      imageUrl?: string | undefined;
     }) => void;
     newAdminForm: {
       firstName: string;
@@ -160,28 +172,48 @@ export default function AdminStateManager({
   const [showUserModal, setShowUserModal] = useState(false);
 
   // Form states
-  const [universityForm, setUniversityForm] = useState({
+  const [universityForm, setUniversityForm] = useState<{
+    name: string;
+    location: string;
+    description: string;
+    imageUrl?: string | undefined;
+    adminNote: string;
+  }>({
     name: "",
     location: "",
     description: "",
-    imageUrl: "",
     adminNote: "",
   });
-  const [programForm, setProgramForm] = useState({
+  const [programForm, setProgramForm] = useState<{
+    title: string;
+    description: string;
+    duration: string;
+    level: string;
+    price?: string | undefined;
+    location?: string | undefined;
+    university?: string | undefined;
+    requirements?: string | undefined;
+    imageUrl?: string | undefined;
+    googleFormLink?: string | undefined;
+    adminNote: string;
+  }>({
     title: "",
     description: "",
     duration: "",
     level: "",
-    imageUrl: "",
-    googleFormLink: "",
     adminNote: "",
   });
-  const [newsForm, setNewsForm] = useState({
+  const [newsForm, setNewsForm] = useState<{
+    title: string;
+    content: string;
+    author: string;
+    publishDate: string;
+    imageUrl?: string | undefined;
+  }>({
     title: "",
     content: "",
     author: "",
     publishDate: "",
-    imageUrl: "",
   });
   const [newAdminForm, setNewAdminForm] = useState({
     firstName: "",

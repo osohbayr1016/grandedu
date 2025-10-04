@@ -57,7 +57,7 @@ export default function AdminUniversityDetailPage() {
     if (university?.id) {
       loadUniversitySectionContent(university.id);
     }
-  }, [university?.id]);
+  }, [university?.id, loadUniversitySectionContent]);
 
   const fetchUniversity = async () => {
     try {

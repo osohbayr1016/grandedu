@@ -7,7 +7,8 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { getContentUrl } from "@/utils/api";
+import { authenticatedFetch, getContentUrl } from "@/utils/api";
+import { createTimeoutSignal } from "@/utils/requestUtils";
 
 interface UniversitySectionContent {
   programsTitle: string;
@@ -24,6 +25,10 @@ interface UniversityContextType {
   updateUniversitySectionContent: (
     content: Partial<UniversitySectionContent>
   ) => void;
+  saveUniversitySectionContent: (
+    universityId: string | null,
+    content: Partial<UniversitySectionContent>
+  ) => Promise<void>;
   loading: boolean;
   refreshUniversitySectionContent: (universityId?: string) => Promise<void>;
   loadUniversitySectionContent: (universityId: string) => Promise<void>;
@@ -58,6 +63,20 @@ export function UniversityProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const saveUniversitySectionContent = async (
+    universityId: string | null,
+    content: Partial<UniversitySectionContent>
+  ) => {
+    const endpoint = universityId
+      ? `${getContentUrl()}/university-sections/${universityId}`
+      : `${getContentUrl()}/university-sections`;
+
+    await authenticatedFetch(endpoint, {
+      method: "POST",
+      body: JSON.stringify(content),
+    });
+  };
+
   const fetchUniversitySectionContent = async (universityId?: string) => {
     try {
       setLoading(true);
@@ -70,7 +89,7 @@ export function UniversityProvider({ children }: { children: ReactNode }) {
         headers: {
           "Content-Type": "application/json",
         },
-        signal: AbortSignal.timeout(10000), // 10 second timeout
+        signal: createTimeoutSignal(10000),
       });
 
       if (response.ok) {
@@ -125,6 +144,7 @@ export function UniversityProvider({ children }: { children: ReactNode }) {
       value={{
         universitySectionContent,
         updateUniversitySectionContent,
+        saveUniversitySectionContent,
         loading,
         refreshUniversitySectionContent,
         loadUniversitySectionContent,

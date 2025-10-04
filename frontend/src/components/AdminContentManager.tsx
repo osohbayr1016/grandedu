@@ -1,62 +1,13 @@
 "use client";
 
+import { University, Program, News, User, GroupedContent } from "@/types";
 import ContentEditor from "./ContentEditor";
-import DataTable from "./DataTable";
 import UserManagement from "./UserManagement";
 import FooterEditor from "./FooterEditor";
 import UniversityContentEditor from "./UniversityContentEditor";
-
-interface GroupedContent {
-  [section: string]: {
-    [field: string]: string;
-  };
-}
-
-interface University {
-  id: string;
-  name: string;
-  location: string;
-  description: string;
-  imageUrl: string;
-  isActive: boolean;
-  adminNote?: string;
-}
-
-interface Program {
-  id: string;
-  title: string;
-  description: string;
-  duration: string;
-  level: string;
-  imageUrl: string;
-  googleFormLink: string;
-  isActive: boolean;
-  isHighlighted?: boolean;
-  adminNote?: string;
-}
-
-interface News {
-  id: string;
-  title: string;
-  content: string;
-  author: string;
-  publishDate: string;
-  imageUrl: string;
-  isActive: boolean;
-}
-
-interface User {
-  id: string;
-  userCode: string | null;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber: string;
-  role: string;
-  isHighlighted: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+import AdminUniversitiesTable from "./AdminUniversitiesTable";
+import AdminProgramsTable from "./AdminProgramsTable";
+import AdminNewsTable from "./AdminNewsTable";
 
 interface FooterContent {
   companyDescription: string;
@@ -133,7 +84,7 @@ interface AdminContentManagerProps {
   userSortBy: "name" | "id" | "date";
   onSortChange: (sort: "name" | "id" | "date") => void;
   onFooterContentChange: (field: string, value: string) => void;
-  onSaveFooter: () => Promise<void>;
+  onSaveFooter: (changes?: Partial<FooterContent>) => Promise<void>;
   footerSaving: boolean;
   footerHasChanges: boolean;
   onUniversitySectionContentChange: (field: string, value: string) => void;
@@ -191,16 +142,9 @@ export default function AdminContentManager({
   onUniversityForContentChange,
 }: AdminContentManagerProps) {
   // Content sections that use ContentEditor
-  const contentSections = [
-    "hero",
-    "about",
-    "programs",
-    "universities",
-    "news",
-    "contact",
-  ];
+  const contentEditorSections = ["hero", "about", "contact"];
 
-  if (contentSections.includes(activeSection)) {
+  if (contentEditorSections.includes(activeSection)) {
     return (
       <ContentEditor
         groupedContent={groupedContent}
@@ -215,22 +159,12 @@ export default function AdminContentManager({
 
   if (activeSection === "universities") {
     return (
-      <DataTable
-        title="Их сургуулиуд"
-        data={universities}
-        columns={[
-          { key: "name", label: "Нэр" },
-          { key: "location", label: "Байршил" },
-          {
-            key: "isActive",
-            label: "Статус",
-            render: (value) => (value ? "Идэвхтэй" : "Идэвхгүй"),
-          },
-        ]}
-        onEdit={onUniversityEdit}
-        onToggleStatus={onUniversityToggle}
+      <AdminUniversitiesTable
+        universities={universities}
         searchQuery={searchQuery}
         onSearchChange={onSearchChange}
+        onEdit={onUniversityEdit}
+        onToggleStatus={onUniversityToggle}
         onAdd={onUniversityAdd}
       />
     );
@@ -238,23 +172,12 @@ export default function AdminContentManager({
 
   if (activeSection === "programs") {
     return (
-      <DataTable
-        title="Хөтөлбөрүүд"
-        data={programs}
-        columns={[
-          { key: "title", label: "Гарчиг" },
-          { key: "level", label: "Түвшин" },
-          { key: "duration", label: "Хугацаа" },
-          {
-            key: "isActive",
-            label: "Статус",
-            render: (value) => (value ? "Идэвхтэй" : "Идэвхгүй"),
-          },
-        ]}
-        onEdit={onProgramEdit}
-        onToggleStatus={onProgramToggle}
+      <AdminProgramsTable
+        programs={programs}
         searchQuery={searchQuery}
         onSearchChange={onSearchChange}
+        onEdit={onProgramEdit}
+        onToggleStatus={onProgramToggle}
         onAdd={onProgramAdd}
       />
     );
@@ -262,28 +185,12 @@ export default function AdminContentManager({
 
   if (activeSection === "news") {
     return (
-      <DataTable
-        title="Мэдээ"
-        data={news}
-        columns={[
-          { key: "title", label: "Гарчиг" },
-          { key: "author", label: "Зохиогч" },
-          {
-            key: "publishDate",
-            label: "Огноо",
-            render: (value) =>
-              new Date(String(value)).toLocaleDateString("mn-MN"),
-          },
-          {
-            key: "isActive",
-            label: "Статус",
-            render: (value) => (value ? "Идэвхтэй" : "Идэвхгүй"),
-          },
-        ]}
-        onEdit={onNewsEdit}
-        onToggleStatus={onNewsToggle}
+      <AdminNewsTable
+        news={news}
         searchQuery={searchQuery}
         onSearchChange={onSearchChange}
+        onEdit={onNewsEdit}
+        onToggleStatus={onNewsToggle}
         onAdd={onNewsAdd}
       />
     );

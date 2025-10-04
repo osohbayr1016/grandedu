@@ -1,11 +1,15 @@
 "use client";
 
+"use client";
+
+import { authenticatedFetch, getApiBaseUrl } from "@/utils/api";
+
 interface University {
   id: string;
   name: string;
   location: string;
   description: string;
-  imageUrl: string;
+  imageUrl?: string;
   isActive: boolean;
   adminNote?: string;
 }
@@ -16,10 +20,14 @@ interface Program {
   description: string;
   duration: string;
   level: string;
-  imageUrl: string;
-  googleFormLink: string;
+  price?: string;
+  location?: string;
+  university?: string;
+  requirements?: string;
+  imageUrl?: string;
+  googleFormLink?: string;
+  isHighlighted: boolean;
   isActive: boolean;
-  isHighlighted?: boolean;
   adminNote?: string;
 }
 
@@ -29,7 +37,7 @@ interface News {
   content: string;
   author: string;
   publishDate: string;
-  imageUrl: string;
+  imageUrl?: string;
   isActive: boolean;
 }
 
@@ -37,7 +45,7 @@ interface UniversityForm {
   name: string;
   location: string;
   description: string;
-  imageUrl: string;
+  imageUrl?: string;
   adminNote: string;
 }
 
@@ -46,8 +54,12 @@ interface ProgramForm {
   description: string;
   duration: string;
   level: string;
-  imageUrl: string;
-  googleFormLink: string;
+  price?: string;
+  location?: string;
+  university?: string;
+  requirements?: string;
+  imageUrl?: string;
+  googleFormLink?: string;
   adminNote: string;
 }
 
@@ -56,10 +68,38 @@ interface NewsForm {
   content: string;
   author: string;
   publishDate: string;
-  imageUrl: string;
+  imageUrl?: string;
+}
+
+interface FooterContent {
+  companyDescription: string;
+  email: string;
+  phone: string;
+  address: string;
+  facebook: string;
+  instagram: string;
+  youtube: string;
+  privacyPolicy: string;
+  termsOfService: string;
+  copyright: string;
 }
 
 export default function AdminEventHandler() {
+  const handleFooterSave = async (
+    changes: Partial<FooterContent> | undefined,
+    currentFooter: FooterContent,
+    setHasChanges: (value: boolean) => void
+  ) => {
+    const payload: Partial<FooterContent> = changes ?? currentFooter;
+
+    await authenticatedFetch(`${getApiBaseUrl()}/api/content/footer`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    setHasChanges(false);
+  };
+
   const handleUniversityEdit = (
     university: University,
     setEditingUniversity: (university: University | null) => void,
@@ -165,6 +205,7 @@ export default function AdminEventHandler() {
   };
 
   return {
+    handleFooterSave,
     handleUniversityEdit,
     handleUniversityAdd,
     handleProgramEdit,

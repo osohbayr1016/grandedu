@@ -6,6 +6,7 @@ import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
 import { getHealthCheckUrl, getHomeContentUrl, getNewsUrl } from "@/utils/api";
 import Link from "next/link";
+import { createTimeoutSignal } from "@/utils/requestUtils";
 
 interface PageContent {
   [section: string]: {
@@ -38,7 +39,7 @@ export default function NewsPage() {
         const response = await fetch(getHealthCheckUrl(), {
           method: "GET",
           headers: { "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(5000),
+          signal: createTimeoutSignal(5000),
         });
         setIsConnected(response.ok);
       } catch {
@@ -56,12 +57,12 @@ export default function NewsPage() {
           fetch(getHomeContentUrl(), {
             method: "GET",
             headers: { "Content-Type": "application/json" },
-            signal: AbortSignal.timeout(10000),
+            signal: createTimeoutSignal(10000),
           }),
           fetch(getNewsUrl(), {
             method: "GET",
             headers: { "Content-Type": "application/json" },
-            signal: AbortSignal.timeout(10000),
+            signal: createTimeoutSignal(10000),
           }),
         ]);
 

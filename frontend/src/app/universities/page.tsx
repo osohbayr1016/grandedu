@@ -10,6 +10,7 @@ import {
   getHomeContentUrl,
   getUniversitiesUrl,
 } from "@/utils/api";
+import { createTimeoutSignal } from "@/utils/requestUtils";
 
 interface PageContent {
   [section: string]: {
@@ -42,7 +43,7 @@ export default function UniversitiesPage() {
         const response = await fetch(getHealthCheckUrl(), {
           method: "GET",
           headers: { "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(5000),
+          signal: createTimeoutSignal(5000),
         });
         setIsConnected(response.ok);
       } catch {
@@ -59,7 +60,7 @@ export default function UniversitiesPage() {
         const contentResponse = await fetch(getHomeContentUrl(), {
           method: "GET",
           headers: { "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(10000),
+          signal: createTimeoutSignal(10000),
         });
         if (contentResponse.ok) {
           const contentData = await contentResponse.json();
@@ -72,7 +73,7 @@ export default function UniversitiesPage() {
         const universitiesResponse = await fetch(getUniversitiesUrl(), {
           method: "GET",
           headers: { "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(10000),
+          signal: createTimeoutSignal(10000),
         });
         if (universitiesResponse.ok) {
           const universitiesData = await universitiesResponse.json();

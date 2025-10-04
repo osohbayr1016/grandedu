@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { getProgramsUrl } from "@/utils/api";
+import { createTimeoutSignal } from "@/utils/requestUtils";
 
 interface Program {
   id: string;
@@ -49,7 +50,7 @@ export function ProgramsProvider({ children }: { children: ReactNode }) {
         headers: {
           "Content-Type": "application/json",
         },
-        signal: AbortSignal.timeout(10000),
+        signal: createTimeoutSignal(10000),
       });
 
       if (response.ok) {

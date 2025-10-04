@@ -5,12 +5,14 @@ import Link from "next/link";
 
 import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
+import PageStructuredData from "@/components/PageStructuredData";
 import {
   getHomeContentUrl,
   getNewsUrl,
   getProgramsUrl,
   getUniversitiesUrl,
 } from "@/utils/api";
+import { createTimeoutSignal } from "@/utils/requestUtils";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface PageContent {
@@ -85,7 +87,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        signal: AbortSignal.timeout(10000), // 10 second timeout
+        signal: createTimeoutSignal(10000),
       });
 
       if (response.ok) {
@@ -162,6 +164,16 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white">
+      <PageStructuredData
+        type="webpage"
+        data={{
+          title: "GrandEdu - Хятадад зуучлах баталгаат хамт олон",
+          description:
+            "Монголын оюутан залуусыг Хятад улсад суралцахад мэргэжлийн зуучлал, их сургуулиудын мэдээлэл, хөтөлбөрүүдийн зөвлөгөө өгдөг найдвартай платформ.",
+          url: "https://grandedu.mn",
+          breadcrumbs: [{ name: "Нүүр", url: "https://grandedu.mn" }],
+        }}
+      />
       {/* {process.env.NODE_ENV === "development" && <BackendTest />} */}
       {/* Navigation moved to global layout */}
 

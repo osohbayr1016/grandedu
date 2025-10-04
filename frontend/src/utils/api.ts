@@ -1,3 +1,5 @@
+import { createTimeoutSignal } from "./requestUtils";
+
 // Test if localhost is available
 const testLocalhost = async (): Promise<boolean> => {
   try {
@@ -7,7 +9,7 @@ const testLocalhost = async (): Promise<boolean> => {
         "Content-Type": "application/json",
       },
       // Short timeout to avoid long waits
-      signal: AbortSignal.timeout(2000),
+      signal: createTimeoutSignal(2000),
     });
     return response.ok;
   } catch {
@@ -76,34 +78,35 @@ export const testBackendConnection = async (): Promise<{
 }> => {
   const url = getApiBaseUrl();
   const healthUrl = `${url}/api/health`;
-  
+
   try {
     console.log("Testing backend connection to:", healthUrl);
     const response = await fetch(healthUrl, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       // Add timeout to avoid hanging
-      signal: AbortSignal.timeout(10000), // 10 seconds
+      signal: createTimeoutSignal(10000),
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
     console.log("Backend connection successful:", data);
-    
+
     return {
       success: true,
       url: healthUrl,
       timestamp: new Date().toISOString(),
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Backend connection failed:", errorMessage);
-    
+
     return {
       success: false,
       error: errorMessage,
@@ -231,28 +234,29 @@ export const getResetPasswordUrl = () => {
 // Utility function for authenticated fetch requests
 export const authenticatedFetch = async (
   url: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  tokenOverride?: string | null
 ) => {
-  const token = localStorage.getItem("token");
+  const resolvedToken =
+    tokenOverride ??
+    (typeof window !== "undefined"
+      ? window.localStorage.getItem("token")
+      : null);
 
-  if (!token) {
+  if (!resolvedToken) {
     throw new Error("No authentication token found");
   }
 
-  const defaultOptions: RequestInit = {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    },
+  const defaultHeaders = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${resolvedToken}`,
   };
 
-  const mergedOptions = {
-    ...defaultOptions,
+  const mergedOptions: RequestInit = {
     ...options,
     headers: {
-      ...defaultOptions.headers,
-      ...options.headers,
+      ...defaultHeaders,
+      ...(options.headers ?? {}),
     },
   };
 

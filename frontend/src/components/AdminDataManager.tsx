@@ -173,6 +173,17 @@ export default function AdminDataManager({
     }
   }, []);
 
+  const groupContent = useCallback((contentData: PageContent[]) => {
+    const grouped: GroupedContent = {};
+    contentData.forEach((item) => {
+      if (!grouped[item.section]) {
+        grouped[item.section] = {};
+      }
+      grouped[item.section][item.field] = item.content;
+    });
+    setGroupedContent(grouped);
+  }, []);
+
   const fetchContent = useCallback(async () => {
     try {
       const response = await authenticatedFetch(getContentUrl());
@@ -184,18 +195,7 @@ export default function AdminDataManager({
     } catch (error) {
       console.error("Error fetching content:", error);
     }
-  }, []);
-
-  const groupContent = useCallback((contentData: PageContent[]) => {
-    const grouped: GroupedContent = {};
-    contentData.forEach((item) => {
-      if (!grouped[item.section]) {
-        grouped[item.section] = {};
-      }
-      grouped[item.section][item.field] = item.content;
-    });
-    setGroupedContent(grouped);
-  }, []);
+  }, [groupContent]);
 
   const initializeData = useCallback(async () => {
     try {
@@ -213,19 +213,11 @@ export default function AdminDataManager({
     } finally {
       onLoadingChange(false);
     }
-  }, [
-    onLoadingChange,
-    fetchStats,
-    fetchPrograms,
-    fetchNews,
-    fetchUniversities,
-    fetchUsers,
-    fetchContent,
-  ]);
+  }, [onLoadingChange, fetchStats, fetchPrograms, fetchNews, fetchUniversities, fetchUsers, fetchContent]);
 
   useEffect(() => {
     initializeData();
-  }, [initializeData]);
+  }, [initializeData, fetchContent]);
 
   // Notify parent when data is loaded
   useEffect(() => {

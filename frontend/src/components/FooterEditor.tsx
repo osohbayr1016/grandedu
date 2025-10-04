@@ -18,7 +18,7 @@ interface FooterContent {
 interface FooterEditorProps {
   footerContent: FooterContent;
   onContentChange: (field: string, value: string) => void;
-  onSave: () => Promise<void>;
+  onSave: (changes?: Partial<FooterContent>) => Promise<void>;
   saving: boolean;
   hasChanges: boolean;
 }
@@ -43,7 +43,7 @@ export default function FooterEditor({
     onContentChange(editingField, editValue);
     setEditingField(null);
     setEditValue("");
-    await onSave();
+    await onSave({ [editingField]: editValue });
   };
 
   const handleCancel = () => {
@@ -133,7 +133,7 @@ export default function FooterEditor({
               </span>
             )}
             <button
-              onClick={onSave}
+              onClick={() => onSave()}
               disabled={saving}
               className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center space-x-2 ${
                 hasChanges

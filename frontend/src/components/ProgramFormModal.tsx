@@ -9,10 +9,14 @@ interface Program {
   description: string;
   duration: string;
   level: string;
-  imageUrl: string;
-  googleFormLink: string;
+  price?: string;
+  location?: string;
+  university?: string;
+  requirements?: string;
+  imageUrl?: string;
+  googleFormLink?: string;
+  isHighlighted: boolean;
   isActive: boolean;
-  isHighlighted?: boolean;
   adminNote?: string;
 }
 
@@ -48,8 +52,8 @@ export default function ProgramFormModal({
         description: editingProgram.description,
         duration: editingProgram.duration,
         level: editingProgram.level,
-        imageUrl: editingProgram.imageUrl,
-        googleFormLink: editingProgram.googleFormLink,
+        imageUrl: editingProgram.imageUrl || "",
+        googleFormLink: editingProgram.googleFormLink || "",
         adminNote: editingProgram.adminNote || "",
       });
     } else {

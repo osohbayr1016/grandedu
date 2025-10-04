@@ -2,71 +2,20 @@
 
 import { useFooter } from "@/contexts/FooterContext";
 import { useUniversity } from "@/contexts/UniversityContext";
+import {
+  University,
+  Program,
+  News,
+  User,
+  DashboardStats,
+  GroupedContent,
+} from "@/types";
 import AdminHeader from "./AdminHeader";
-import DashboardStats from "./DashboardStats";
+import DashboardStatsComponent from "./DashboardStats";
 import AdminContentManager from "./AdminContentManager";
 import AdminModals from "./AdminModals";
 import AdminStateManager from "./AdminStateManager";
 import AdminEventHandler from "./AdminEventHandler";
-
-interface GroupedContent {
-  [section: string]: {
-    [field: string]: string;
-  };
-}
-
-interface DashboardStats {
-  totalUsers: number;
-  totalPrograms: number;
-  totalNews: number;
-  totalUniversities: number;
-}
-
-interface University {
-  id: string;
-  name: string;
-  location: string;
-  description: string;
-  imageUrl: string;
-  isActive: boolean;
-  adminNote?: string;
-}
-
-interface Program {
-  id: string;
-  title: string;
-  description: string;
-  duration: string;
-  level: string;
-  imageUrl: string;
-  googleFormLink: string;
-  isActive: boolean;
-  isHighlighted?: boolean;
-  adminNote?: string;
-}
-
-interface News {
-  id: string;
-  title: string;
-  content: string;
-  author: string;
-  publishDate: string;
-  imageUrl: string;
-  isActive: boolean;
-}
-
-interface User {
-  id: string;
-  userCode: string | null;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber: string;
-  role: string;
-  isHighlighted: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
 
 interface AdminMainContentProps {
   activeSection: string;
@@ -105,14 +54,17 @@ export default function AdminMainContent({
   onSaveContent,
 }: AdminMainContentProps) {
   const { footerContent, updateFooterContent } = useFooter();
-  const { universitySectionContent, updateUniversitySectionContent } =
-    useUniversity();
+  const {
+    universitySectionContent,
+    updateUniversitySectionContent,
+    saveUniversitySectionContent,
+  } = useUniversity();
 
   return (
     <div className="flex-1 p-6">
       <AdminHeader activeSection={activeSection} sections={sections} />
 
-      <DashboardStats stats={stats} />
+      <DashboardStatsComponent stats={stats} />
 
       <AdminStateManager
         initialActiveSection={activeSection}
@@ -140,7 +92,7 @@ export default function AdminMainContent({
                 universitySectionContent={universitySectionContent}
                 onUniversityEdit={(university) =>
                   eventHandlers.handleUniversityEdit(
-                    university,
+                    university as University,
                     state.setEditingUniversity,
                     state.setUniversityForm,
                     state.setShowUniversityModal
@@ -156,7 +108,7 @@ export default function AdminMainContent({
                 }
                 onProgramEdit={(program) =>
                   eventHandlers.handleProgramEdit(
-                    program,
+                    program as Program,
                     state.setEditingProgram,
                     state.setProgramForm,
                     state.setShowProgramModal
@@ -172,7 +124,7 @@ export default function AdminMainContent({
                 }
                 onNewsEdit={(news) =>
                   eventHandlers.handleNewsEdit(
-                    news,
+                    news as News,
                     state.setEditingNews,
                     state.setNewsForm,
                     state.setShowNewsModal
@@ -206,11 +158,16 @@ export default function AdminMainContent({
                   updateFooterContent({ [field]: value } as Partial<
                     typeof footerContent
                   >);
+                  state.setFooterHasChanges(true);
                 }}
-                onSaveFooter={async () => {
+                onSaveFooter={async (changes) => {
                   state.setFooterSaving(true);
                   try {
-                    // Save footer logic
+                    await eventHandlers.handleFooterSave(
+                      changes,
+                      footerContent,
+                      state.setFooterHasChanges
+                    );
                   } finally {
                     state.setFooterSaving(false);
                   }
@@ -221,11 +178,16 @@ export default function AdminMainContent({
                   updateUniversitySectionContent({ [field]: value } as Partial<
                     typeof universitySectionContent
                   >);
+                  state.setUniversitySectionHasChanges(true);
                 }}
                 onSaveUniversitySection={async () => {
                   state.setUniversitySectionSaving(true);
                   try {
-                    // Save university section logic
+                    await saveUniversitySectionContent(
+                      state.selectedUniversityForContent || null,
+                      universitySectionContent
+                    );
+                    state.setUniversitySectionHasChanges(false);
                   } finally {
                     state.setUniversitySectionSaving(false);
                   }

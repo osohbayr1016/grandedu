@@ -7,7 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePrograms } from "@/contexts/ProgramsContext";
 import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
-import { getProgramsContentUrl, getNavigationContentUrl } from "@/utils/api";
+import { getNavigationContentUrl, getProgramsContentUrl } from "@/utils/api";
+import { createTimeoutSignal } from "@/utils/requestUtils";
 
 interface Program {
   id: string;
@@ -47,7 +48,7 @@ export default function ProgramsPage() {
   useEffect(() => {
     fetchPageContent();
     fetchPrograms(); // Fetch programs when the programs page loads
-  }, []);
+  }, [fetchPrograms]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -70,12 +71,12 @@ export default function ProgramsPage() {
         fetch(getProgramsContentUrl(), {
           method: "GET",
           headers: { "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(10000),
+          signal: createTimeoutSignal(10000),
         }),
         fetch(getNavigationContentUrl(), {
           method: "GET",
           headers: { "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(10000),
+          signal: createTimeoutSignal(10000),
         }),
       ]);
 

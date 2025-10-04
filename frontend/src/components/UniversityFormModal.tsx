@@ -8,7 +8,7 @@ interface University {
   name: string;
   location: string;
   description: string;
-  imageUrl: string;
+  imageUrl?: string;
   isActive: boolean;
   adminNote?: string;
 }
@@ -42,7 +42,7 @@ export default function UniversityFormModal({
         name: editingUniversity.name,
         location: editingUniversity.location,
         description: editingUniversity.description,
-        imageUrl: editingUniversity.imageUrl,
+        imageUrl: editingUniversity.imageUrl || "",
         adminNote: editingUniversity.adminNote || "",
       });
     } else {

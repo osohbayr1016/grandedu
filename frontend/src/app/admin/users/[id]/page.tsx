@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { getUsersUrl, authenticatedFetch } from "@/utils/api";
@@ -38,18 +38,7 @@ export default function UserDetailPage({
     getParams();
   }, [params]);
 
-  useEffect(() => {
-    if (authLoading || !userId) return;
-
-    if (!user || user.role !== "admin") {
-      router.push("/");
-      return;
-    }
-
-    fetchUserDetail();
-  }, [user, authLoading, router, userId]);
-
-  const fetchUserDetail = async () => {
+  const fetchUserDetail = useCallback(async () => {
     try {
       setLoading(true);
       const response = await authenticatedFetch(`${getUsersUrl()}/${userId}`);
@@ -67,7 +56,18 @@ export default function UserDetailPage({
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, router]);
+
+  useEffect(() => {
+    if (authLoading || !userId) return;
+
+    if (!user || user.role !== "admin") {
+      router.push("/");
+      return;
+    }
+
+    fetchUserDetail();
+  }, [user, authLoading, router, userId, fetchUserDetail]);
 
   const handleToggleRole = async () => {
     if (!userDetail) return;

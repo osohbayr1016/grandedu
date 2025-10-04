@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getHealthCheckUrl, getApiBaseUrl } from "@/utils/api";
+import { createTimeoutSignal } from "@/utils/requestUtils";
 
 export default function BackendTest() {
   const [status, setStatus] = useState<string>("Testing...");
@@ -24,7 +25,7 @@ export default function BackendTest() {
           "Content-Type": "application/json",
         },
         // Add timeout to prevent hanging
-        signal: AbortSignal.timeout(10000),
+        signal: createTimeoutSignal(10000),
       });
 
       if (response.ok) {

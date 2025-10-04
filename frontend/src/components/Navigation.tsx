@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 import { getNavigationContentUrl } from "@/utils/api";
+import { createTimeoutSignal } from "@/utils/requestUtils";
 
 export default function Navigation() {
   const { user, logout, setShowAuth } = useAuth();
@@ -40,7 +41,7 @@ export default function Navigation() {
           headers: {
             "Content-Type": "application/json",
           },
-          signal: AbortSignal.timeout(10000),
+          signal: createTimeoutSignal(10000),
         });
 
         if (response.ok) {
@@ -134,9 +135,9 @@ export default function Navigation() {
             >
               {navContent.universitiesLink}
             </Link>
-            <a href="#contact" className="text-gray-600 hover:text-blue-700">
+            <Link href="/contact" className="text-gray-600 hover:text-blue-700">
               {navContent.contactLink}
-            </a>
+            </Link>
           </div>
 
           <div className="flex items-center justify-end space-x-3">
@@ -274,12 +275,12 @@ export default function Navigation() {
             >
               {navContent.universitiesLink}
             </Link>
-            <a
-              href="#contact"
+            <Link
+              href="/contact"
               className="block px-2 py-2 rounded hover:bg-gray-100 text-gray-700"
             >
               {navContent.contactLink}
-            </a>
+            </Link>
             {!user && (
               <button
                 onClick={() => {
