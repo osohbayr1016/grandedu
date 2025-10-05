@@ -141,7 +141,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // Toggle program status (admin only)
-router.patch("/:id/toggle", async (req, res) => {
+router.patch("/:id/toggle", auth, async (req, res) => {
   try {
     const { id } = req.params;
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import { getApiBaseUrl } from "@/utils/api";
 
 const schema = yup
   .object({
@@ -20,7 +21,7 @@ const schema = yup
       .string()
       .required("Утасны дугаар заавал оруулна уу")
       .matches(
-        /^(\+976|976)?\s?[6-9]\d{7}$/,
+        /^(\+976|976)?\s?[0-9\s]{8,}$/,
         "Зөв утасны дугаар оруулна уу (жишээ: +976 9999 9999 эсвэл 9999 9999)"
       ),
     subject: yup
@@ -62,17 +63,29 @@ export default function ContactForm() {
     setIsLoading(true);
 
     try {
-      // For demo purposes, we'll simulate sending an email
-      // In production, you'd send this to your backend API
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const response = await fetch(`${getApiBaseUrl()}/api/contact`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          message: `${data.subject}\n\n${data.message}`,
+        }),
+      });
 
-      console.log("Contact form data:", data);
-      setIsSubmitted(true);
-      reset();
-    } catch {
-      // For demo purposes, always succeed
-      setIsSubmitted(true);
-      reset();
+      if (response.ok) {
+        console.log("Contact form data:", data);
+        setIsSubmitted(true);
+        reset();
+      } else {
+        throw new Error("Failed to submit contact form");
+      }
+    } catch (error) {
+      console.error("Error submitting contact form:", error);
+      alert("Мессеж илгээх үед алдаа гарлаа. Дахин оролдоно уу.");
     } finally {
       setIsLoading(false);
     }
@@ -134,20 +147,20 @@ export default function ContactForm() {
           </svg>
         </div>
 
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">
-          Холбоо барих
-        </h2>
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">Холбоо барих</h2>
 
         <p className="text-gray-600">
           Асуулт, санал хүсэлт байвал бидэнтэй холбогдоно уу
         </p>
       </div>
 
-
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Нэр *
             </label>
             <input
@@ -164,7 +177,10 @@ export default function ContactForm() {
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Имэйл хаяг *
             </label>
             <input
@@ -176,14 +192,19 @@ export default function ContactForm() {
               disabled={isLoading}
             />
             {errors.email && (
-              <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
+              <p className="mt-2 text-sm text-red-600">
+                {errors.email.message}
+              </p>
             )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="phone"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Утасны дугаар *
             </label>
             <input
@@ -195,12 +216,17 @@ export default function ContactForm() {
               disabled={isLoading}
             />
             {errors.phone && (
-              <p className="mt-2 text-sm text-red-600">{errors.phone.message}</p>
+              <p className="mt-2 text-sm text-red-600">
+                {errors.phone.message}
+              </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="inquiryType" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="inquiryType"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Хүсэлтийн төрөл *
             </label>
             <select
@@ -217,13 +243,18 @@ export default function ContactForm() {
               <option value="other">Бусад</option>
             </select>
             {errors.inquiryType && (
-              <p className="mt-2 text-sm text-red-600">{errors.inquiryType.message}</p>
+              <p className="mt-2 text-sm text-red-600">
+                {errors.inquiryType.message}
+              </p>
             )}
           </div>
         </div>
 
         <div>
-          <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="subject"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Гарчиг *
           </label>
           <input
@@ -235,12 +266,17 @@ export default function ContactForm() {
             disabled={isLoading}
           />
           {errors.subject && (
-            <p className="mt-2 text-sm text-red-600">{errors.subject.message}</p>
+            <p className="mt-2 text-sm text-red-600">
+              {errors.subject.message}
+            </p>
           )}
         </div>
 
         <div>
-          <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="message"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Мессеж *
           </label>
           <textarea
@@ -252,7 +288,9 @@ export default function ContactForm() {
             disabled={isLoading}
           />
           {errors.message && (
-            <p className="mt-2 text-sm text-red-600">{errors.message.message}</p>
+            <p className="mt-2 text-sm text-red-600">
+              {errors.message.message}
+            </p>
           )}
         </div>
 
@@ -295,8 +333,18 @@ export default function ContactForm() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
           <div>
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              <svg
+                className="w-6 h-6 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
               </svg>
             </div>
             <h3 className="font-semibold text-gray-900 mb-1">Имэйл</h3>
@@ -305,8 +353,18 @@ export default function ContactForm() {
 
           <div>
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              <svg
+                className="w-6 h-6 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                />
               </svg>
             </div>
             <h3 className="font-semibold text-gray-900 mb-1">Утас</h3>
@@ -315,9 +373,24 @@ export default function ContactForm() {
 
           <div>
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              <svg
+                className="w-6 h-6 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                />
               </svg>
             </div>
             <h3 className="font-semibold text-gray-900 mb-1">Хаяг</h3>

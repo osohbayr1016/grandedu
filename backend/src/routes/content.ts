@@ -484,4 +484,77 @@ router.delete(
   }
 );
 
+// Footer content endpoints
+router.get("/footer", async (req: Request, res: Response) => {
+  try {
+    // Return default footer content structure
+    const defaultFooter = {
+      companyDescription: "",
+      email: "",
+      phone: "",
+      address: "",
+      facebook: "",
+      instagram: "",
+      youtube: "",
+      privacyPolicy: "",
+      termsOfService: "",
+      copyright: "© 2024 GrandEdu. Бүх эрх хуулиар хамгаалагдсан.",
+    };
+
+    // Try to get footer content from database
+    const footerContent = await prisma.pageContent.findMany({
+      where: {
+        page: "footer",
+        isActive: true,
+      },
+    });
+
+    // Convert to object format
+    const footerData = footerContent.reduce((acc, item) => {
+      acc[item.field] = item.content;
+      return acc;
+    }, {} as Record<string, string>);
+
+    res.json({ ...defaultFooter, ...footerData });
+  } catch (error) {
+    console.error("Error fetching footer content:", error);
+    res.status(500).json({ error: "Failed to fetch footer content" });
+  }
+});
+
+router.put("/footer", auth, async (req: Request, res: Response) => {
+  try {
+    const footerData = req.body;
+
+    // Update or create footer content items
+    for (const [field, content] of Object.entries(footerData)) {
+      await prisma.pageContent.upsert({
+        where: {
+          page_section_field: {
+            page: "footer",
+            section: "main",
+            field: field,
+          },
+        },
+        update: {
+          content: content as string,
+          updatedAt: new Date(),
+        },
+        create: {
+          page: "footer",
+          section: "main",
+          field: field,
+          content: content as string,
+          type: "text",
+        },
+      });
+    }
+
+    res.json({ message: "Footer content updated successfully" });
+  } catch (error) {
+    console.error("Error updating footer content:", error);
+    res.status(500).json({ error: "Failed to update footer content" });
+  }
+});
+
 export default router;

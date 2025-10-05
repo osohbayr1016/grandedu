@@ -7,6 +7,7 @@ import programRoutes from "./routes/programs";
 import contentRoutes from "./routes/content";
 import newsRoutes from "./routes/news";
 import universitiesRoutes from "./routes/universities";
+import contactRoutes from "./routes/contact";
 
 dotenv.config();
 
@@ -96,6 +97,7 @@ app.use("/api/programs", programRoutes);
 app.use("/api/content", contentRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/universities", universitiesRoutes);
+app.use("/api/contact", contactRoutes);
 
 // Basic route
 app.get("/", (req, res) => {
