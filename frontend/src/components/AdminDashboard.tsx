@@ -8,10 +8,11 @@ import { authenticatedFetch, getApiBaseUrl } from "@/utils/api";
 import AdminUniversitiesTable from "@/components/AdminUniversitiesTable";
 import AdminProgramsTable from "@/components/AdminProgramsTable";
 import AdminNewsTable from "@/components/AdminNewsTable";
+import AdminCoursesTable from "@/components/AdminCoursesTable";
 import AdminFooterEditor from "@/components/AdminFooterEditor";
 import AdminContactMessages from "@/components/AdminContactMessages";
 import Modal from "@/components/Modal";
-import { Entity, Program, University, News } from "@/types";
+import { Entity, Program, University, News, Course } from "@/types";
 
 interface ContentItem {
   id: string;
@@ -34,11 +35,13 @@ export default function AdminDashboard() {
     universities: Entity[];
     programs: Entity[];
     news: Entity[];
+    courses: Entity[];
     users: Entity[];
   }>({
     universities: [],
     programs: [],
     news: [],
+    courses: [],
     users: [],
   });
   const [stats, setStats] = useState({
@@ -46,6 +49,7 @@ export default function AdminDashboard() {
     totalPrograms: 0,
     totalNews: 0,
     totalUniversities: 0,
+    totalCourses: 0,
   });
 
   // Search state
@@ -54,7 +58,7 @@ export default function AdminDashboard() {
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [editingEntity, setEditingEntity] = useState<
-    University | Program | News | null
+    University | Program | News | Course | null
   >(null);
   const [modalType, setModalType] = useState<string>("");
 
@@ -63,6 +67,7 @@ export default function AdminDashboard() {
     { id: "dashboard", name: "Хянах самбар", icon: "📊" },
     { id: "universities", name: "Их сургуулиуд", icon: "🎓" },
     { id: "programs", name: "Хөтөлбөрүүд", icon: "📚" },
+    { id: "courses", name: "Сургалтууд", icon: "🎯" },
     { id: "news", name: "Мэдээ", icon: "📰" },
     { id: "footer", name: "Footer", icon: "🔗" },
     { id: "messages", name: "Холбоо барих", icon: "💬" },
@@ -97,14 +102,21 @@ export default function AdminDashboard() {
     const token = localStorage.getItem("token");
 
     try {
-      const [universitiesRes, programsRes, newsRes, usersRes, statsRes] =
-        await Promise.all([
-          authenticatedFetch(`${getApiBaseUrl()}/api/universities`, {}, token!),
-          authenticatedFetch(`${getApiBaseUrl()}/api/programs`, {}, token!),
-          authenticatedFetch(`${getApiBaseUrl()}/api/news`, {}, token!),
-          authenticatedFetch(`${getApiBaseUrl()}/api/auth/users`, {}, token!),
-          authenticatedFetch(`${getApiBaseUrl()}/api/auth/stats`, {}, token!),
-        ]);
+      const [
+        universitiesRes,
+        programsRes,
+        newsRes,
+        coursesRes,
+        usersRes,
+        statsRes,
+      ] = await Promise.all([
+        authenticatedFetch(`${getApiBaseUrl()}/api/universities`, {}, token!),
+        authenticatedFetch(`${getApiBaseUrl()}/api/programs`, {}, token!),
+        authenticatedFetch(`${getApiBaseUrl()}/api/news`, {}, token!),
+        authenticatedFetch(`${getApiBaseUrl()}/api/courses`, {}, token!),
+        authenticatedFetch(`${getApiBaseUrl()}/api/auth/users`, {}, token!),
+        authenticatedFetch(`${getApiBaseUrl()}/api/auth/stats`, {}, token!),
+      ]);
 
       if (universitiesRes.ok) {
         const universities = await universitiesRes.json();
@@ -119,6 +131,11 @@ export default function AdminDashboard() {
       if (newsRes.ok) {
         const news = await newsRes.json();
         setEntities((prev) => ({ ...prev, news }));
+      }
+
+      if (coursesRes.ok) {
+        const courses = await coursesRes.json();
+        setEntities((prev) => ({ ...prev, courses }));
       }
 
       if (usersRes.ok) {
@@ -363,6 +380,16 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              <div className="bg-indigo-500 text-white rounded-lg p-6">
+                <div className="flex items-center">
+                  <div className="flex-1">
+                    <p className="text-indigo-100 text-sm">Нийт сургалт</p>
+                    <p className="text-2xl font-bold">{stats.totalCourses}</p>
+                  </div>
+                  <div className="text-3xl opacity-80">🎯</div>
+                </div>
+              </div>
+
               {/* Quick Action Cards */}
               <div className="md:col-span-2 lg:col-span-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
                 <button
@@ -386,6 +413,19 @@ export default function AdminDashboard() {
                     <span className="text-2xl mr-3">📚</span>
                     <div className="text-left">
                       <p className="font-medium text-gray-900">Хөтөлбөрүүд</p>
+                      <p className="text-sm text-gray-500">Удирдах</p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setActiveSection("courses")}
+                  className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center">
+                    <span className="text-2xl mr-3">🎯</span>
+                    <div className="text-left">
+                      <p className="font-medium text-gray-900">Сургалтууд</p>
                       <p className="text-sm text-gray-500">Удирдах</p>
                     </div>
                   </div>
@@ -472,6 +512,14 @@ export default function AdminDashboard() {
             />
           )}
 
+          {activeSection === "courses" && (
+            <AdminCoursesTable
+              courses={entities.courses as Course[]}
+              onUpdate={loadData}
+              onEdit={(course) => handleEdit("courses", course)}
+            />
+          )}
+
           {activeSection === "news" && (
             <AdminNewsTable
               news={entities.news as News[]}
@@ -524,6 +572,8 @@ export default function AdminDashboard() {
                   ? "Их сургууль"
                   : modalType === "programs"
                   ? "Хөтөлбөр"
+                  : modalType === "courses"
+                  ? "Сургалт"
                   : modalType === "news"
                   ? "Мэдээ"
                   : "Элемент"
@@ -533,6 +583,8 @@ export default function AdminDashboard() {
                   ? "их сургууль"
                   : modalType === "programs"
                   ? "хөтөлбөр"
+                  : modalType === "courses"
+                  ? "сургалт"
                   : modalType === "news"
                   ? "мэдээ"
                   : "элемент"
@@ -556,7 +608,7 @@ function EntityEditForm({
   onSave,
   onCancel,
 }: {
-  entity: University | Program | News | null;
+  entity: University | Program | News | Course | null;
   onSave: (data: Record<string, unknown>) => void;
   onCancel: () => void;
 }) {

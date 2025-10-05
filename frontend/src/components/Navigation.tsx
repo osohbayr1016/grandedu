@@ -18,6 +18,7 @@ export default function Navigation() {
     logo: "GrandEdu",
     homeLink: "Нүүр",
     programsLink: "Хөтөлбөрүүд",
+    coursesLink: "Сургалтууд",
     newsLink: "Мэдээ",
     universitiesLink: "Их сургуулиуд",
     contactLink: "Холбоо барих",
@@ -114,6 +115,16 @@ export default function Navigation() {
               }`}
             >
               {navContent.programsLink}
+            </Link>
+            <Link
+              href="/courses"
+              className={`hover:text-blue-700 ${
+                pathname?.startsWith("/courses")
+                  ? "text-blue-700 font-semibold"
+                  : "text-gray-600"
+              }`}
+            >
+              {navContent.coursesLink}
             </Link>
             <Link
               href="/news"
@@ -254,6 +265,16 @@ export default function Navigation() {
               }`}
             >
               {navContent.programsLink}
+            </Link>
+            <Link
+              href="/courses"
+              className={`block px-2 py-2 rounded hover:bg-gray-100 ${
+                pathname?.startsWith("/courses")
+                  ? "text-blue-700 font-semibold"
+                  : "text-gray-700"
+              }`}
+            >
+              {navContent.coursesLink}
             </Link>
             <Link
               href="/news"

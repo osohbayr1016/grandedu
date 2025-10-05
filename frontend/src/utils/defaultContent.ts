@@ -4,6 +4,7 @@ export const defaultContent = {
     logo: "GrandEdu",
     homeLink: "Нүүр",
     programsLink: "Хөтөлбөрүүд",
+    coursesLink: "Сургалтууд",
     newsLink: "Мэдээ",
     universitiesLink: "Их сургуулиуд",
     contactLink: "Холбоо барих",
@@ -35,6 +36,10 @@ export const defaultContent = {
   universities: {
     title: "Их сургуулиуд",
     subtitle: "Хятадын тэргүүн их сургуулиуд",
+  },
+  courses: {
+    title: "Сургалтууд",
+    description: "Хятад хэлний сургалт болон бусад мэргэжлийн сургалтууд",
   },
   header: {
     badge: "Хөтөлбөрүүд",

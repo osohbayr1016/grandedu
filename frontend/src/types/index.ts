@@ -24,6 +24,8 @@ export interface Entity {
   isActive: boolean;
   isHighlighted?: boolean;
   adminNote?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface University {
@@ -63,6 +65,25 @@ export interface News {
   isActive: boolean;
 }
 
+export interface Course {
+  id: string;
+  title: string;
+  description: string;
+  duration: string;
+  level: string;
+  price?: string;
+  instructor?: string;
+  schedule?: string;
+  requirements?: string;
+  imageUrl?: string;
+  registrationLink?: string;
+  adminNote?: string;
+  isActive: boolean;
+  isHighlighted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface User {
   id: string;
   userCode: string | null;
@@ -88,6 +109,7 @@ export interface DashboardStats {
   totalPrograms: number;
   totalNews: number;
   totalUniversities: number;
+  totalCourses: number;
 }
 
 export interface GroupedContent {

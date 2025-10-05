@@ -193,6 +193,19 @@ export const getAdminUniversitiesUrl = () => {
   return url;
 };
 
+// Courses endpoints
+export const getCoursesUrl = () => {
+  const url = `${getApiBaseUrl()}/api/courses`;
+  console.log("Courses URL:", url);
+  return url;
+};
+
+export const getAdminCoursesUrl = () => {
+  const url = `${getApiBaseUrl()}/api/courses/admin`;
+  console.log("Admin Courses URL:", url);
+  return url;
+};
+
 // User management endpoints
 export const getUsersUrl = () => {
   const url = `${getApiBaseUrl()}/api/auth/users`;
