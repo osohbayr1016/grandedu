@@ -8,12 +8,14 @@ interface AdminCoursesTableProps {
   courses: Course[];
   onUpdate: () => void;
   onEdit: (course: Course) => void;
+  onAdd?: () => void;
 }
 
 export default function AdminCoursesTable({
   courses,
   onUpdate,
   onEdit,
+  onAdd,
 }: AdminCoursesTableProps) {
   const [loading, setLoading] = useState<string | null>(null);
 
@@ -106,8 +108,16 @@ export default function AdminCoursesTable({
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200">
+      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
         <h3 className="text-lg font-medium text-gray-900">Сургалтууд</h3>
+        {onAdd && (
+          <button
+            onClick={onAdd}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+          >
+            + Шинэ сургалт нэмэх
+          </button>
+        )}
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">

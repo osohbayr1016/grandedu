@@ -517,6 +517,7 @@ export default function AdminDashboard() {
               courses={entities.courses as Course[]}
               onUpdate={loadData}
               onEdit={(course) => handleEdit("courses", course)}
+              onAdd={() => handleAdd("courses")}
             />
           )}
 

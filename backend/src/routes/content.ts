@@ -145,97 +145,6 @@ router.patch("/:id/toggle", auth, async (req: Request, res: Response) => {
   }
 });
 
-// Get footer content
-router.get("/footer", async (req: Request, res: Response) => {
-  try {
-    const footerContent = await prisma.pageContent.findMany({
-      where: {
-        page: "footer",
-        section: "footer",
-        isActive: true,
-      },
-      orderBy: {
-        order: "asc",
-      },
-    });
-
-    // Group content by section and field
-    const groupedContent = footerContent.reduce((acc, item) => {
-      if (!acc[item.section]) {
-        acc[item.section] = {};
-      }
-      acc[item.section][item.field] = item.content;
-      return acc;
-    }, {} as Record<string, Record<string, string>>);
-
-    res.json(groupedContent);
-  } catch (error) {
-    console.error("Error fetching footer content:", error);
-    res.status(500).json({ error: "Failed to fetch footer content" });
-  }
-});
-
-// Save footer content
-router.post("/footer", auth, async (req: Request, res: Response) => {
-  try {
-    const footerData = req.body;
-    const footerFields = [
-      "companyDescription",
-      "email",
-      "phone",
-      "address",
-      "facebook",
-      "instagram",
-      "youtube",
-      "privacyPolicy",
-      "termsOfService",
-      "copyright",
-    ];
-
-    // Save each footer field as a separate content entry
-    const promises = footerFields.map(async (field) => {
-      if (footerData[field] !== undefined) {
-        const existingContent = await prisma.pageContent.findFirst({
-          where: {
-            page: "footer",
-            section: "footer",
-            field: field,
-          },
-        });
-
-        if (existingContent) {
-          // Update existing content
-          return await prisma.pageContent.update({
-            where: { id: existingContent.id },
-            data: {
-              content: footerData[field],
-              updatedAt: new Date(),
-            },
-          });
-        } else {
-          // Create new content
-          return await prisma.pageContent.create({
-            data: {
-              page: "footer",
-              section: "footer",
-              field: field,
-              content: footerData[field],
-              type: "text",
-              order: 0,
-            },
-          });
-        }
-      }
-    });
-
-    await Promise.all(promises);
-    res.json({ message: "Footer content saved successfully" });
-  } catch (error) {
-    console.error("Error saving footer content:", error);
-    res.status(500).json({ error: "Failed to save footer content" });
-  }
-});
-
 // Get university sections content (global fallback)
 router.get("/university-sections", async (req: Request, res: Response) => {
   try {
@@ -484,7 +393,7 @@ router.delete(
   }
 );
 
-// Footer content endpoints
+// Footer content endpoints - GET
 router.get("/footer", async (req: Request, res: Response) => {
   try {
     // Return default footer content structure
@@ -505,6 +414,7 @@ router.get("/footer", async (req: Request, res: Response) => {
     const footerContent = await prisma.pageContent.findMany({
       where: {
         page: "footer",
+        section: "main",
         isActive: true,
       },
     });
