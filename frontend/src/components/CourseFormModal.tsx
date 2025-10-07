@@ -1,35 +1,35 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Program } from "@/types";
+import { Course } from "@/types";
 import Modal from "@/components/Modal";
 
-interface ProgramFormModalProps {
+interface CourseFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  program?: Program | null;
-  onSave: (programData: Partial<Program>) => void;
+  course?: Course | null;
+  onSave: (courseData: Partial<Course>) => void;
   loading?: boolean;
 }
 
-export default function ProgramFormModal({
+export default function CourseFormModal({
   isOpen,
   onClose,
-  program,
+  course,
   onSave,
   loading = false,
-}: ProgramFormModalProps) {
+}: CourseFormModalProps) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     duration: "",
     level: "Энгийн",
     price: "",
-    location: "",
-    university: "",
+    instructor: "",
+    schedule: "",
     requirements: "",
     imageUrl: "",
-    googleFormLink: "",
+    registrationLink: "",
     adminNote: "",
     isActive: true,
     isHighlighted: false,
@@ -38,21 +38,21 @@ export default function ProgramFormModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (program) {
+    if (course) {
       setFormData({
-        title: program.title || "",
-        description: program.description || "",
-        duration: program.duration || "",
-        level: program.level || "Энгийн",
-        price: program.price || "",
-        location: program.location || "",
-        university: program.university || "",
-        requirements: program.requirements || "",
-        imageUrl: program.imageUrl || "",
-        googleFormLink: program.googleFormLink || "",
-        adminNote: program.adminNote || "",
-        isActive: program.isActive ?? true,
-        isHighlighted: program.isHighlighted ?? false,
+        title: course.title || "",
+        description: course.description || "",
+        duration: course.duration || "",
+        level: course.level || "Энгийн",
+        price: course.price || "",
+        instructor: course.instructor || "",
+        schedule: course.schedule || "",
+        requirements: course.requirements || "",
+        imageUrl: course.imageUrl || "",
+        registrationLink: course.registrationLink || "",
+        adminNote: course.adminNote || "",
+        isActive: course.isActive ?? true,
+        isHighlighted: course.isHighlighted ?? false,
       });
     } else {
       setFormData({
@@ -61,24 +61,24 @@ export default function ProgramFormModal({
         duration: "",
         level: "Энгийн",
         price: "",
-        location: "",
-        university: "",
+        instructor: "",
+        schedule: "",
         requirements: "",
         imageUrl: "",
-        googleFormLink: "",
+        registrationLink: "",
         adminNote: "",
         isActive: true,
         isHighlighted: false,
       });
     }
     setErrors({});
-  }, [program, isOpen]);
+  }, [course, isOpen]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = "Хөтөлбөрийн нэр заавал оруулах шаардлагатай";
+      newErrors.title = "Сургалтын нэр заавал оруулах шаардлагатай";
     }
 
     if (!formData.description.trim()) {
@@ -135,7 +135,7 @@ export default function ProgramFormModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={program ? "Хөтөлбөр засах" : "Шинэ хөтөлбөр нэмэх"}
+      title={course ? "Сургалт засах" : "Шинэ сургалт нэмэх"}
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -143,7 +143,7 @@ export default function ProgramFormModal({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Хөтөлбөрийн нэр *
+              Сургалтын нэр *
             </label>
             <input
               type="text"
@@ -153,7 +153,7 @@ export default function ProgramFormModal({
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 errors.title ? "border-red-500" : "border-gray-300"
               }`}
-              placeholder="Хөтөлбөрийн нэр оруулна уу"
+              placeholder="Сургалтын нэр оруулна уу"
             />
             {errors.title && (
               <p className="mt-1 text-sm text-red-600">{errors.title}</p>
@@ -192,11 +192,11 @@ export default function ProgramFormModal({
             name="description"
             value={formData.description}
             onChange={handleInputChange}
-            rows={4}
+            rows={3}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               errors.description ? "border-red-500" : "border-gray-300"
             }`}
-            placeholder="Хөтөлбөрийн тайлбар оруулна уу"
+            placeholder="Сургалтын тайлбар оруулна уу"
           />
           {errors.description && (
             <p className="mt-1 text-sm text-red-600">{errors.description}</p>
@@ -216,7 +216,7 @@ export default function ProgramFormModal({
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 errors.duration ? "border-red-500" : "border-gray-300"
               }`}
-              placeholder="Жишээ: 4 жил, 2 жил"
+              placeholder="Жишээ: 3 сар, 6 долоо хоног"
             />
             {errors.duration && (
               <p className="mt-1 text-sm text-red-600">{errors.duration}</p>
@@ -233,7 +233,7 @@ export default function ProgramFormModal({
               value={formData.price}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Жишээ: 2,000,000₮/жил"
+              placeholder="Жишээ: 500,000₮, Үнэгүй"
             />
           </div>
         </div>
@@ -241,29 +241,29 @@ export default function ProgramFormModal({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Байршил
+              Заах багш
             </label>
             <input
               type="text"
-              name="location"
-              value={formData.location}
+              name="instructor"
+              value={formData.instructor}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Жишээ: Улаанбаатар, Монгол улс"
+              placeholder="Заах багшийн нэр"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Их сургууль
+              Хуваарь
             </label>
             <input
               type="text"
-              name="university"
-              value={formData.university}
+              name="schedule"
+              value={formData.schedule}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Их сургуулийн нэр"
+              placeholder="Жишээ: Даваа, Мягмар 18:00-20:00"
             />
           </div>
         </div>
@@ -276,9 +276,9 @@ export default function ProgramFormModal({
             name="requirements"
             value={formData.requirements}
             onChange={handleInputChange}
-            rows={3}
+            rows={2}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Хөтөлбөрт элсэх шаардлага"
+            placeholder="Сургалтад оролцох шаардлага"
           />
         </div>
 
@@ -293,18 +293,18 @@ export default function ProgramFormModal({
               value={formData.imageUrl}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="https://example.com/program-image.jpg"
+              placeholder="https://example.com/image.jpg"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Google Form холбоос
+              Бүртгэлийн холбоос
             </label>
             <input
               type="url"
-              name="googleFormLink"
-              value={formData.googleFormLink}
+              name="registrationLink"
+              value={formData.registrationLink}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="https://forms.google.com/..."
@@ -366,10 +366,11 @@ export default function ProgramFormModal({
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             disabled={loading}
           >
-            {loading ? "Хадгалж байна..." : program ? "Хадгалах" : "Нэмэх"}
+            {loading ? "Хадгалж байна..." : course ? "Хадгалах" : "Нэмэх"}
           </button>
         </div>
       </form>
     </Modal>
   );
 }
+

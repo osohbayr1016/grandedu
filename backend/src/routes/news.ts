@@ -54,7 +54,8 @@ router.get("/:id", async (req, res) => {
 // Create news (admin only)
 router.post("/", auth, async (req, res) => {
   try {
-    const { title, content, author, publishDate, imageUrl } = req.body;
+    const { title, content, author, publishDate, imageUrl, isActive } =
+      req.body;
 
     if (!title || !content || !author) {
       return res
@@ -69,6 +70,7 @@ router.post("/", auth, async (req, res) => {
         author,
         publishDate: publishDate ? new Date(publishDate) : new Date(),
         imageUrl,
+        isActive: isActive !== undefined ? isActive : true,
       },
     });
 
@@ -83,7 +85,8 @@ router.post("/", auth, async (req, res) => {
 router.put("/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, content, author, publishDate, imageUrl } = req.body;
+    const { title, content, author, publishDate, imageUrl, isActive } =
+      req.body;
 
     const news = await prisma.news.update({
       where: { id },
@@ -93,6 +96,7 @@ router.put("/:id", auth, async (req, res) => {
         author,
         publishDate: publishDate ? new Date(publishDate) : undefined,
         imageUrl,
+        isActive,
         updatedAt: new Date(),
       },
     });

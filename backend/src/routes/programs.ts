@@ -66,6 +66,8 @@ router.post("/", async (req, res) => {
       imageUrl,
       googleFormLink,
       adminNote,
+      isActive,
+      isHighlighted,
     } = req.body;
 
     if (!title || !description || !duration) {
@@ -87,6 +89,8 @@ router.post("/", async (req, res) => {
         imageUrl,
         googleFormLink,
         adminNote: adminNote || null,
+        isActive: isActive !== undefined ? isActive : true,
+        isHighlighted: isHighlighted !== undefined ? isHighlighted : false,
       },
     });
 
@@ -113,6 +117,8 @@ router.put("/:id", async (req, res) => {
       imageUrl,
       googleFormLink,
       adminNote,
+      isActive,
+      isHighlighted,
     } = req.body;
 
     const program = await prisma.program.update({
@@ -129,6 +135,8 @@ router.put("/:id", async (req, res) => {
         imageUrl,
         googleFormLink,
         adminNote: adminNote || null,
+        isActive,
+        isHighlighted,
         updatedAt: new Date(),
       },
     });

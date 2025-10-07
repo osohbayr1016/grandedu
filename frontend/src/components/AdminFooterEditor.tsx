@@ -69,9 +69,6 @@ export default function AdminFooterEditor({ onClose }: AdminFooterEditorProps) {
         `${getApiBaseUrl()}/api/content/footer`,
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
           body: JSON.stringify(footerContent),
         },
         token!
@@ -81,11 +78,19 @@ export default function AdminFooterEditor({ onClose }: AdminFooterEditorProps) {
         alert("Footer мэдээлэл амжилттай хадгалагдлаа!");
         onClose();
       } else {
-        alert("Footer мэдээлэл хадгалах үед алдаа гарлаа.");
+        const errorData = await response.json();
+        console.error("Footer save error:", errorData);
+        alert(
+          "Footer мэдээлэл хадгалах үед алдаа гарлаа: " +
+            (errorData.error || "Тодорхойгүй алдаа")
+        );
       }
     } catch (error) {
       console.error("Error saving footer content:", error);
-      alert("Footer мэдээлэл хадгалах үед алдаа гарлаа.");
+      alert(
+        "Footer мэдээлэл хадгалах үед алдаа гарлаа: " +
+          (error instanceof Error ? error.message : "Тодорхойгүй алдаа")
+      );
     } finally {
       setSaving(false);
     }

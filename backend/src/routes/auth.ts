@@ -283,12 +283,14 @@ router.get("/stats", async (req, res) => {
     const totalPrograms = await prisma.program.count();
     const totalNews = await prisma.news.count();
     const totalUniversities = await prisma.university.count();
+    const totalCourses = await prisma.course.count();
 
     res.json({
       totalUsers,
       totalPrograms,
       totalNews,
       totalUniversities,
+      totalCourses,
     });
   } catch (error) {
     console.error("Get stats error:", error);

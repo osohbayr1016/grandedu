@@ -11,17 +11,14 @@ import AdminNewsTable from "@/components/AdminNewsTable";
 import AdminCoursesTable from "@/components/AdminCoursesTable";
 import AdminFooterEditor from "@/components/AdminFooterEditor";
 import AdminContactMessages from "@/components/AdminContactMessages";
-import Modal from "@/components/Modal";
+import AdminUsersTable from "@/components/AdminUsersTable";
+import CourseFormModal from "@/components/CourseFormModal";
+import UniversityFormModal from "@/components/UniversityFormModal";
+import ProgramFormModal from "@/components/ProgramFormModal";
+import NewsFormModal from "@/components/NewsFormModal";
 import { Entity, Program, University, News, Course } from "@/types";
 
-interface ContentItem {
-  id: string;
-  page: string;
-  section: string;
-  field: string;
-  content: string;
-  type: string;
-}
+// Removed legacy content editor types/modal
 
 export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -30,7 +27,6 @@ export default function AdminDashboard() {
   // State management
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("dashboard");
-  const [content, setContent] = useState<ContentItem[]>([]);
   const [entities, setEntities] = useState<{
     universities: Entity[];
     programs: Entity[];
@@ -56,11 +52,17 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Modal state
-  const [showModal, setShowModal] = useState(false);
+  const [showCourseModal, setShowCourseModal] = useState(false);
+  const [showUniversityModal, setShowUniversityModal] = useState(false);
+  const [showProgramModal, setShowProgramModal] = useState(false);
+  const [showNewsModal, setShowNewsModal] = useState(false);
   const [editingEntity, setEditingEntity] = useState<
     University | Program | News | Course | null
   >(null);
-  const [modalType, setModalType] = useState<string>("");
+  const [courseModalLoading, setCourseModalLoading] = useState(false);
+  const [universityModalLoading, setUniversityModalLoading] = useState(false);
+  const [programModalLoading, setProgramModalLoading] = useState(false);
+  const [newsModalLoading, setNewsModalLoading] = useState(false);
 
   // Sidebar navigation items
   const sidebarItems = [
@@ -155,10 +157,20 @@ export default function AdminDashboard() {
   };
 
   // Entity handlers
-  const handleEdit = (type: string, entity: University | Program | News) => {
+  const handleEdit = (
+    type: string,
+    entity: University | Program | News | Course
+  ) => {
     setEditingEntity(entity);
-    setModalType(type);
-    setShowModal(true);
+    if (type === "courses") {
+      setShowCourseModal(true);
+    } else if (type === "universities") {
+      setShowUniversityModal(true);
+    } else if (type === "programs") {
+      setShowProgramModal(true);
+    } else if (type === "news") {
+      setShowNewsModal(true);
+    }
   };
 
   const handleToggleStatus = async (
@@ -203,62 +215,285 @@ export default function AdminDashboard() {
 
   const handleAdd = (type: string) => {
     setEditingEntity(null);
-    setModalType(type);
-    setShowModal(true);
+    if (type === "courses") {
+      setShowCourseModal(true);
+    } else if (type === "universities") {
+      setShowUniversityModal(true);
+    } else if (type === "programs") {
+      setShowProgramModal(true);
+    } else if (type === "news") {
+      setShowNewsModal(true);
+    }
   };
 
-  const handleModalSave = async (formData: Partial<Entity>) => {
-    if (!modalType) return;
+  // Removed legacy generic modal save handler
 
+  // Course modal handlers
+  const handleCourseSave = async (courseData: Partial<Course>) => {
+    setCourseModalLoading(true);
     const token = localStorage.getItem("token");
 
     try {
       if (editingEntity) {
+        // Update existing course
         const response = await authenticatedFetch(
-          `${getApiBaseUrl()}/api/${modalType}/${editingEntity.id}`,
+          `${getApiBaseUrl()}/api/courses/${editingEntity.id}`,
           {
             method: "PUT",
-            body: JSON.stringify(formData),
+            body: JSON.stringify(courseData),
           },
           token!
         );
 
         if (response.ok) {
-          const updatedEntity = await response.json();
+          const updatedCourse = await response.json();
           setEntities((prev) => ({
             ...prev,
-            [modalType]: prev[modalType as keyof typeof prev].map(
-              (item: Entity) =>
-                item.id === editingEntity.id
-                  ? { ...item, ...updatedEntity }
-                  : item
+            courses: prev.courses.map((course: Entity) =>
+              course.id === editingEntity.id
+                ? { ...course, ...updatedCourse }
+                : course
             ),
           }));
+          setShowCourseModal(false);
+          setEditingEntity(null);
+          alert("Сургалтыг амжилттай шинэчлэлээ!");
         }
       } else {
+        // Create new course
         const response = await authenticatedFetch(
-          `${getApiBaseUrl()}/api/${modalType}`,
+          `${getApiBaseUrl()}/api/courses`,
           {
             method: "POST",
-            body: JSON.stringify(formData),
+            body: JSON.stringify(courseData),
           },
           token!
         );
 
         if (response.ok) {
-          const newEntity = await response.json();
+          const newCourse = await response.json();
           setEntities((prev) => ({
             ...prev,
-            [modalType]: [...prev[modalType as keyof typeof prev], newEntity],
+            courses: [...prev.courses, newCourse],
           }));
+          setStats((prev) => ({
+            ...prev,
+            totalCourses: prev.totalCourses + 1,
+          }));
+          setShowCourseModal(false);
+          setEditingEntity(null);
+          alert("Сургалтыг амжилттай нэмлээ!");
         }
       }
-
-      setShowModal(false);
-      setEditingEntity(null);
-      setModalType("");
     } catch (error) {
-      console.error(`Error saving ${modalType}:`, error);
+      console.error("Error saving course:", error);
+      alert(
+        "Алдаа гарлаа: " +
+          (error instanceof Error ? error.message : "Тодорхойгүй алдаа")
+      );
+    } finally {
+      setCourseModalLoading(false);
+    }
+  };
+
+  // University modal handlers
+  const handleUniversitySave = async (universityData: Partial<University>) => {
+    setUniversityModalLoading(true);
+    const token = localStorage.getItem("token");
+
+    try {
+      if (editingEntity) {
+        // Update existing university
+        const response = await authenticatedFetch(
+          `${getApiBaseUrl()}/api/universities/${editingEntity.id}`,
+          {
+            method: "PUT",
+            body: JSON.stringify(universityData),
+          },
+          token!
+        );
+
+        if (response.ok) {
+          const updatedUniversity = await response.json();
+          setEntities((prev) => ({
+            ...prev,
+            universities: prev.universities.map((university: Entity) =>
+              university.id === editingEntity.id
+                ? { ...university, ...updatedUniversity }
+                : university
+            ),
+          }));
+          setShowUniversityModal(false);
+          setEditingEntity(null);
+          alert("Их сургуулийг амжилттай шинэчлэлээ!");
+        }
+      } else {
+        // Create new university
+        const response = await authenticatedFetch(
+          `${getApiBaseUrl()}/api/universities`,
+          {
+            method: "POST",
+            body: JSON.stringify(universityData),
+          },
+          token!
+        );
+
+        if (response.ok) {
+          const newUniversity = await response.json();
+          setEntities((prev) => ({
+            ...prev,
+            universities: [...prev.universities, newUniversity],
+          }));
+          setStats((prev) => ({
+            ...prev,
+            totalUniversities: prev.totalUniversities + 1,
+          }));
+          setShowUniversityModal(false);
+          setEditingEntity(null);
+          alert("Их сургуулийг амжилттай нэмлээ!");
+        }
+      }
+    } catch (error) {
+      console.error("Error saving university:", error);
+      alert(
+        "Алдаа гарлаа: " +
+          (error instanceof Error ? error.message : "Тодорхойгүй алдаа")
+      );
+    } finally {
+      setUniversityModalLoading(false);
+    }
+  };
+
+  // Program modal handlers
+  const handleProgramSave = async (programData: Partial<Program>) => {
+    setProgramModalLoading(true);
+    const token = localStorage.getItem("token");
+
+    try {
+      if (editingEntity) {
+        // Update existing program
+        const response = await authenticatedFetch(
+          `${getApiBaseUrl()}/api/programs/${editingEntity.id}`,
+          {
+            method: "PUT",
+            body: JSON.stringify(programData),
+          },
+          token!
+        );
+
+        if (response.ok) {
+          const updatedProgram = await response.json();
+          setEntities((prev) => ({
+            ...prev,
+            programs: prev.programs.map((program: Entity) =>
+              program.id === editingEntity.id
+                ? { ...program, ...updatedProgram }
+                : program
+            ),
+          }));
+          setShowProgramModal(false);
+          setEditingEntity(null);
+          alert("Хөтөлбөрийг амжилттай шинэчлэлээ!");
+        }
+      } else {
+        // Create new program
+        const response = await authenticatedFetch(
+          `${getApiBaseUrl()}/api/programs`,
+          {
+            method: "POST",
+            body: JSON.stringify(programData),
+          },
+          token!
+        );
+
+        if (response.ok) {
+          const newProgram = await response.json();
+          setEntities((prev) => ({
+            ...prev,
+            programs: [...prev.programs, newProgram],
+          }));
+          setStats((prev) => ({
+            ...prev,
+            totalPrograms: prev.totalPrograms + 1,
+          }));
+          setShowProgramModal(false);
+          setEditingEntity(null);
+          alert("Хөтөлбөрийг амжилттай нэмлээ!");
+        }
+      }
+    } catch (error) {
+      console.error("Error saving program:", error);
+      alert(
+        "Алдаа гарлаа: " +
+          (error instanceof Error ? error.message : "Тодорхойгүй алдаа")
+      );
+    } finally {
+      setProgramModalLoading(false);
+    }
+  };
+
+  // News modal handlers
+  const handleNewsSave = async (newsData: Partial<News>) => {
+    setNewsModalLoading(true);
+    const token = localStorage.getItem("token");
+
+    try {
+      if (editingEntity) {
+        // Update existing news
+        const response = await authenticatedFetch(
+          `${getApiBaseUrl()}/api/news/${editingEntity.id}`,
+          {
+            method: "PUT",
+            body: JSON.stringify(newsData),
+          },
+          token!
+        );
+
+        if (response.ok) {
+          const updatedNews = await response.json();
+          setEntities((prev) => ({
+            ...prev,
+            news: prev.news.map((newsItem: Entity) =>
+              newsItem.id === editingEntity.id
+                ? { ...newsItem, ...updatedNews }
+                : newsItem
+            ),
+          }));
+          setShowNewsModal(false);
+          setEditingEntity(null);
+          alert("Мэдээг амжилттай шинэчлэлээ!");
+        }
+      } else {
+        // Create new news
+        const response = await authenticatedFetch(
+          `${getApiBaseUrl()}/api/news`,
+          {
+            method: "POST",
+            body: JSON.stringify(newsData),
+          },
+          token!
+        );
+
+        if (response.ok) {
+          const newNews = await response.json();
+          setEntities((prev) => ({
+            ...prev,
+            news: [...prev.news, newNews],
+          }));
+          setStats((prev) => ({ ...prev, totalNews: prev.totalNews + 1 }));
+          setShowNewsModal(false);
+          setEditingEntity(null);
+          alert("Мэдээг амжилттай нэмлээ!");
+        }
+      }
+    } catch (error) {
+      console.error("Error saving news:", error);
+      alert(
+        "Алдаа гарлаа: " +
+          (error instanceof Error ? error.message : "Тодорхойгүй алдаа")
+      );
+    } finally {
+      setNewsModalLoading(false);
     }
   };
 
@@ -518,6 +753,8 @@ export default function AdminDashboard() {
               onUpdate={loadData}
               onEdit={(course) => handleEdit("courses", course)}
               onAdd={() => handleAdd("courses")}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
             />
           )}
 
@@ -545,118 +782,63 @@ export default function AdminDashboard() {
           )}
 
           {activeSection === "users" && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Хэрэглэгчид
-                </h3>
-                <p className="text-gray-600">
-                  Хэрэглэгчийн удирдлага түр хугацаанд боломжгүй байна.
-                </p>
-                <p className="text-sm text-gray-500 mt-2">
-                  Энэ хэсгийг дараа хөгжүүлэх болно.
-                </p>
-              </div>
-            </div>
+            <AdminUsersTable
+              users={entities.users as any[]}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              onUpdate={loadData}
+            />
           )}
         </div>
       </div>
 
-      {/* Generic Entity Edit Modal */}
-      <Modal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title={
-          editingEntity
-            ? `${
-                modalType === "universities"
-                  ? "Их сургууль"
-                  : modalType === "programs"
-                  ? "Хөтөлбөр"
-                  : modalType === "courses"
-                  ? "Сургалт"
-                  : modalType === "news"
-                  ? "Мэдээ"
-                  : "Элемент"
-              } засах`
-            : `Шинэ ${
-                modalType === "universities"
-                  ? "их сургууль"
-                  : modalType === "programs"
-                  ? "хөтөлбөр"
-                  : modalType === "courses"
-                  ? "сургалт"
-                  : modalType === "news"
-                  ? "мэдээ"
-                  : "элемент"
-              } нэмэх`
-        }
-        size="lg"
-      >
-        <EntityEditForm
-          entity={editingEntity}
-          onSave={handleModalSave}
-          onCancel={() => setShowModal(false)}
-        />
-      </Modal>
-    </div>
-  );
-}
+      {/* Course Form Modal */}
+      <CourseFormModal
+        isOpen={showCourseModal}
+        onClose={() => {
+          setShowCourseModal(false);
+          setEditingEntity(null);
+        }}
+        course={editingEntity as Course}
+        onSave={handleCourseSave}
+        loading={courseModalLoading}
+      />
 
-// Generic Entity Edit Form Component
-function EntityEditForm({
-  entity,
-  onSave,
-  onCancel,
-}: {
-  entity: University | Program | News | Course | null;
-  onSave: (data: Record<string, unknown>) => void;
-  onCancel: () => void;
-}) {
-  const [formData, setFormData] = useState<Record<string, unknown>>(
-    (entity as unknown as Record<string, unknown>) || {}
-  );
+      {/* University Form Modal */}
+      <UniversityFormModal
+        isOpen={showUniversityModal}
+        onClose={() => {
+          setShowUniversityModal(false);
+          setEditingEntity(null);
+        }}
+        university={editingEntity as University}
+        onSave={handleUniversitySave}
+        loading={universityModalLoading}
+      />
 
-  useEffect(() => {
-    if (entity) {
-      setFormData(entity as unknown as Record<string, unknown>);
-    } else {
-      setFormData({});
-    }
-  }, [entity]);
+      {/* Program Form Modal */}
+      <ProgramFormModal
+        isOpen={showProgramModal}
+        onClose={() => {
+          setShowProgramModal(false);
+          setEditingEntity(null);
+        }}
+        program={editingEntity as Program}
+        onSave={handleProgramSave}
+        loading={programModalLoading}
+      />
 
-  return (
-    <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Мэдээлэл засах
-        </label>
-        <p className="text-sm text-gray-600 mb-4">
-          Энэ хэсэг түр хугацаанд хялбаршуулсан байна. Дэлгэрэнгүй засварлах
-          боломжийг дараа нэмнэ.
-        </p>
-        <div className="bg-gray-50 p-4 rounded-md">
-          <pre className="text-xs text-gray-600 overflow-auto">
-            {JSON.stringify(formData, null, 2)}
-          </pre>
-        </div>
-      </div>
-
-      <div className="flex justify-end space-x-3 pt-4">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
-        >
-          Цуцлах
-        </button>
-        <button
-          onClick={() => onSave(formData)}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
-        >
-          Хадгалах
-        </button>
-      </div>
+      {/* News Form Modal */}
+      <NewsFormModal
+        isOpen={showNewsModal}
+        onClose={() => {
+          setShowNewsModal(false);
+          setEditingEntity(null);
+        }}
+        news={editingEntity as News}
+        onSave={handleNewsSave}
+        loading={newsModalLoading}
+      />
     </div>
   );
 }

@@ -9,6 +9,8 @@ interface AdminCoursesTableProps {
   onUpdate: () => void;
   onEdit: (course: Course) => void;
   onAdd?: () => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
 export default function AdminCoursesTable({
@@ -16,6 +18,8 @@ export default function AdminCoursesTable({
   onUpdate,
   onEdit,
   onAdd,
+  searchQuery = "",
+  onSearchChange,
 }: AdminCoursesTableProps) {
   const [loading, setLoading] = useState<string | null>(null);
 
@@ -106,17 +110,56 @@ export default function AdminCoursesTable({
     }
   };
 
+  // Filter courses based on search query
+  const filteredCourses = courses.filter(
+    (course) =>
+      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.instructor?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.level.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-        <h3 className="text-lg font-medium text-gray-900">Сургалтууд</h3>
-        {onAdd && (
-          <button
-            onClick={onAdd}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
-          >
-            + Шинэ сургалт нэмэх
-          </button>
+      <div className="px-6 py-4 border-b border-gray-200">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium text-gray-900">Сургалтууд</h3>
+          {onAdd && (
+            <button
+              onClick={onAdd}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              + Шинэ сургалт нэмэх
+            </button>
+          )}
+        </div>
+
+        {/* Search Bar */}
+        {onSearchChange && (
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Сургалт хайх..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              <svg
+                className="h-5 w-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+          </div>
         )}
       </div>
       <div className="overflow-x-auto">
@@ -141,14 +184,16 @@ export default function AdminCoursesTable({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {courses.length === 0 ? (
+            {filteredCourses.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                  Сургалт олдсонгүй
+                  {searchQuery
+                    ? "Хайлтын үр дүн олдсонгүй"
+                    : "Сургалт олдсонгүй"}
                 </td>
               </tr>
             ) : (
-              courses.map((course) => (
+              filteredCourses.map((course) => (
                 <tr key={course.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
