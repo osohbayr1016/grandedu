@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginForm from "@/components/LoginForm";
 import SignupForm from "@/components/SignupForm";
@@ -38,7 +38,6 @@ interface Course {
 }
 
 export default function CoursesPage() {
-  const router = useRouter();
   const { showAuth, setShowAuth, isLogin, setIsLogin } = useAuth();
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [pageContent, setPageContent] = useState<PageContent>({});
@@ -179,10 +178,12 @@ export default function CoursesPage() {
                 >
                   <div className="h-32 sm:h-48 relative overflow-hidden">
                     {course.imageUrl ? (
-                      <img
+                      <Image
                         src={course.imageUrl}
                         alt={course.title}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                     ) : (
                       <div className="h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">

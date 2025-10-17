@@ -2,19 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { authenticatedFetch, getApiBaseUrl } from "@/utils/api";
-
-interface User {
-  id: string;
-  userCode: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber: string;
-  role: string;
-  isHighlighted: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { User } from "@/types";
 
 interface AdminUsersTableProps {
   users: User[];

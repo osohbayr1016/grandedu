@@ -12,6 +12,7 @@ import AdminCoursesTable from "@/components/AdminCoursesTable";
 import AdminFooterEditor from "@/components/AdminFooterEditor";
 import AdminContactMessages from "@/components/AdminContactMessages";
 import AdminUsersTable from "@/components/AdminUsersTable";
+// User type imported only for mapping reference; not used directly to avoid lint unused warning
 import CourseFormModal from "@/components/CourseFormModal";
 import UniversityFormModal from "@/components/UniversityFormModal";
 import ProgramFormModal from "@/components/ProgramFormModal";
@@ -783,7 +784,18 @@ export default function AdminDashboard() {
 
           {activeSection === "users" && (
             <AdminUsersTable
-              users={entities.users as any[]}
+              users={(entities.users as Entity[]).map((u) => ({
+                id: String(u.id),
+                userCode: (u.userCode as string | null) ?? null,
+                firstName: String(u.firstName ?? ""),
+                lastName: String(u.lastName ?? ""),
+                email: String(u.email ?? ""),
+                phoneNumber: String(u.phoneNumber ?? ""),
+                role: String((u as { role?: string }).role ?? "user"),
+                isHighlighted: Boolean(u.isHighlighted ?? false),
+                createdAt: String(u.createdAt ?? ""),
+                updatedAt: String(u.updatedAt ?? ""),
+              }))}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               onUpdate={loadData}

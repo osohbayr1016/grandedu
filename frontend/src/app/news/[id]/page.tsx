@@ -8,6 +8,7 @@ import SignupForm from "@/components/SignupForm";
 import { getNewsUrl } from "@/utils/api";
 import Link from "next/link";
 import { createTimeoutSignal } from "@/utils/requestUtils";
+import Image from "next/image";
 
 interface News {
   id: string;
@@ -160,11 +161,13 @@ export default function NewsDetailPage() {
                 {news.title}
               </h1>
               {news.imageUrl && (
-                <div className="mb-8">
-                  <img
+                <div className="mb-8 relative w-full h-64 sm:h-80 lg:h-96">
+                  <Image
                     src={news.imageUrl}
                     alt={news.title}
-                    className="w-full h-64 sm:h-80 lg:h-96 object-cover rounded-lg shadow-lg"
+                    fill
+                    className="object-cover rounded-lg shadow-lg"
+                    sizes="100vw"
                   />
                 </div>
               )}
@@ -219,10 +222,13 @@ export default function NewsDetailPage() {
                   >
                     {newsItem.imageUrl && (
                       <div className="mb-4">
-                        <img
+                        <Image
                           src={newsItem.imageUrl}
                           alt={newsItem.title}
+                          width={800}
+                          height={400}
                           className="w-full h-48 object-cover rounded-lg group-hover:scale-105 transition-transform"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
                       </div>
                     )}

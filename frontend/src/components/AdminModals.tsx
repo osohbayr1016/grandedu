@@ -86,24 +86,24 @@ export default function AdminModals({
         isOpen={showUniversityModal}
         onClose={onCloseUniversityModal}
         onSave={onSaveUniversity}
-        editingUniversity={editingUniversity}
-        saving={universitySaving}
+        university={editingUniversity}
+        loading={universitySaving}
       />
 
       <ProgramFormModal
         isOpen={showProgramModal}
         onClose={onCloseProgramModal}
         onSave={onSaveProgram}
-        editingProgram={editingProgram}
-        saving={programSaving}
+        program={editingProgram}
+        loading={programSaving}
       />
 
       <NewsFormModal
         isOpen={showNewsModal}
         onClose={onCloseNewsModal}
         onSave={onSaveNews}
-        editingNews={editingNews}
-        saving={newsSaving}
+        news={editingNews}
+        loading={newsSaving}
       />
     </>
   );

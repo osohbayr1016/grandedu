@@ -11,6 +11,7 @@ import {
   getUniversitiesUrl,
 } from "@/utils/api";
 import { createTimeoutSignal } from "@/utils/requestUtils";
+import Image from "next/image";
 
 interface PageContent {
   [section: string]: {
@@ -172,10 +173,12 @@ export default function UniversitiesPage() {
                 >
                   <div className="h-32 sm:h-48 relative overflow-hidden">
                     {university.imageUrl ? (
-                      <img
+                      <Image
                         src={university.imageUrl}
                         alt={university.name}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                     ) : (
                       <div className="h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">

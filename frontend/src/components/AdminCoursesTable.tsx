@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Course } from "@/types";
+import Image from "next/image";
 import { authenticatedFetch, getApiBaseUrl } from "@/utils/api";
 
 interface AdminCoursesTableProps {
@@ -199,10 +200,12 @@ export default function AdminCoursesTable({
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
                         {course.imageUrl ? (
-                          <img
+                          <Image
                             className="h-10 w-10 rounded-full object-cover"
                             src={course.imageUrl}
                             alt={course.title}
+                            width={40}
+                            height={40}
                           />
                         ) : (
                           <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">

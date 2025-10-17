@@ -7,6 +7,7 @@ import SignupForm from "@/components/SignupForm";
 import { getHealthCheckUrl, getHomeContentUrl, getNewsUrl } from "@/utils/api";
 import Link from "next/link";
 import { createTimeoutSignal } from "@/utils/requestUtils";
+import Image from "next/image";
 
 interface PageContent {
   [section: string]: {
@@ -174,10 +175,13 @@ export default function NewsPage() {
                   >
                     {newsItem.imageUrl && (
                       <div className="mb-4">
-                        <img
+                        <Image
                           src={newsItem.imageUrl}
                           alt={newsItem.title}
+                          width={800}
+                          height={400}
                           className="w-full h-48 object-cover rounded-lg"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
                       </div>
                     )}
