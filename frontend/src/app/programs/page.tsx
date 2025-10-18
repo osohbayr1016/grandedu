@@ -44,6 +44,7 @@ export default function ProgramsPage() {
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchPageContent();
@@ -302,8 +303,56 @@ export default function ProgramsPage() {
         </div>
       </div>
 
+      {/* Search Box */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Хөтөлбөрийн нэр, тайлбар, их сургуулиар хайх..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-3 pl-12 pr-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+            />
+            <svg
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Programs Grid */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-12 sm:pb-16">
         {programs.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
@@ -334,10 +383,33 @@ export default function ProgramsPage() {
           </div>
         ) : (
           <>
-            {programs.filter((program) => program.isActive).length > 0 ? (
+            {programs
+              .filter((program) => program.isActive)
+              .filter((program) => {
+                if (!searchQuery) return true;
+                const query = searchQuery.toLowerCase();
+                return (
+                  program.title.toLowerCase().includes(query) ||
+                  program.description.toLowerCase().includes(query) ||
+                  program.level?.toLowerCase().includes(query) ||
+                  program.university?.toLowerCase().includes(query) ||
+                  program.location?.toLowerCase().includes(query)
+                );
+              }).length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
                 {programs
                   .filter((program) => program.isActive)
+                  .filter((program) => {
+                    if (!searchQuery) return true;
+                    const query = searchQuery.toLowerCase();
+                    return (
+                      program.title.toLowerCase().includes(query) ||
+                      program.description.toLowerCase().includes(query) ||
+                      program.level?.toLowerCase().includes(query) ||
+                      program.university?.toLowerCase().includes(query) ||
+                      program.location?.toLowerCase().includes(query)
+                    );
+                  })
                   .sort((a, b) => {
                     // Sort highlighted programs first
                     if (a.isHighlighted && !b.isHighlighted) return -1;

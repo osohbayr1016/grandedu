@@ -97,6 +97,41 @@ export default function AdminUsersTable({
     }
   };
 
+  const handleDelete = async (user: User) => {
+    if (
+      !confirm(
+        `${user.firstName} ${user.lastName} хэрэглэгчийг устгахдаа итгэлтэй байна уу? Энэ үйлдлийг буцаах боломжгүй!`
+      )
+    ) {
+      return;
+    }
+
+    setLoading(user.id);
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await authenticatedFetch(
+        `${getApiBaseUrl()}/api/auth/users/${user.id}`,
+        {
+          method: "DELETE",
+        },
+        token!
+      );
+
+      if (response.ok) {
+        onUpdate();
+        alert("Хэрэглэгчийг амжилттай устгалаа!");
+      } else {
+        alert("Алдаа гарлаа. Дахин оролдоно уу.");
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      alert("Алдаа гарлаа. Дахин оролдоно уу.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   const { filtered, adminCount, highlightedCount } = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
     const filteredItems = users.filter((user) => {
@@ -243,6 +278,13 @@ export default function AdminUsersTable({
                       >
                         {user.isHighlighted ? "Онцлохыг цуцлах" : "Онцлох"}
                       </button>
+                      <button
+                        onClick={() => handleDelete(user)}
+                        className="text-sm font-medium text-red-600 hover:text-red-800"
+                        disabled={loading === user.id}
+                      >
+                        {loading === user.id ? "Устгаж байна..." : "Устгах"}
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -325,6 +367,13 @@ export default function AdminUsersTable({
                   disabled={loading === user.id}
                 >
                   {user.isHighlighted ? "Онцлохыг цуцлах" : "Онцлох"}
+                </button>
+                <button
+                  onClick={() => handleDelete(user)}
+                  className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 font-medium py-2 px-4 rounded-lg text-sm transition-colors"
+                  disabled={loading === user.id}
+                >
+                  {loading === user.id ? "Устгаж байна..." : "Устгах"}
                 </button>
               </div>
             </div>

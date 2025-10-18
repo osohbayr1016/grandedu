@@ -11,6 +11,7 @@ import {
   getNewsUrl,
   getProgramsUrl,
   getUniversitiesUrl,
+  getCoursesUrl,
 } from "@/utils/api";
 import { createTimeoutSignal } from "@/utils/requestUtils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -55,6 +56,18 @@ interface University {
   isActive: boolean;
 }
 
+interface Course {
+  id: string;
+  title: string;
+  description: string;
+  duration: string;
+  level: string;
+  price?: string;
+  instructor?: string;
+  isActive: boolean;
+  isHighlighted?: boolean;
+}
+
 export default function Home() {
   const [pageContent, setPageContent] = useState<PageContent>({});
   const [contentLoading, setContentLoading] = useState(true);
@@ -62,6 +75,7 @@ export default function Home() {
   const [news, setNews] = useState<News[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [universities, setUniversities] = useState<University[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const { user, showAuth, setShowAuth, isLogin, setIsLogin } = useAuth();
 
@@ -113,13 +127,18 @@ export default function Home() {
 
   const fetchRealData = async () => {
     try {
-      // Fetch news, programs, and universities in parallel
-      const [newsResponse, programsResponse, universitiesResponse] =
-        await Promise.all([
-          fetch(getNewsUrl()),
-          fetch(getProgramsUrl()),
-          fetch(getUniversitiesUrl()),
-        ]);
+      // Fetch news, programs, courses, and universities in parallel
+      const [
+        newsResponse,
+        programsResponse,
+        coursesResponse,
+        universitiesResponse,
+      ] = await Promise.all([
+        fetch(getNewsUrl()),
+        fetch(getProgramsUrl()),
+        fetch(getCoursesUrl()),
+        fetch(getUniversitiesUrl()),
+      ]);
 
       if (newsResponse.ok) {
         const newsData = await newsResponse.json();
@@ -129,6 +148,11 @@ export default function Home() {
       if (programsResponse.ok) {
         const programsData = await programsResponse.json();
         setPrograms(programsData);
+      }
+
+      if (coursesResponse.ok) {
+        const coursesData = await coursesResponse.json();
+        setCourses(coursesData);
       }
 
       if (universitiesResponse.ok) {
@@ -415,6 +439,90 @@ export default function Home() {
                         "viewMoreButton",
                         "Дэлгэрэнгүй →"
                       )}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500 text-lg">Хоосон байна</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Courses Section */}
+      <section className="py-12 sm:py-16 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 sm:mb-12 space-y-4 sm:space-y-0 animate-fade-in-up">
+              <div className="w-full sm:w-auto">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">
+                  {getContent("courses", "title", "Сургалтууд")}
+                </h2>
+                <div className="w-full h-0.5 bg-gray-300 mx-auto mb-6"></div>
+                <p className="text-gray-600 text-sm sm:text-base">
+                  {getContent(
+                    "courses",
+                    "description",
+                    "Хятад хэлний болон бусад мэргэжлийн сургалтууд"
+                  )}
+                </p>
+              </div>
+              <Link
+                href="/courses"
+                className="text-blue-600 hover:text-blue-700 font-semibold text-sm sm:text-base"
+              >
+                {getContent(
+                  "courses",
+                  "viewAllButton",
+                  "Бүх сургалтыг харах →"
+                )}
+              </Link>
+            </div>
+
+            {courses.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {courses.slice(0, 3).map((course, index) => (
+                  <div
+                    key={course.id}
+                    className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up animate-delay-200"
+                    style={{ animationDelay: `${(index + 1) * 200}ms` }}
+                  >
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-600 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
+                      <svg
+                        className="w-5 h-5 sm:w-6 sm:h-6 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">
+                      {course.title}
+                    </h3>
+                    <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
+                      {course.description.length > 80
+                        ? `${course.description.substring(0, 80)}...`
+                        : course.description}
+                    </p>
+                    <div className="text-sm text-gray-500 mb-3">
+                      <p>Хугацаа: {course.duration}</p>
+                      <p>Түвшин: {course.level}</p>
+                      {course.price && <p>Үнэ: {course.price}</p>}
+                    </div>
+                    <Link
+                      href="/courses"
+                      className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
+                    >
+                      {getContent("courses", "viewMoreButton", "Дэлгэрэнгүй →")}
                     </Link>
                   </div>
                 ))}

@@ -1,6 +1,7 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
 import { auth } from "../middleware/auth";
+import { sendEmailWithFallback } from "../utils/emailService";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -24,6 +25,40 @@ router.post("/", async (req, res) => {
         message,
       },
     });
+
+    // Send email notification to admin
+    try {
+      const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+
+      if (adminEmail) {
+        const emailHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2563eb;">Шинэ холбоо барих мэдээлэл</h2>
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <p><strong>Нэр:</strong> ${name}</p>
+              <p><strong>Имэйл:</strong> ${email}</p>
+              <p><strong>Утас:</strong> ${phone || "Оруулаагүй"}</p>
+              <p><strong>Мессеж:</strong></p>
+              <p style="white-space: pre-wrap;">${message}</p>
+            </div>
+            <p style="color: #6b7280; font-size: 12px;">
+              Энэ мэдээлэл GrandEdu вэбсайтын холбоо барих хэсгээс ирсэн.
+            </p>
+          </div>
+        `;
+
+        await sendEmailWithFallback({
+          to: adminEmail,
+          subject: `Шинэ холбоо барих мэдээлэл - ${name}`,
+          html: emailHtml,
+        });
+
+        console.log("Contact form notification email sent to admin");
+      }
+    } catch (emailError) {
+      // Don't fail the request if email fails
+      console.error("Failed to send contact notification email:", emailError);
+    }
 
     res.status(201).json({
       message: "Мэдээлэл амжилттай илгээгдлээ",

@@ -9,6 +9,8 @@ import newsRoutes from "./routes/news";
 import universitiesRoutes from "./routes/universities";
 import contactRoutes from "./routes/contact";
 import coursesRoutes from "./routes/courses";
+import registrationsRoutes from "./routes/registrations";
+import savedCoursesRoutes from "./routes/savedCourses";
 
 dotenv.config();
 
@@ -100,6 +102,8 @@ app.use("/api/news", newsRoutes);
 app.use("/api/universities", universitiesRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/courses", coursesRoutes);
+app.use("/api/registrations", registrationsRoutes);
+app.use("/api/saved-courses", savedCoursesRoutes);
 
 // Basic route
 app.get("/", (req, res) => {

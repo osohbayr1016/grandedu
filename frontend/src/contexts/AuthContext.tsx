@@ -27,6 +27,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (userData: SignupData) => Promise<void>;
   logout: () => void;
+  updateUser: (updatedUser: User) => void;
   loading: boolean;
   showAuth: boolean;
   setShowAuth: (show: boolean) => void;
@@ -171,12 +172,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     delete axios.defaults.headers.common["Authorization"];
   };
 
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+  };
+
   const value = {
     user,
     token,
     login,
     signup,
     logout,
+    updateUser,
     loading,
     showAuth,
     setShowAuth,

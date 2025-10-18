@@ -181,6 +181,55 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Update current user's profile
+router.put("/profile", async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+      userId: string;
+    };
+    const { firstName, lastName, phoneNumber } = req.body;
+
+    // Validation
+    if (!firstName || !lastName || !phoneNumber) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: decoded.userId },
+      data: {
+        firstName,
+        lastName,
+        phoneNumber,
+        updatedAt: new Date(),
+      },
+      select: {
+        id: true,
+        userCode: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phoneNumber: true,
+        role: true,
+        isHighlighted: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    res.json(updatedUser);
+  } catch (error) {
+    console.error("Update profile error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // Get all users (admin only)
 router.get("/users", async (req, res) => {
   try {

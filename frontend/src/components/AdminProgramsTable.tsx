@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { authenticatedFetch, getApiBaseUrl } from "@/utils/api";
 
 interface Program {
   id: string;
@@ -26,6 +27,7 @@ interface AdminProgramsTableProps {
   onEdit: (program: Program) => void;
   onToggleStatus: (program: Program) => Promise<void>;
   onAdd: () => void;
+  onUpdate: () => void;
 }
 
 export default function AdminProgramsTable({
@@ -35,7 +37,41 @@ export default function AdminProgramsTable({
   onEdit,
   onToggleStatus,
   onAdd,
+  onUpdate,
 }: AdminProgramsTableProps) {
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const handleDelete = async (program: Program) => {
+    if (
+      !confirm(`"${program.title}" хөтөлбөрийг устгахдаа итгэлтэй байна уу?`)
+    ) {
+      return;
+    }
+
+    setLoading(program.id);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await authenticatedFetch(
+        `${getApiBaseUrl()}/api/programs/${program.id}`,
+        {
+          method: "DELETE",
+        },
+        token!
+      );
+
+      if (response.ok) {
+        onUpdate();
+      } else {
+        alert("Алдаа гарлаа. Дахин оролдоно уу.");
+      }
+    } catch (error) {
+      console.error("Error deleting program:", error);
+      alert("Алдаа гарлаа. Дахин оролдоно уу.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   const { filtered, activeCount, highlightedCount } = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
     const filteredItems = programs.filter((program) => {
@@ -161,16 +197,25 @@ export default function AdminProgramsTable({
                       <button
                         onClick={() => onEdit(program)}
                         className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                        disabled={loading === program.id}
                       >
                         Засварлах
                       </button>
                       <button
                         onClick={() => onToggleStatus(program)}
                         className="text-sm font-medium text-gray-600 hover:text-gray-800"
+                        disabled={loading === program.id}
                       >
                         {program.isActive
                           ? "Идэвхгүй болгох"
                           : "Идэвхтэй болгох"}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(program)}
+                        className="text-sm font-medium text-red-600 hover:text-red-800"
+                        disabled={loading === program.id}
+                      >
+                        {loading === program.id ? "Устгаж байна..." : "Устгах"}
                       </button>
                     </div>
                   </td>
@@ -225,12 +270,14 @@ export default function AdminProgramsTable({
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <p className="text-sm text-gray-600">
-                    <span className="font-medium">Түвшин:</span> {program.level || "Тодорхойгүй"}
+                    <span className="font-medium">Түвшин:</span>{" "}
+                    {program.level || "Тодорхойгүй"}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">
-                    <span className="font-medium">Хугацаа:</span> {program.duration || "Тодорхойгүй"}
+                    <span className="font-medium">Хугацаа:</span>{" "}
+                    {program.duration || "Тодорхойгүй"}
                   </p>
                 </div>
               </div>
@@ -239,14 +286,23 @@ export default function AdminProgramsTable({
                 <button
                   onClick={() => onEdit(program)}
                   className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-2 px-4 rounded-lg text-sm transition-colors"
+                  disabled={loading === program.id}
                 >
                   Засварлах
                 </button>
                 <button
                   onClick={() => onToggleStatus(program)}
                   className="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium py-2 px-4 rounded-lg text-sm transition-colors"
+                  disabled={loading === program.id}
                 >
                   {program.isActive ? "Идэвхгүй болгох" : "Идэвхтэй болгох"}
+                </button>
+                <button
+                  onClick={() => handleDelete(program)}
+                  className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 font-medium py-2 px-4 rounded-lg text-sm transition-colors"
+                  disabled={loading === program.id}
+                >
+                  {loading === program.id ? "Устгаж байна..." : "Устгах"}
                 </button>
               </div>
             </div>

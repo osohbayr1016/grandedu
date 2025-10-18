@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Entity, University } from "@/types";
+import { authenticatedFetch, getApiBaseUrl } from "@/utils/api";
 
 interface AdminUniversitiesTableProps {
   universities: Entity[];
@@ -10,6 +11,7 @@ interface AdminUniversitiesTableProps {
   onEdit: (university: University) => void;
   onToggleStatus: (university: University) => Promise<void>;
   onAdd: () => void;
+  onUpdate: () => void;
 }
 
 export default function AdminUniversitiesTable({
@@ -19,7 +21,43 @@ export default function AdminUniversitiesTable({
   onEdit,
   onToggleStatus,
   onAdd,
+  onUpdate,
 }: AdminUniversitiesTableProps) {
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const handleDelete = async (university: University) => {
+    if (
+      !confirm(
+        `"${university.name}" их сургуулийг устгахдаа итгэлтэй байна уу?`
+      )
+    ) {
+      return;
+    }
+
+    setLoading(university.id);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await authenticatedFetch(
+        `${getApiBaseUrl()}/api/universities/${university.id}`,
+        {
+          method: "DELETE",
+        },
+        token!
+      );
+
+      if (response.ok) {
+        onUpdate();
+      } else {
+        alert("Алдаа гарлаа. Дахин оролдоно уу.");
+      }
+    } catch (error) {
+      console.error("Error deleting university:", error);
+      alert("Алдаа гарлаа. Дахин оролдоно уу.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   const { filtered, activeCount } = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
     const filteredItems = universities.filter((university) => {
@@ -126,16 +164,27 @@ export default function AdminUniversitiesTable({
                       <button
                         onClick={() => onEdit(university as University)}
                         className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                        disabled={loading === university.id}
                       >
                         Засварлах
                       </button>
                       <button
                         onClick={() => onToggleStatus(university as University)}
                         className="text-sm font-medium text-gray-600 hover:text-gray-800"
+                        disabled={loading === university.id}
                       >
                         {university.isActive
                           ? "Идэвхгүй болгох"
                           : "Идэвхтэй болгох"}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(university as University)}
+                        className="text-sm font-medium text-red-600 hover:text-red-800"
+                        disabled={loading === university.id}
+                      >
+                        {loading === university.id
+                          ? "Устгаж байна..."
+                          : "Устгах"}
                       </button>
                     </div>
                   </td>
@@ -191,14 +240,23 @@ export default function AdminUniversitiesTable({
                 <button
                   onClick={() => onEdit(university as University)}
                   className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-2 px-4 rounded-lg text-sm transition-colors"
+                  disabled={loading === university.id}
                 >
                   Засварлах
                 </button>
                 <button
                   onClick={() => onToggleStatus(university as University)}
                   className="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium py-2 px-4 rounded-lg text-sm transition-colors"
+                  disabled={loading === university.id}
                 >
                   {university.isActive ? "Идэвхгүй болгох" : "Идэвхтэй болгох"}
+                </button>
+                <button
+                  onClick={() => handleDelete(university as University)}
+                  className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 font-medium py-2 px-4 rounded-lg text-sm transition-colors"
+                  disabled={loading === university.id}
+                >
+                  {loading === university.id ? "Устгаж байна..." : "Устгах"}
                 </button>
               </div>
             </div>

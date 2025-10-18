@@ -37,6 +37,14 @@ export default function UniversitiesPage() {
   const [pageContent, setPageContent] = useState<PageContent>({});
   const [universities, setUniversities] = useState<University[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterLocation, setFilterLocation] = useState("Бүгд");
+
+  // Get unique locations for filter
+  const uniqueLocations = [
+    "Бүгд",
+    ...Array.from(new Set(universities.map((u) => u.location).filter(Boolean))),
+  ];
 
   useEffect(() => {
     const checkBackendHealth = async () => {
@@ -160,67 +168,194 @@ export default function UniversitiesPage() {
         </div>
       </div>
 
+      {/* Search and Filters */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
+        <div className="max-w-4xl mx-auto space-y-4">
+          {/* Search Box */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Их сургуулийн нэр, байршил, тайлбараар хайх..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-3 pl-12 pr-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+            />
+            <svg
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-wrap gap-4">
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Байршил
+              </label>
+              <select
+                value={filterLocation}
+                onChange={(e) => setFilterLocation(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                {uniqueLocations.map((location) => (
+                  <option key={location} value={location}>
+                    {location}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {(filterLocation !== "Бүгд" || searchQuery) && (
+              <div className="flex items-end">
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setFilterLocation("Бүгд");
+                  }}
+                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Цэвэрлэх
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Universities Grid */}
-      <main className="py-12 sm:py-16">
+      <main className="pb-12 sm:pb-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {universities.length > 0 ? (
-              universities.map((university) => (
-                <article
-                  key={university.id}
-                  onClick={() => router.push(`/universities/${university.id}`)}
-                  className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                >
-                  <div className="h-32 sm:h-48 relative overflow-hidden">
-                    {university.imageUrl ? (
-                      <Image
-                        src={university.imageUrl}
-                        alt={university.name}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      />
-                    ) : (
-                      <div className="h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                        <div className="text-white text-center px-2">
-                          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white bg-opacity-20 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
-                            <svg
-                              className="w-6 h-6 sm:w-8 sm:h-8"
-                              fill="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                            </svg>
+            {universities.filter((university) => {
+              // Search filter
+              if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                const matchesSearch =
+                  university.name.toLowerCase().includes(query) ||
+                  university.location.toLowerCase().includes(query) ||
+                  university.description.toLowerCase().includes(query);
+                if (!matchesSearch) return false;
+              }
+
+              // Location filter
+              if (
+                filterLocation !== "Бүгд" &&
+                university.location !== filterLocation
+              ) {
+                return false;
+              }
+
+              return true;
+            }).length > 0 ? (
+              universities
+                .filter((university) => {
+                  // Search filter
+                  if (searchQuery) {
+                    const query = searchQuery.toLowerCase();
+                    const matchesSearch =
+                      university.name.toLowerCase().includes(query) ||
+                      university.location.toLowerCase().includes(query) ||
+                      university.description.toLowerCase().includes(query);
+                    if (!matchesSearch) return false;
+                  }
+
+                  // Location filter
+                  if (
+                    filterLocation !== "Бүгд" &&
+                    university.location !== filterLocation
+                  ) {
+                    return false;
+                  }
+
+                  return true;
+                })
+                .map((university) => (
+                  <article
+                    key={university.id}
+                    onClick={() =>
+                      router.push(`/universities/${university.id}`)
+                    }
+                    className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  >
+                    <div className="h-32 sm:h-48 relative overflow-hidden">
+                      {university.imageUrl ? (
+                        <Image
+                          src={university.imageUrl}
+                          alt={university.name}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        />
+                      ) : (
+                        <div className="h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                          <div className="text-white text-center px-2">
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white bg-opacity-20 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
+                              <svg
+                                className="w-6 h-6 sm:w-8 sm:h-8"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                              </svg>
+                            </div>
+                            <h3 className="text-sm sm:text-lg font-bold">
+                              {university.name}
+                            </h3>
                           </div>
-                          <h3 className="text-sm sm:text-lg font-bold">
-                            {university.name}
-                          </h3>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4 sm:p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">
-                      {university.name}
-                    </h3>
-                    <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                      {university.location}
-                    </p>
-                    <p className="text-gray-600 text-sm sm:text-base mb-4 line-clamp-3">
-                      {university.description}
-                    </p>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(`/universities/${university.id}`);
-                      }}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
-                    >
-                      Дэлгэрэнгүй үзэх →
-                    </button>
-                  </div>
-                </article>
-              ))
+                      )}
+                    </div>
+                    <div className="p-4 sm:p-6">
+                      <h3 className="text-lg font-bold text-gray-900 mb-2">
+                        {university.name}
+                      </h3>
+                      <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
+                        {university.location}
+                      </p>
+                      <p className="text-gray-600 text-sm sm:text-base mb-4 line-clamp-3">
+                        {university.description}
+                      </p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/universities/${university.id}`);
+                        }}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        Дэлгэрэнгүй үзэх →
+                      </button>
+                    </div>
+                  </article>
+                ))
             ) : (
               <div className="col-span-full text-center py-12">
                 <div className="text-gray-500">

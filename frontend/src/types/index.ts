@@ -79,7 +79,7 @@ export interface Course {
   registrationLink?: string;
   adminNote?: string;
   isActive: boolean;
-  isHighlighted: boolean;
+  isHighlighted?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -116,4 +116,31 @@ export interface GroupedContent {
   [section: string]: {
     [field: string]: string;
   };
+}
+
+export interface CourseRegistration {
+  id: string;
+  userId: string;
+  courseId: string;
+  status: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    userCode?: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+  };
+  course: Course;
+}
+
+export interface SavedCourse {
+  id: string;
+  userId: string;
+  courseId: string;
+  createdAt: string;
+  course: Course;
 }

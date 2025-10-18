@@ -10,14 +10,23 @@ import AdminProgramsTable from "@/components/AdminProgramsTable";
 import AdminNewsTable from "@/components/AdminNewsTable";
 import AdminCoursesTable from "@/components/AdminCoursesTable";
 import AdminFooterEditor from "@/components/AdminFooterEditor";
+import AdminHeroEditor from "@/components/AdminHeroEditor";
 import AdminContactMessages from "@/components/AdminContactMessages";
 import AdminUsersTable from "@/components/AdminUsersTable";
+import AdminRegistrationsTable from "@/components/AdminRegistrationsTable";
 // User type imported only for mapping reference; not used directly to avoid lint unused warning
 import CourseFormModal from "@/components/CourseFormModal";
 import UniversityFormModal from "@/components/UniversityFormModal";
 import ProgramFormModal from "@/components/ProgramFormModal";
 import NewsFormModal from "@/components/NewsFormModal";
-import { Entity, Program, University, News, Course } from "@/types";
+import {
+  Entity,
+  Program,
+  University,
+  News,
+  Course,
+  CourseRegistration,
+} from "@/types";
 
 // Removed legacy content editor types/modal
 
@@ -34,12 +43,14 @@ export default function AdminDashboard() {
     news: Entity[];
     courses: Entity[];
     users: Entity[];
+    registrations: CourseRegistration[];
   }>({
     universities: [],
     programs: [],
     news: [],
     courses: [],
     users: [],
+    registrations: [],
   });
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -47,6 +58,7 @@ export default function AdminDashboard() {
     totalNews: 0,
     totalUniversities: 0,
     totalCourses: 0,
+    totalRegistrations: 0,
   });
 
   // Search state
@@ -72,6 +84,8 @@ export default function AdminDashboard() {
     { id: "programs", name: "Хөтөлбөрүүд", icon: "📚" },
     { id: "courses", name: "Сургалтууд", icon: "🎯" },
     { id: "news", name: "Мэдээ", icon: "📰" },
+    { id: "registrations", name: "Бүртгэлүүд", icon: "📝" },
+    { id: "hero", name: "Hero Section", icon: "🎨" },
     { id: "footer", name: "Footer", icon: "🔗" },
     { id: "messages", name: "Холбоо барих", icon: "💬" },
     { id: "users", name: "Хэрэглэгчид", icon: "👥" },
@@ -98,6 +112,7 @@ export default function AdminDashboard() {
     }
 
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading, router]);
 
   const loadData = async () => {
@@ -111,6 +126,7 @@ export default function AdminDashboard() {
         newsRes,
         coursesRes,
         usersRes,
+        registrationsRes,
         statsRes,
       ] = await Promise.all([
         authenticatedFetch(`${getApiBaseUrl()}/api/universities`, {}, token!),
@@ -118,6 +134,11 @@ export default function AdminDashboard() {
         authenticatedFetch(`${getApiBaseUrl()}/api/news`, {}, token!),
         authenticatedFetch(`${getApiBaseUrl()}/api/courses`, {}, token!),
         authenticatedFetch(`${getApiBaseUrl()}/api/auth/users`, {}, token!),
+        authenticatedFetch(
+          `${getApiBaseUrl()}/api/registrations/all`,
+          {},
+          token!
+        ),
         authenticatedFetch(`${getApiBaseUrl()}/api/auth/stats`, {}, token!),
       ]);
 
@@ -146,9 +167,17 @@ export default function AdminDashboard() {
         setEntities((prev) => ({ ...prev, users }));
       }
 
+      if (registrationsRes.ok) {
+        const registrations = await registrationsRes.json();
+        setEntities((prev) => ({ ...prev, registrations }));
+      }
+
       if (statsRes.ok) {
         const statsData = await statsRes.json();
-        setStats(statsData);
+        setStats({
+          ...statsData,
+          totalRegistrations: entities.registrations.length,
+        });
       }
     } catch (error) {
       console.error("Error loading admin data:", error);
@@ -194,14 +223,23 @@ export default function AdminDashboard() {
 
       if (response.ok) {
         const updatedEntity = await response.json();
-        setEntities((prev) => ({
-          ...prev,
-          [type]: prev[type as keyof typeof prev].map((item: Entity) =>
-            item.id === entity.id
-              ? { ...item, isActive: updatedEntity.isActive }
-              : item
-          ),
-        }));
+        // Type guard to ensure we're only updating Entity arrays, not CourseRegistration arrays
+        if (
+          type === "universities" ||
+          type === "programs" ||
+          type === "news" ||
+          type === "courses"
+        ) {
+          setEntities((prev) => ({
+            ...prev,
+            [type]: (prev[type as keyof typeof prev] as Entity[]).map(
+              (item: Entity) =>
+                item.id === entity.id
+                  ? { ...item, isActive: updatedEntity.isActive }
+                  : item
+            ),
+          }));
+        }
 
         // Show success message
         console.log(`${type} status updated successfully`);
@@ -626,6 +664,18 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              <div className="bg-pink-500 text-white rounded-lg p-6">
+                <div className="flex items-center">
+                  <div className="flex-1">
+                    <p className="text-pink-100 text-sm">Нийт бүртгэл</p>
+                    <p className="text-2xl font-bold">
+                      {stats.totalRegistrations}
+                    </p>
+                  </div>
+                  <div className="text-3xl opacity-80">📝</div>
+                </div>
+              </div>
+
               {/* Quick Action Cards */}
               <div className="md:col-span-2 lg:col-span-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
                 <button
@@ -676,6 +726,19 @@ export default function AdminDashboard() {
                     <div className="text-left">
                       <p className="font-medium text-gray-900">Мэдээ</p>
                       <p className="text-sm text-gray-500">Удирдах</p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setActiveSection("hero")}
+                  className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center">
+                    <span className="text-2xl mr-3">🎨</span>
+                    <div className="text-left">
+                      <p className="font-medium text-gray-900">Hero Section</p>
+                      <p className="text-sm text-gray-500">Засварлах</p>
                     </div>
                   </div>
                 </button>
@@ -732,6 +795,7 @@ export default function AdminDashboard() {
                 handleToggleStatus("universities", university)
               }
               onAdd={() => handleAdd("universities")}
+              onUpdate={loadData}
             />
           )}
 
@@ -745,6 +809,7 @@ export default function AdminDashboard() {
                 handleToggleStatus("programs", program)
               }
               onAdd={() => handleAdd("programs")}
+              onUpdate={loadData}
             />
           )}
 
@@ -769,7 +834,21 @@ export default function AdminDashboard() {
                 handleToggleStatus("news", newsItem)
               }
               onAdd={() => handleAdd("news")}
+              onUpdate={loadData}
             />
+          )}
+
+          {activeSection === "registrations" && (
+            <AdminRegistrationsTable
+              registrations={entities.registrations}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              onUpdate={loadData}
+            />
+          )}
+
+          {activeSection === "hero" && (
+            <AdminHeroEditor onClose={() => setActiveSection("dashboard")} />
           )}
 
           {activeSection === "footer" && (
