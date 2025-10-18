@@ -731,6 +731,19 @@ export default function AdminDashboard() {
                 </button>
 
                 <button
+                  onClick={() => setActiveSection("registrations")}
+                  className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center">
+                    <span className="text-2xl mr-3">📝</span>
+                    <div className="text-left">
+                      <p className="font-medium text-gray-900">Бүртгэлүүд</p>
+                      <p className="text-sm text-gray-500">Удирдах</p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
                   onClick={() => setActiveSection("hero")}
                   className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
                 >

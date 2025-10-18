@@ -76,7 +76,9 @@ export default function AdminFooterEditor({ onClose }: AdminFooterEditorProps) {
 
       if (response.ok) {
         alert("Footer мэдээлэл амжилттай хадгалагдлаа!");
-        onClose();
+
+        // Force page reload to refresh footer content
+        window.location.reload();
       } else {
         const errorData = await response.json();
         console.error("Footer save error:", errorData);

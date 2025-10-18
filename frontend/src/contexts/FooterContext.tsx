@@ -88,13 +88,12 @@ export function FooterProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const data = await response.json();
 
-        // Transform the grouped content back to FooterContent format
-        if (data.footer && typeof data.footer === "object") {
-          setFooterContent((prev) => ({
-            ...prev,
-            ...sanitizeFooterUpdates(data.footer),
-          }));
-        }
+        // The API returns footer content as a flat object, not nested
+        // Just use the data directly as it matches our FooterContent interface
+        setFooterContent((prev) => ({
+          ...prev,
+          ...sanitizeFooterUpdates(data),
+        }));
       } else {
         console.warn("Failed to fetch footer content, using defaults");
       }
